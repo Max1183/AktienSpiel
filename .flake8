@@ -1,0 +1,16 @@
+[flake8]
+ignore = C101, A005, E402, Q000
+exclude =
+    .git,
+    .mypy_cache,
+    __pycache__,
+    .venv
+filename = *.py
+accept-encodings = utf-8
+inline-quotes = single
+max-complexity = 12
+max-linenumber = 500
+max-line-length = 119
+multiline-quotes = double
+per-file-ignores =
+    cooking_core/project/settings/templates/settings.dev.py:F821
