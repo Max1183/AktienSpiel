@@ -34,7 +34,6 @@
     "ACN": "Accenture plc",
     "DHR": "Danaher Corporation",
     "BMY": "Bristol-Myers Squibb Company",
-    "LIN": "Linde plc",
     "NEE": "NextEra Energy Inc.",
     "VZ": "Verizon Communications Inc.",
     "NKE": "NIKE Inc.",
@@ -70,7 +69,6 @@
     "PLD": "Prologis Inc.",
     "SBUX": "Starbucks Corporation",
     "ADP": "Automatic Data Processing Inc.",
-    "CI": "The Cigna Group",
     "AMD": "Advanced Micro Devices Inc.",
     "BLK": "BlackRock Inc.",
     "LMT": "Lockheed Martin Corporation",
@@ -89,5 +87,6 @@
     "GD": "General Dynamics Corporation",
     "HUM": "Humana Inc.",
     "PGR": "Progressive Corporation",
-    "MDLZ": "Mondelēz International Inc."
+    "MDLZ": "Mondelēz International Inc.",
+    "RHM.DE": "Rheinmetall AG"
 }
