@@ -6,11 +6,12 @@ import Login from './pages/Login'
 import Register from './pages/Register'
 import NotFound from './pages/NotFound'
 
-import Home from './pages/Home'
-import About from './pages/About'
-import Contact from './pages/Contact'
-import CreateStatistic from './pages/CreateStatistic'
-import Statistics from './pages/Statistics'
+import Start from './pages/Start'
+
+import Depot from './pages/Depot'
+import DepotSearch from './pages/DepotSearch'
+
+import Contest from './pages/Contest'
 
 function Logout() {
     localStorage.clear()
@@ -39,11 +40,13 @@ function App() {
     return (
         <BrowserRouter>
             <Routes>
-                {Protected(Home, "/")}
-                {Protected(About, "/about")}
-                {Protected(Contact, "/contact")}
-                {Protected(CreateStatistic, "/statistics/create")}
-                {Protected(Statistics, "/statistics/view")}
+                {Protected(Start, "/")}
+
+                {Protected(Depot, "/depot")}
+                {Protected(DepotSearch, "/depot/search")}
+
+                {Protected(Contest, "/contest")}
+
                 <Route path="/login" element={<Login />} />
                 <Route path="/logout" element={<Logout />} />
                 <Route path="/register" element={<RegisterAndLogout />} />

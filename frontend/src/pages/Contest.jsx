@@ -1,9 +1,9 @@
 import Layout from '../components/Layout'
 
-function Contact() {
+function Contest() {
     return <Layout>
-        <h1>Contact</h1>
+        <h1>Wettbewerb</h1>
     </Layout>
 }
 
-export default Contact
+export default Contest

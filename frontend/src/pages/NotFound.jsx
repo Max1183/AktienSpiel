@@ -1,10 +1,9 @@
-import Layout from '../components/Layout'
-
 function NotFound() {
-    return <Layout>
+    return <div className="mt-5 text-center">
         <h1>404 Not found</h1>
         <p>The page you are looking for doesn't exist!</p>
-    </Layout>
+        <p>Go back to <a href="/">Home</a></p>
+    </div>
 }
 
 export default NotFound

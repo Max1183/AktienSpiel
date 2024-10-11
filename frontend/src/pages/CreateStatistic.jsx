@@ -1,6 +1,6 @@
 import {useState} from 'react'
 import Layout from '../components/Layout'
-import '../styles/Home.css'
+import '../styles/Start.css'
 import api from '../api'
 
 function CreateStatistic() {

@@ -1,9 +1,9 @@
 import Layout from '../components/Layout'
 
-function About() {
+function Depot() {
     return <Layout>
-        <h1>About</h1>
+        <h1>Depot</h1>
     </Layout>
 }
 
-export default About
+export default Depot

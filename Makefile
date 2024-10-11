@@ -4,8 +4,17 @@ poetry-update:
 	poetry update
 
 .PHONY: install
-install:
+install: frontend-install install
 	poetry install
+
+# Frontend commands
+.PHONY: frontend-install
+frontend-install:
+	cd ./frontend && npm install
+
+.PHONY: run-frontend
+run-frontend:
+	cd ./frontend && npm run dev -- --host 0.0.0.0 --port 3000
 
 # Pre-commit commands
 .PHONY: install-pre-commit
@@ -64,8 +73,8 @@ migrate:
 migrations:
 	cd ./backend && poetry run python manage.py makemigrations
 
-.PHONY: run-server
-run-server:
+.PHONY: start-backend
+start-backend:
 	cd ./backend && poetry run python manage.py runserver 0.0.0.0:8000
 
 .PHONY: shell
@@ -82,3 +91,7 @@ update-db: migrations migrate
 # Run before commit
 .PHONY: update
 update: install update-db git-add install-pre-commit pre-commit git-status ;
+
+.PHONY: run
+run:
+	make start-backend & make start-frontend

@@ -7,22 +7,23 @@ license = "MIT"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.12"
+python = "^3.13"
 django = "^5.1.1"
 django-cors-headers = "^4.4.0"
 djangorestframework = "^3.15.2"
 pyjwt = "^2.9.0"
 pytz = "^2024.2"
 sqlparse = "^0.5.1"
-psycopg2-binary = "^2.9.9"
 python-dotenv = "^1.0.1"
 asgiref = "^3.8.1"
 djangorestframework-simplejwt = "^5.3.1"
 yfinance = "^0.2.44"
+psycopg = {extras = ["binary"], version = "^3.2.3"}
 
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^3.8.0"
+yapf = "^0.40.2"
 
 [build-system]
 requires = ["poetry-core"]

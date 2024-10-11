@@ -1,14 +1,42 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
+import Navigation from '../components/Navigation'
+
+function useWindowSize() {
+  const [windowSize, setWindowSize] = useState({
+    width: undefined,
+    height: undefined,
+  });
+
+  useEffect(() => {
+    function handleResize() {
+      setWindowSize({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    }
+
+    window.addEventListener('resize', handleResize);
+    handleResize();
+
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  return windowSize;
+}
 
 function Layout({ children }) {
+    const { width } = useWindowSize();
+    const small = width < 992;
+    const breakpoint = 992;
+
     return <main className="content">
-        <Navbar />
-        <section className="container">
+        <Navbar small={small} />
+        <section className="container mt-3">
             {children}
         </section>
-        <Footer />
+        {small ? <Navigation /> : <Footer />}
     </main>
 }
 

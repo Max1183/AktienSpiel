@@ -11,7 +11,7 @@ import yfinance as yf
 
 from .models import History, Stock
 
-DATA_DIR = "../Data/"
+DATA_DIR = "Data/"
 
 
 def get_current_price(info, name):
@@ -72,20 +72,14 @@ def load_stock_data():
     print("Daten wurden erfolgreich geladen.")
 
 
-def update_stock_data(element, ticker, progress, total, lock):
+def update_stock_data(element, ticker):
     try:
         ticker_data = yf.Ticker(ticker)
 
         with transaction.atomic():
             stock = Stock.objects.select_for_update().get(pk=element)
-            new_price = get_current_price(ticker_data.info, stock.name)
-
-            if stock.current_price != new_price:
-                print(
-                    f"Preis für {stock.name} wurde von {stock.current_price} auf {new_price} aktualisiert."
-                )
-
-            stock.current_price = new_price
+            stock.current_price = get_current_price(ticker_data.info,
+                                                    stock.name)
             stock.save()
 
         for history in stock.history_entries.all():
@@ -98,44 +92,29 @@ def update_stock_data(element, ticker, progress, total, lock):
     except Exception as e:
         print(f"Fehler beim Aktualisieren der Daten für {ticker}: {e}")
 
-    finally:
-        with lock:
-            progress.value += 1
-            aktueller_fortschritt = int(progress.value / total * 10) * 10
-            if aktueller_fortschritt > progress.last_progress.value:
-                print(f"Fortschritt: {aktueller_fortschritt}%")
-                progress.last_progress.value = aktueller_fortschritt
-
 
 def stock_updater():
     load_stock_data()
     time.sleep(2)
 
-    import multiprocessing as mp
     while True:
         print("Daten werden aktualisiert...")
         start_time = time.time()
         stocks = Stock.objects.all()
 
-        with mp.Manager() as manager:
-            progress = manager.Value('i', 0)
-            progress.last_progress = manager.Value('i', 0)
-            lock = manager.Lock()
-            total = len(stocks)
+        with ThreadPoolExecutor(max_workers=16) as executor:
+            futures = [
+                executor.submit(update_stock_data, stock.id, stock.ticker)
+                for stock in stocks
+            ]
 
-            with ThreadPoolExecutor(max_workers=32) as executor:
-                futures = [
-                    executor.submit(update_stock_data, stock.id, stock.ticker,
-                                    progress, total, lock) for stock in stocks
-                ]
-
-                for future in futures:
-                    future.result()
+            for future in futures:
+                future.result()
 
         time_taken = int(time.time() - start_time)
         print(
             f"Daten wurden in {time_taken} Sekunden erfolgreich aktualisiert.")
-        time.sleep(max(0, 60 - time_taken))
+        time.sleep(max(0, 300 - time_taken))
 
 
 background_thread = threading.Thread(target=stock_updater, daemon=True)

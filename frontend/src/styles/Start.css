@@ -1,8 +1,3 @@
-/* Container for the whole page */
-div {
-  font-family: Arial, sans-serif;
-}
-
 /* Styles for the notes section */
 .notes-section {
   margin-bottom: 2rem;
@@ -65,10 +60,4 @@ div {
 
 .creation-form input[type="submit"]:hover {
   background-color: #0056b3;
-}
-
-main {
-  display: grid;
-  grid-template-rows: auto 1fr auto; /* Header, Content, Footer */
-  min-height: 100vh;
 }
