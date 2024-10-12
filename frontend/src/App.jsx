@@ -10,6 +10,7 @@ import Start from './pages/Start'
 
 import Depot from './pages/Depot'
 import DepotSearch from './pages/DepotSearch'
+import StockDetail from './pages/StockDetail'
 
 import Contest from './pages/Contest'
 
@@ -44,6 +45,7 @@ function App() {
 
                 {Protected(Depot, "/depot")}
                 {Protected(DepotSearch, "/depot/search")}
+                {Protected(StockDetail, "/depot/stocks/:id")}
 
                 {Protected(Contest, "/contest")}
 

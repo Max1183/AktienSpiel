@@ -3,6 +3,7 @@ import api from '../api';
 import { useSearchParams } from 'react-router-dom';
 import Layout from '../components/Layout';
 import SearchBar from '../components/SearchBar';
+import StockListItem from '../components/StockListItem';
 
 function DepotSearch() {
     const [searchParams] = useSearchParams();
@@ -30,10 +31,12 @@ function DepotSearch() {
     return <Layout>
         <h1>Suchen</h1>
         <SearchBar oldSearchTerm={query} />
-        <p>{searchResults.length} Ergebnisse für "{query}"</p>
-        {searchResults.map((result) => (
-            <div key={result.id}>{result.name} - {result.current_price}€</div>
-        ))}
+        {searchResults.length > 0 && <p>{searchResults.length} Ergebnisse für "{query}"</p>}
+        <div className="list-group">
+            {searchResults.map((result) => (
+                <StockListItem key={result.id} stock={result} />
+            ))}
+        </div>
     </Layout>
 }
 

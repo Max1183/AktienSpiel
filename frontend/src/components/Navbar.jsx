@@ -13,7 +13,7 @@ function Navbar ({ small }) {
                     <img src="/Logo.png" className="logo" id="logo" width="183" height="50" alt="Logo" />
                 </a>
                 <a className="navbar-brand mb-0 h1" href="/profile/">
-                    <img src="/profile.png" className="profile" width="40" height="40" alt="Profile" />
+                    <img src="/Profile.png" className="profile" width="40" height="40" alt="Profile" />
                 </a>
                 <div className="offcanvas offcanvas-start" tabIndex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel" data-bs-scroll="true">
                     <div className="offcanvas-header">
@@ -96,7 +96,7 @@ function Navbar ({ small }) {
                 </ul>
                 <SearchBar />
                 <a className="navbar-brand mb-0 h1" href="/profile/">
-                    <img src="/profile.png" className="profile" width="40" height="40" alt="Profile" />
+                    <img src="/Profile.png" className="profile" width="40" height="40" alt="Profile" />
                 </a>
             </div>
         </nav>

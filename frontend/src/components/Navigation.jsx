@@ -33,6 +33,15 @@ function Navigation () {
                       WETTBEWERB
                     </NavLink>
                 </li>
+                <li className="nav-item">
+                    <NavLink
+                      to="/depot/search/"
+                      className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}
+                      aria-current={({ isActive }) => (isActive ? "page" : undefined)}
+                    >
+                      <img src="/SearchIcon.png" alt="Search" width="27" height="20" className="d-inline-block align-text-top" />
+                    </NavLink>
+                </li>
             </ul>
         </div>
     </nav>

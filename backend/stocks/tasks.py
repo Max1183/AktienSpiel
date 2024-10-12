@@ -12,6 +12,7 @@ import yfinance as yf
 from .models import History, Stock
 
 DATA_DIR = "Data/"
+SLEEP_TIME = 10
 
 
 def get_current_price(info, name):
@@ -59,16 +60,15 @@ def load_stock_data():
     History.objects.all().delete()
 
     for ticker, name in companies.items():
-        stock = Stock.objects.create(name=name, ticker=ticker)
-
-        ticker_data = yf.Ticker(stock.ticker)
-        stock.current_price = get_current_price(ticker_data.info, stock.name)
-        stock.save()
+        stock = Stock.objects.create(name=name, ticker=ticker, current_price=0)
 
         for history_name, times in histories.items():
-            update_history(ticker_data, stock, history_name, times)
+            History.objects.create(stock=stock,
+                                   name=history_name,
+                                   period=times[0],
+                                   interval=times[1],
+                                   values=[])
 
-        print(f"Daten für {stock.name} wurden erfolgreich geladen.")
     print("Daten wurden erfolgreich geladen.")
 
 
@@ -95,7 +95,7 @@ def update_stock_data(element, ticker):
 
 def stock_updater():
     load_stock_data()
-    time.sleep(2)
+    time.sleep(10)
 
     while True:
         print("Daten werden aktualisiert...")
@@ -114,7 +114,7 @@ def stock_updater():
         time_taken = int(time.time() - start_time)
         print(
             f"Daten wurden in {time_taken} Sekunden erfolgreich aktualisiert.")
-        time.sleep(max(0, 300 - time_taken))
+        time.sleep(max(0, SLEEP_TIME * 60 - time_taken))
 
 
 background_thread = threading.Thread(target=stock_updater, daemon=True)

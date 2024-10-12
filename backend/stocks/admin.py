@@ -12,8 +12,8 @@ class HistoryInline(admin.TabularInline):
 class StockAdmin(admin.ModelAdmin):
     inlines = [HistoryInline]
     fields = ["name", "ticker", "current_price"]
-    list_display = ["name", "current_price"]
-    search_fields = ["name"]
+    list_display = ["name", "ticker", "current_price"]
+    search_fields = ["name", "ticker"]
     readonly_fields = ["current_price"]
 
 

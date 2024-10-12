@@ -5,6 +5,9 @@ from stocks import views as stock_views
 from . import views
 
 urlpatterns = [
-    path("stocks/", views.StockViewSet.as_view(), name="stocks"),
-    path("search/", stock_views.search_stocks, name="search_stocks"),
+    path("search/", stock_views.search_stocks, name="stock-search"),
+    path("stocks/", views.StockViewSet.as_view(), name="stock-list"),
+    path("stocks/<int:pk>/",
+         views.StockDetailView.as_view(),
+         name="stock-detail"),
 ]

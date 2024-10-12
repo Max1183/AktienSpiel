@@ -30,7 +30,7 @@ class StockSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Stock
-        fields = ['id', 'name', 'current_price', 'history_entries']
+        fields = ['id', 'name', 'ticker', 'current_price', 'history_entries']
         read_only = True
 
 

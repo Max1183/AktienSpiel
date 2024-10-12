@@ -1,7 +1,7 @@
 from django.contrib.auth.models import User
 
 from rest_framework import generics, viewsets
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
 
 from stocks.models import Stock, StockHolding
 
@@ -14,10 +14,16 @@ class CreateUserView(generics.CreateAPIView):
     permission_classes = [AllowAny]
 
 
+class StockDetailView(generics.RetrieveAPIView):
+    queryset = Stock.objects.all()
+    serializer_class = StockSerializer
+    permission_classes = [IsAuthenticated]
+
+
 class StockViewSet(generics.ListAPIView):
     serializer_class = StockSerializer
     queryset = Stock.objects.all()
-    permission_classes = [AllowAny]
+    permission_classes = [IsAdminUser]
 
 
 class StockHoldingViewSet(viewsets.ModelViewSet):
