@@ -1,8 +1,9 @@
 import Layout from '../components/Layout'
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api';
 import Chart from 'chart.js/auto';
+import * as bootstrap from 'bootstrap';
 
 function StockDetail() {
     const { id } = useParams();
@@ -11,6 +12,20 @@ function StockDetail() {
     const [err, setErr] = useState(null);
     const [activeTimeSpan, setActiveTimeSpan] = useState('1 Year');
     const [chart, setChart] = useState(null);
+
+    const [buy, setBuy] = useState(true);
+    const [amount, setAmount] = useState(0);
+
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
+        const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
+
+        return () => {
+            tooltipList.forEach(tooltip => tooltip.dispose());
+        };
+    }, [stock]);
 
     useEffect(() => {
         const fetchStock = async () => {
@@ -80,32 +95,119 @@ function StockDetail() {
         </Layout>
     }
 
+    const handleBuy = () => {
+        setBuy(true);
+    };
+
+    const handleSell = () => {
+        setBuy(false);
+    };
+
+    const handleOrder = (event) => {
+        event.preventDefault();
+        if (window.confirm(`Sind Sie sicher, dass Sie ${amount} Aktien ${buy ? 'kaufen' : 'verkaufen'} wollen?`)) {
+            api.post('/api/transactions/create/', {
+                stock_id: id,
+                transaction_type: buy ? 'buy' : 'sell',
+                amount: amount
+            }).then(res => {
+                if (res.status === 201) {
+                    alert(`${buy ? 'Kauf' : 'Verkauf'} von ${amount} Aktien von ${stock.name} durchgeführt!`);
+                    setAmount(0);
+                    setBuy(true);
+                }
+                else alert('Fehler beim erstellen des Order-Auftrags');
+            }).catch((err) => console.log(err));
+        }
+    }
+
     return <Layout>
-        <h1>{stock.name}</h1>
-        <p>Ticker: {stock.ticker}</p>
+        <div className="row">
+            <div className="col-lg-6 p-2">
+                <div className="card bg-light p-3 h-100">
+                    <h2>{stock.name}</h2>
+                    <p>Ticker: {stock.ticker}</p>
 
-        <canvas className="mb-3" id="stock-chart"></canvas>
+                    <canvas className="mb-3" id="stock-chart"></canvas>
 
-        <div className="btn-group d-flex btn-group-sm">
-            {stock.history_entries.sort((a, b) => a.id - b.id).map(entry => (
-                <button
-                    type="button"
-                    key={entry.id}
-                    onClick={() => setActiveTimeSpan(entry.name)}
-                    className={`btn btn-primary ${activeTimeSpan === entry.name ? 'active' : ''}`}
-                    disabled={entry.values.length === 0}
-                >
-                    {entry.name}
-                </button>
-            ))}
-        </div>
+                    <div className="btn-group d-flex btn-group-sm">
+                        {stock.history_entries.sort((a, b) => a.id - b.id).map(entry => (
+                            <button
+                                type="button"
+                                key={entry.id}
+                                onClick={() => setActiveTimeSpan(entry.name)}
+                                className={`btn btn-primary ${activeTimeSpan === entry.name ? 'active' : ''}`}
+                                disabled={entry.values.length === 0}
+                            >
+                                {entry.name}
+                            </button>
+                        ))}
+                    </div>
+                    <p className="mt-3 fs-4">Geldkurs: {stock.current_price}</p>
+                </div>
+            </div>
+            <div className="col-lg-6 p-2">
+                <div className=" card bg-light p-3 h-100 d-flex flex-column">
+                    <h2>Order-Formular</h2>
 
-        <p className="mt-3 fs-4">Geldkurs: {stock.current_price}</p>
-        <div className="d-flex justify-content-around">
-            <button type="button" className="btn btn-success" onClick={() => alert('Aktie gekauft!')}>Kaufen</button>
-            <button type="button" className="btn btn-danger" onClick={() => alert('Aktie verkauft!')}>Verkaufen</button>
+                    <div className="row bg-info p-2 border rounded mt-1 mb-3 fs-5">
+                        {buy ? (
+                            <>
+                                <span className='col-8'>Verfügbares Kapital:</span>
+                                <span className='col-4 text-end'>0€</span>
+                            </>
+                        ) : (
+                            <>
+                                <span className='col-8'>Aktien:</span>
+                                <span className='col-4 text-end'>0</span>
+                            </>
+                        )}
+                    </div>
+
+                    <form role="form" onSubmit={handleOrder} className="flex-grow-1 d-flex flex-column">
+                        <div className="row">
+                            <div className="col-sm-4">
+                                <p className="fs-5 mb-1">
+                                    Orderart: <img
+                                        width="15"
+                                        height="15"
+                                        src="/Tooltip.png"
+                                        data-bs-toggle="tooltip"
+                                        data-bs-placement="top"
+                                        data-bs-title="Wähle eine Option" />
+                                </p>
+                            </div>
+                            <div className="col-sm-8 mb-3">
+                                <button type="button" onClick={handleBuy} className={`btn btn-outline-success me-3 ${buy && 'active'}`}>Kaufen</button>
+                                <button type="button" onClick={handleSell} className={`btn btn-outline-danger ${!buy && 'active'}`}>Verkaufen</button>
+                            </div>
+                        </div>
+                        <div className="row mb-2">
+                            <div className="col-sm-4">
+                                <p className="fs-5 mb-1">Anzahl:</p>
+                            </div>
+                            <div className="col-sm-8 mb-3">
+                                <input
+                                    className="form-control"
+                                    type="number"
+                                    value={amount}
+                                    placeholder="Gib die Anzahl der Aktien ein..."
+                                    onChange={(e) => setAmount(e.target.value)}
+                                    min={1}
+                                    max={100}
+                                />
+                            </div>
+                        </div>
+                        <p>Gebühren ca.: 0.00 €</p>
+                        <p className="m-0">Gesamt ca.: 0.00 €</p>
+                        <div className="mt-auto mt-3">
+                            <button type="submit" className="btn btn-primary mt-3">Order-Auftrag erstellen</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
     </Layout>
 }
 
-export default StockDetail
+export default StockDetail;

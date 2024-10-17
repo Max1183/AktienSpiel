@@ -12,7 +12,7 @@ import yfinance as yf
 from .models import History, Stock
 
 DATA_DIR = "Data/"
-SLEEP_TIME = 10
+SLEEP_TIME = 5
 
 
 def get_current_price(info, name):

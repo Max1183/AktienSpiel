@@ -6,6 +6,11 @@ poetry-update:
 .PHONY: install
 install: frontend-install backend-install
 
+.PHONY:
+dependencies:
+	poetry update && cd ./frontend && npm update
+	make install
+
 .PHONY: backend-install
 backend-install:
 	poetry install

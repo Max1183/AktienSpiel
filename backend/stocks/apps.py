@@ -7,3 +7,4 @@ class StockConfig(AppConfig):
 
     def ready(self):
         import stocks.tasks  # noqa F401
+        import stocks.signals  # noqa F401

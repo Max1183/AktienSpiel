@@ -31,7 +31,7 @@ function DepotSearch() {
     return <Layout>
         <h1>Suchen</h1>
         <SearchBar oldSearchTerm={query} />
-        {searchResults.length > 0 && <p>{searchResults.length} Ergebnisse für "{query}"</p>}
+        {query && <p>{searchResults.length} Ergebnisse für "{query}"</p>}
         <div className="list-group">
             {searchResults.map((result) => (
                 <StockListItem key={result.id} stock={result} />

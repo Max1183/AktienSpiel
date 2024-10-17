@@ -10,4 +10,7 @@ urlpatterns = [
     path("stocks/<int:pk>/",
          views.StockDetailView.as_view(),
          name="stock-detail"),
+    path("transactions/create/",
+         views.TransactionCreateView.as_view(),
+         name="transaction-create"),
 ]

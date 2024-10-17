@@ -12,7 +12,13 @@ import Depot from './pages/Depot'
 import DepotSearch from './pages/DepotSearch'
 import StockDetail from './pages/StockDetail'
 
+import Transaction from './pages/Transaction'
+
 import Contest from './pages/Contest'
+
+import Profile from './pages/Profile'
+import Team from './pages/Team'
+
 
 function Logout() {
     localStorage.clear()
@@ -46,8 +52,12 @@ function App() {
                 {Protected(Depot, "/depot")}
                 {Protected(DepotSearch, "/depot/search")}
                 {Protected(StockDetail, "/depot/stocks/:id")}
+                {Protected(Transaction, "/depot/transaction/:t/:id")}
 
                 {Protected(Contest, "/contest")}
+
+                {Protected(Profile, "/profile")}
+                {Protected(Team, "/profile/team")}
 
                 <Route path="/login" element={<Login />} />
                 <Route path="/logout" element={<Logout />} />
