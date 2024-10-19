@@ -7,23 +7,24 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('stocks', '0011_transaction_description'),
+        ("stocks", "0011_transaction_description"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='stockholding',
-            name='stock',
+            model_name="stockholding",
+            name="stock",
             field=models.ForeignKey(
-                on_delete=django.db.models.deletion.CASCADE,
-                to='stocks.stock'),
+                on_delete=django.db.models.deletion.CASCADE, to="stocks.stock"
+            ),
         ),
         migrations.AlterField(
-            model_name='stockholding',
-            name='team',
+            model_name="stockholding",
+            name="team",
             field=models.ForeignKey(
                 on_delete=django.db.models.deletion.CASCADE,
-                related_name='holdings',
-                to='stocks.team'),
+                related_name="holdings",
+                to="stocks.team",
+            ),
         ),
     ]

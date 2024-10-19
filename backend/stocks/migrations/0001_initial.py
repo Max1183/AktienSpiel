@@ -12,34 +12,46 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='Stock',
+            name="Stock",
             fields=[
-                ('id',
-                 models.BigAutoField(auto_created=True,
-                                     primary_key=True,
-                                     serialize=False,
-                                     verbose_name='ID')),
-                ('name', models.CharField(max_length=30)),
-                ('ticker', models.CharField(max_length=10)),
-                ('current_price', models.FloatField(default=0)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.CharField(max_length=30)),
+                ("ticker", models.CharField(max_length=10)),
+                ("current_price", models.FloatField(default=0)),
             ],
         ),
         migrations.CreateModel(
-            name='History',
+            name="History",
             fields=[
-                ('id',
-                 models.BigAutoField(auto_created=True,
-                                     primary_key=True,
-                                     serialize=False,
-                                     verbose_name='ID')),
-                ('period', models.CharField(max_length=10)),
-                ('time', models.CharField(max_length=10)),
-                ('interval', models.CharField(max_length=10)),
-                ('values', models.JSONField(default=list)),
-                ('stock',
-                 models.ForeignKey(on_delete=django.db.models.deletion.CASCADE,
-                                   related_name='history_entries',
-                                   to='stocks.stock')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("period", models.CharField(max_length=10)),
+                ("time", models.CharField(max_length=10)),
+                ("interval", models.CharField(max_length=10)),
+                ("values", models.JSONField(default=list)),
+                (
+                    "stock",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="history_entries",
+                        to="stocks.stock",
+                    ),
+                ),
             ],
         ),
     ]

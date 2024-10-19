@@ -1,101 +1,65 @@
-# Poetry commands
-.PHONY: poetry-update
-poetry-update:
-	poetry update
-
-.PHONY: install
-install: frontend-install backend-install
-
-.PHONY:
+# Poetry
+install: backend-install frontend-install
 dependencies:
 	poetry update && cd ./frontend && npm update
 	make install
-
-.PHONY: backend-install
 backend-install:
 	poetry install
 
-# Frontend commands
-.PHONY: frontend-install
+# Frontend
 frontend-install:
 	cd ./frontend && npm install
-
-.PHONY: run-frontend
 run-frontend:
 	cd ./frontend && npm run dev -- --host 0.0.0.0 --port 3000
 
-# Pre-commit commands
-.PHONY: install-pre-commit
+# Pre-commit
 install-pre-commit:
 	poetry run pre-commit uninstall && poetry run pre-commit install
-
-.PHONY: pre-commit
 pre-commit:
 	poetry run pre-commit run --all-files
 
-# Git commands
-.PHONY: git-status
+# Git (vereinfacht und mit Variablen)
+GIT = poetry run git
 git-status:
-	poetry run git status
-
-.PHONY: git-add
+	$(GIT) status
 git-add:
-	poetry run git add .
-
-.PHONY: git-commit
+	$(GIT) add .
 git-commit:
-ifeq ($(msg),)
+ifndef msg
 	$(error msg is undefined)
-else
-	poetry run git commit -am "$(msg)"
 endif
-
-.PHONY: git-prepare
-git-prepare: git-add $(if $(msg), git-commit $(msg)) git-status
-
-.PHONY: git-pull
+	$(GIT) commit -am "$(msg)"
+git-prepare: git-add $(if $(msg),git-commit) git-status  # Vereinfacht
 git-pull:
-	poetry run git pull origin master
-
-.PHONY: git-push
+	$(GIT) pull origin master
 git-push:
-	poetry run git push origin master
-
-.PHONY: git-force-pull
-git-force-pull: git-fetch git-merge $(force="true")
-
-.PHONY: git-fetch
+	$(GIT) push origin master
 git-fetch:
-	poetry run git fetch origin master
-
-.PHONY: git-merge
+	$(GIT) fetch origin master
 git-merge:
-	poetry run git merge origin/master $(if $(force), --allow-unrelated-histories)
+	$(GIT) merge origin/master $(if $(force),--allow-unrelated-histories)
+git-force-pull: git-fetch git-merge $(force="true") # force als Parameter
 
-# Django commands
-.PHONY: migrate
+
+# Django
+MANAGE = cd ./backend && poetry run python manage.py
 migrate:
-	cd ./backend && poetry run python manage.py migrate
-
-.PHONY: migrations
+	$(MANAGE) migrate
 migrations:
-	cd ./backend && poetry run python manage.py makemigrations
-
-.PHONY: run-backend
+	$(MANAGE) makemigrations
+collectstatic:
+	$(MANAGE) collectstatic --noinput
 run-backend:
-	cd ./backend && poetry run python manage.py runserver 0.0.0.0:8000
-
-.PHONY: shell
+	$(MANAGE) runserver 0.0.0.0:8000
 shell:
-	cd ./backend && poetry run python manage.py shell
-
-.PHONY: superuser
-superuser:
-	cd ./backend && poetry run python manage.py createsuperuser
-
-.PHONY: update-db
+	$(MANAGE) shell
+createsuperuser:
+	$(MANAGE) createsuperuser
 update-db: migrations migrate
 
-# Run before commit
-.PHONY: update
-update: install update-db git-add install-pre-commit pre-commit git-status ;
+# Kombinierte Befehle
+update: update-db git-add install-pre-commit pre-commit git-status
+
+.PHONY: install dependencies backend-install frontend-install run-frontend install-pre-commit pre-commit \
+        git-status git-add git-commit git-prepare git-pull git-push git-force-pull git-fetch git-merge \
+        migrate migrations collectstatic run-backend shell createsuperuser update-db update

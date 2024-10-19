@@ -19,12 +19,16 @@ asgiref = "^3.8.1"
 djangorestframework-simplejwt = "^5.3.1"
 yfinance = "^0.2.44"
 psycopg = {extras = ["binary"], version = "^3.2.3"}
+whitenoise = "^6.7.0"
 
 
 [tool.poetry.group.dev.dependencies]
-pre-commit = "^3.8.0"
+pre-commit = "^4.0.1"
 yapf = "^0.40.2"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.isort]
+profile = "black"

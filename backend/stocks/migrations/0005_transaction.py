@@ -7,29 +7,39 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('stocks', '0004_stockholding_team_stockholding_team'),
+        ("stocks", "0004_stockholding_team_stockholding_team"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Transaction',
+            name="Transaction",
             fields=[
-                ('id',
-                 models.BigAutoField(auto_created=True,
-                                     primary_key=True,
-                                     serialize=False,
-                                     verbose_name='ID')),
-                ('amount', models.IntegerField(default=0)),
-                ('price', models.FloatField(default=0)),
-                ('fee', models.FloatField(default=0)),
-                ('transaction_type', models.CharField(max_length=5)),
-                ('date', models.DateTimeField(auto_now_add=True)),
-                ('stock',
-                 models.ForeignKey(on_delete=django.db.models.deletion.CASCADE,
-                                   to='stocks.stock')),
-                ('team',
-                 models.ForeignKey(on_delete=django.db.models.deletion.CASCADE,
-                                   to='stocks.team')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("amount", models.IntegerField(default=0)),
+                ("price", models.FloatField(default=0)),
+                ("fee", models.FloatField(default=0)),
+                ("transaction_type", models.CharField(max_length=5)),
+                ("date", models.DateTimeField(auto_now_add=True)),
+                (
+                    "stock",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="stocks.stock"
+                    ),
+                ),
+                (
+                    "team",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="stocks.team"
+                    ),
+                ),
             ],
         ),
     ]

@@ -1,19 +1,19 @@
 from django.contrib.auth.models import User
-
 from rest_framework import serializers
-
 from stocks.models import History, Stock, StockHolding, Transaction
 from stocks.transactions import execute_transaction
 
 
 class UserSerializer(serializers.ModelSerializer):
+    """Serializer für Benutzer."""
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'password']
-        extra_kwargs = {'password': {'write_only': True}}
+        fields = ["id", "username", "email", "password"]
+        extra_kwargs = {"password": {"write_only": True}}
 
     def create(self, validated_data):
+        """Erstellt einen neuen Benutzer."""
         user = User.objects.create_user(**validated_data)
         return user
 
@@ -22,51 +22,84 @@ class HistorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = History
-        fields = ['id', 'name', 'values']
-        read_only = True
+        fields = ["id", "name", "values"]
+        read_only_fields = fields
 
 
 class StockSerializer(serializers.ModelSerializer):
+    """Serializer für Aktien."""
+
     history_entries = HistorySerializer(many=True, read_only=True)
 
     class Meta:
         model = Stock
-        fields = ['id', 'name', 'ticker', 'current_price', 'history_entries']
-        read_only = True
+        fields = ["id", "name", "ticker", "current_price", "history_entries"]
+        read_only_fields = fields
 
 
 class StockHoldingSerializer(serializers.ModelSerializer):
+    """Serializer für Aktienbestände."""
 
     class Meta:
         model = StockHolding
-        fields = ['id', 'team', 'stock', 'amount']
-        read_only = True
+        fields = ["id", "team", "stock", "amount"]
+        read_only_fields = fields
 
 
 class TransactionSerializer(serializers.ModelSerializer):
-    stock_id = serializers.IntegerField()
+    """Serializer für Transaktionen."""
+
+    stock = serializers.PrimaryKeyRelatedField(queryset=Stock.objects.all())
 
     class Meta:
         model = Transaction
-        fields = ['stock_id', 'transaction_type', 'amount']
+        fields = ["stock", "transaction_type", "amount"]
+
+    def validate(self, data):
+        """Validiert die Transaktionsdaten."""
+        team = self.context["request"].user.profile.team
+        stock = data["stock"]
+        amount = data["amount"]
+        transaction_type = data["transaction_type"]
+
+        if amount <= 0:
+            raise serializers.ValidationError(
+                {"amount": "Die Menge muss positiv sein."}
+            )
+
+        if transaction_type == "buy":
+            cost = stock.current_price * amount + max(
+                15, stock.current_price * amount * 0.001
+            )
+            if team.balance < cost:
+                raise serializers.ValidationError("Nicht genügend Guthaben.")
+
+        elif transaction_type == "sell":
+            try:
+                stock_holding = StockHolding.objects.get(team=team, stock=stock)
+                if stock_holding.amount < amount:
+                    raise serializers.ValidationError("Nicht genügend Aktien im Depot.")
+
+            except StockHolding.DoesNotExist:
+                raise serializers.ValidationError(
+                    "Sie besitzen keine Aktien dieses Typs."
+                )
+
+        else:
+            raise serializers.ValidationError(
+                {"transaction_type": "Ungültiger Transaktionstyp."}
+            )
+
+        return data
 
     def create(self, validated_data):
-        team = self.context['request'].user.profile.team
+        """Erstellt eine neue Transaktion."""
+        team = self.context["request"].user.profile.team
+        validated_data["team"] = team
+        validated_data["price"] = validated_data["stock"].current_price
+        fee = max(15, validated_data["price"] * validated_data["amount"] * 0.001)
+        validated_data["fee"] = fee
 
-        stock = Stock.objects.get(pk=validated_data.pop('stock_id'))
-        amount = validated_data.pop('amount')
-        price = stock.current_price
-        fee = max(15, price * amount * 0.001)
-        transaction_type = validated_data.pop('transaction_type')
-
-        transaction = Transaction.objects.create(
-            team=team,
-            stock=stock,
-            amount=amount,
-            price=price,
-            fee=fee,
-            transaction_type=transaction_type)
-
+        transaction = super().save(**validated_data)
         execute_transaction(transaction)
-
         return transaction

@@ -7,21 +7,22 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('stocks', '0005_transaction'),
+        ("stocks", "0005_transaction"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='stockholding',
-            name='stock',
+            model_name="stockholding",
+            name="stock",
             field=models.ForeignKey(
                 on_delete=django.db.models.deletion.CASCADE,
-                related_name='holdings',
-                to='stocks.stock'),
+                related_name="holdings",
+                to="stocks.stock",
+            ),
         ),
         migrations.AlterField(
-            model_name='team',
-            name='name',
+            model_name="team",
+            name="name",
             field=models.CharField(max_length=20),
         ),
     ]

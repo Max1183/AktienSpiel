@@ -5,51 +5,56 @@ from .models import StockHolding, Transaction
 
 @transaction.atomic()
 def execute_transaction(ta: Transaction):
+    if ta.status != "open":
+        return
+
     team = ta.team
     amount = ta.amount
+    stock = ta.stock
 
     if ta.transaction_type == "buy":
         total_price = amount * ta.price + ta.fee
 
         if total_price > team.balance:
-            transaction_error(ta,
-                              "Insufficient funds to complete the purchase.")
+            transaction_error(ta, "Nicht genügend Guthaben.")
+            return
 
-        else:
-            team.update_balance(-total_price)
+        team.update_balance(-total_price)
 
-            stock_holding, created = StockHolding.objects.update_or_create(
-                team=team,
-                stock=ta.stock,
-            )
+        stock_holding, created = StockHolding.objects.update_or_create(
+            team=team,
+            stock=stock,
+        )
 
-            stock_holding.adjust_amount(amount)
+        stock_holding.adjust_amount(amount)
 
     elif ta.transaction_type == "sell":
         try:
-            stock_holding = StockHolding.objects.get(team=team, stock=ta.stock)
-
-            if amount > stock_holding.amount:
-                transaction_error(
-                    ta,
-                    f"You only have {stock_holding.amount} shares of {ta.stock.name} available to sell."
-                )
-
-            else:
-                team.update_balance(amount * ta.price - ta.fee)
-                stock_holding.adjust_amount(-amount)
+            stock_holding = StockHolding.objects.get(team=team, stock=stock)
 
         except StockHolding.DoesNotExist:
-            transaction_error(ta, "You don't have stocks of this type!")
+            transaction_error(ta, "Sie haben keine Aktien von diesem Unternehmen.")
+            return
+
+        if amount > stock_holding.amount:
+            message = (
+                f"Sie besitzen nur {stock_holding.amount} Aktien von {stock.name}."
+            )
+            transaction_error(ta, message)
+            return
+
+        team.update_balance(amount * ta.price - ta.fee)
+        stock_holding.adjust_amount(-amount)
 
     else:
-        transaction_error(ta, "Unsupported transaction type")
+        transaction_error(ta, "Ungültiger Transaktionstyp.")
+        return
 
-    if ta.status == "open":
-        ta.status = "closed"
+    ta.status = "closed"
     ta.save()
 
 
-def transaction_error(transaction: Transaction, error):
-    transaction.status = "error"
-    transaction.description += "\nTransaction couldn't be completed due to the following problem:\n" + error
+def transaction_error(ta: Transaction, error_message):
+    ta.status = "error"
+    ta.description = f"{ta.description}\nFehler: {error_message}"
+    ta.save()

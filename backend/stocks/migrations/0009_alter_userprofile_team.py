@@ -7,16 +7,17 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('stocks', '0008_alter_userprofile_user'),
+        ("stocks", "0008_alter_userprofile_user"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='userprofile',
-            name='team',
+            model_name="userprofile",
+            name="team",
             field=models.ForeignKey(
                 on_delete=django.db.models.deletion.CASCADE,
-                related_name='members',
-                to='stocks.team'),
+                related_name="members",
+                to="stocks.team",
+            ),
         ),
     ]

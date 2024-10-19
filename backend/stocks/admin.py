@@ -5,13 +5,13 @@ from .models import History, Stock, StockHolding, Team, Transaction, UserProfile
 
 class HistoryInline(admin.TabularInline):
     model = History
-    extra = 1
+    extra = 0
     readonly_fields = ["name", "period", "interval", "values"]
 
 
 class StockHoldingInline(admin.TabularInline):
     model = StockHolding
-    extra = 1
+    extra = 0
     readonly_fields = ["stock", "amount"]
 
 
@@ -34,10 +34,10 @@ class StockAdmin(admin.ModelAdmin):
 @admin.register(Team)
 class TeamAdmin(admin.ModelAdmin):
     inlines = [UserProfileInLine, StockHoldingInline]
-    fields = ["name", "team_member_count", "balance", "team_balance"]
-    list_display = ["name", "team_member_count", "team_balance"]
+    fields = ["name", "team_member_count", "balance", "portfolio_value"]
+    list_display = ["name", "team_member_count", "portfolio_value"]
     search_fields = ["name"]
-    readonly_fields = ["balance", "team_member_count", "team_balance"]
+    readonly_fields = ["balance", "team_member_count", "portfolio_value"]
 
 
 @admin.register(UserProfile)
@@ -50,10 +50,24 @@ class UserProfileAdmin(admin.ModelAdmin):
 @admin.register(Transaction)
 class TransactionAdmin(admin.ModelAdmin):
     list_display = [
-        "team", "stock", "status", "transaction_type", "amount", "total_price"
+        "team",
+        "stock",
+        "status",
+        "transaction_type",
+        "amount",
+        "total_price",
     ]
+    list_filter = ["status", "transaction_type", "team", "stock"]
+    ordering = ("-date",)
     search_fields = ["stock", "transaction_type"]
     readonly_fields = [
-        "team", "stock", "status", "transaction_type", "amount", "price",
-        "total_price", "fee"
+        "team",
+        "stock",
+        "status",
+        "transaction_type",
+        "amount",
+        "price",
+        "total_price",
+        "fee",
+        "date",
     ]

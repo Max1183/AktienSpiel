@@ -1,41 +1,52 @@
 from django.contrib.auth.models import User
-
-from rest_framework import generics, viewsets
-from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
-
+from django.db import transaction
+from rest_framework import generics, mixins, viewsets
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from stocks.models import Stock, StockHolding
 
-from .serializers import StockHoldingSerializer, StockSerializer, TransactionSerializer, UserSerializer
+from .serializers import (
+    StockHoldingSerializer,
+    StockSerializer,
+    TransactionSerializer,
+    UserSerializer,
+)
 
 
 class CreateUserView(generics.CreateAPIView):
+    """View zum Erstellen neuer Benutzer."""
+
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [AllowAny]
 
+    @transaction.atomic
+    def post(self, request, *args, **kwargs):
+        return super().post(request, *args, **kwargs)
 
-class StockDetailView(generics.RetrieveAPIView):
-    queryset = Stock.objects.all()
+
+class StockViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
+    """Viewset für Aktien Details."""
+
     serializer_class = StockSerializer
+    queryset = Stock.objects.all()
     permission_classes = [IsAuthenticated]
 
 
-class StockViewSet(generics.ListAPIView):
-    serializer_class = StockSerializer
-    queryset = Stock.objects.all()
-    permission_classes = [IsAdminUser]
+class StockHoldingViewSet(viewsets.ReadOnlyModelViewSet):
+    """Viewset für die Stock Holdings eines Teams (read-only)."""
 
-
-class StockHoldingViewSet(viewsets.ModelViewSet):
     serializer_class = StockHoldingSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        team = self.request.user.team
-        return StockHolding.objects.filter(team=team)
+        return StockHolding.objects.filter(
+            team=self.request.user.profile.team
+        ).select_related("team", "stock")
 
 
-class TransactionCreateView(generics.CreateAPIView):
-    queryset = StockHolding.objects.all()
+class TransactionViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
+    """Viewset zum Erstellen neuer Transaktionen."""
+
     serializer_class = TransactionSerializer
     permission_classes = [IsAuthenticated]
+    queryset = None

@@ -1,18 +1,16 @@
 # Backup files
 *.bak
+*~
 
 # Distribution / packaging
 *.egg
 *.egg-info/
 *.manifest
 *.spec
-.Python build/
-.eggs/
-.installed.cfg
-develop-eggs/
+.Python
+build/
 dist/
 downloads/
-eggs/
 lib/
 lib64/
 parts/
@@ -23,40 +21,30 @@ wheels/
 # Django
 *.log
 *.pot
-*.pyc
-/staticfiles
+local_settings.py
+staticfiles/
 __pycache__
 db.sqlite3
 media
 
 # Environments
-.venv
-/.env
-/local
-ENV/
-env.bak/
-env/
-venv
-venv.bak/
+.venv/
 venv/
+.env
 
 # IDEs
 .DS_Store
-.idea
-.vscode
-
-# Installer logs
-pip-delete-this-directory.txt
-pip-log.txt
+.idea/
+.vscode/
 
 # mypy
-.mypy_cache
+.mypy_cache/
 
 # pyenv
 .python-version
 
 # pytest
-.pytest_cache
+.pytest_cache/
 
 # Python
 *$py.class
@@ -68,8 +56,11 @@ pip-log.txt
 .coverage
 .coverage.*
 .hypothesis/
-.pytest_cache/
 .tox/
 coverage.xml
 htmlcov/
 nosetests.xml
+
+# System files
+Thumbs.db
+*.swp

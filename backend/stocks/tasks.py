@@ -3,11 +3,10 @@ import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 
+import yfinance as yf
 from django.core.signals import request_started
 from django.db import transaction
 from django.dispatch import receiver
-
-import yfinance as yf
 
 from .models import History, Stock
 
@@ -18,9 +17,7 @@ SLEEP_TIME = 5
 def get_current_price(info, name):
     current_price = info.get("currentPrice")
     if current_price is None:
-        print(
-            f"Konnte den aktuellen Preis für {name} nicht abrufen. Info: {info}"
-        )
+        print(f"Konnte den aktuellen Preis für {name} nicht abrufen. Info: {info}")
         return 0
     return current_price
 
@@ -28,7 +25,7 @@ def get_current_price(info, name):
 def update_history(ticker_data, stock: Stock, name, times):
     period, interval = times
     hist = ticker_data.history(period=period, interval=interval)
-    values = list(float(value['Close']) for index, value in hist.iterrows())
+    values = [float(value["Close"]) for index, value in hist.iterrows()]
 
     with transaction.atomic():
         history, created = History.objects.select_for_update().get_or_create(
@@ -63,11 +60,13 @@ def load_stock_data():
         stock = Stock.objects.create(name=name, ticker=ticker, current_price=0)
 
         for history_name, times in histories.items():
-            History.objects.create(stock=stock,
-                                   name=history_name,
-                                   period=times[0],
-                                   interval=times[1],
-                                   values=[])
+            History.objects.create(
+                stock=stock,
+                name=history_name,
+                period=times[0],
+                interval=times[1],
+                values=[],
+            )
 
     print("Daten wurden erfolgreich geladen.")
 
@@ -78,13 +77,13 @@ def update_stock_data(element, ticker):
 
         with transaction.atomic():
             stock = Stock.objects.select_for_update().get(pk=element)
-            stock.current_price = get_current_price(ticker_data.info,
-                                                    stock.name)
+            stock.current_price = get_current_price(ticker_data.info, stock.name)
             stock.save()
 
         for history in stock.history_entries.all():
-            update_history(ticker_data, stock, history.name,
-                           (history.period, history.interval))
+            update_history(
+                ticker_data, stock, history.name, (history.period, history.interval)
+            )
 
     except Stock.DoesNotExist:
         print(f"Aktie mit ID {element} nicht gefunden.")
@@ -112,8 +111,7 @@ def stock_updater():
                 future.result()
 
         time_taken = int(time.time() - start_time)
-        print(
-            f"Daten wurden in {time_taken} Sekunden erfolgreich aktualisiert.")
+        print(f"Daten wurden in {time_taken} Sekunden erfolgreich aktualisiert.")
         time.sleep(max(0, SLEEP_TIME * 60 - time_taken))
 
 
