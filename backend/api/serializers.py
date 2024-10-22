@@ -4,6 +4,10 @@ from stocks.models import History, Stock, StockHolding, Transaction
 from stocks.transactions import execute_transaction
 
 
+def calculate_fee(current_price, amount):
+    return max(15, int(float(current_price * amount) * 0.001))
+
+
 class UserSerializer(serializers.ModelSerializer):
     """Serializer für Benutzer."""
 
@@ -19,6 +23,7 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class HistorySerializer(serializers.ModelSerializer):
+    """Serializer für Aktienhistorie."""
 
     class Meta:
         model = History
@@ -40,9 +45,11 @@ class StockSerializer(serializers.ModelSerializer):
 class StockHoldingSerializer(serializers.ModelSerializer):
     """Serializer für Aktienbestände."""
 
+    stock = StockSerializer(read_only=True)
+
     class Meta:
         model = StockHolding
-        fields = ["id", "team", "stock", "amount"]
+        fields = ["id", "stock", "amount"]
         read_only_fields = fields
 
 
@@ -68,10 +75,10 @@ class TransactionSerializer(serializers.ModelSerializer):
             )
 
         if transaction_type == "buy":
-            cost = stock.current_price * amount + max(
-                15, stock.current_price * amount * 0.001
+            price = amount * stock.current_price + calculate_fee(
+                stock.current_price, amount
             )
-            if team.balance < cost:
+            if team.balance < price:
                 raise serializers.ValidationError("Nicht genügend Guthaben.")
 
         elif transaction_type == "sell":
@@ -97,9 +104,9 @@ class TransactionSerializer(serializers.ModelSerializer):
         team = self.context["request"].user.profile.team
         validated_data["team"] = team
         validated_data["price"] = validated_data["stock"].current_price
-        fee = max(15, validated_data["price"] * validated_data["amount"] * 0.001)
+        fee = calculate_fee(validated_data["price"], validated_data["amount"])
         validated_data["fee"] = fee
 
-        transaction = super().save(**validated_data)
+        transaction = Transaction.objects.create(**validated_data)
         execute_transaction(transaction)
         return transaction

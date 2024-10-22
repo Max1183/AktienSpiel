@@ -106,8 +106,8 @@ function StockDetail() {
     const handleOrder = (event) => {
         event.preventDefault();
         if (window.confirm(`Sind Sie sicher, dass Sie ${amount} Aktien ${buy ? 'kaufen' : 'verkaufen'} wollen?`)) {
-            api.post('/api/transactions/create/', {
-                stock_id: id,
+            api.post('/api/transactions/', {
+                stock: id,
                 transaction_type: buy ? 'buy' : 'sell',
                 amount: amount
             }).then(res => {
