@@ -21,7 +21,6 @@ ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost").split(",")
 # Application definition
 
 INSTALLED_APPS = [
-    "stocks.apps.StockConfig",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -29,6 +28,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "api",
+    "stocks",
     "rest_framework",
     "corsheaders",
 ]

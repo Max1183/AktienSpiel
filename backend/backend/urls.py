@@ -1,7 +1,8 @@
-from api.views import CreateUserView
 from django.contrib import admin
 from django.urls import include, path
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+
+from api.views import CreateUserView
 
 urlpatterns = [
     path("admin/", admin.site.urls),

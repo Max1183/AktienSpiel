@@ -1,31 +1,32 @@
-# Poetry
+# Dependencies
+POETRY = cd .\backend\ && poetry
+NPM = cd .\frontend\ && npm
+
 install: backend-install frontend-install
-dependencies:
-	poetry update && cd ./frontend && npm update
-	make install
+dependencies: backend-dependencies frontend-dependencies install
 backend-install:
-	poetry install
+	$(POETRY) install
+frontend-install:
+	$(NPM) install
+backend-dependencies:
+	$(POETRY) update
+frontend-dependencies:
+	$(NPM) update
 
 # Frontend (React/npm)
-frontend-install:
-	cd ./frontend && npm install
 run-frontend:
-	cd ./frontend && npm run dev -- --host 0.0.0.0 --port 3000
-
-# Pre-commit
-install-pre-commit:
-	poetry run pre-commit uninstall && poetry run pre-commit install
-pre-commit:
-	poetry run pre-commit run --all-files
+	$(NPM) run dev -- --host 0.0.0.0 --port 3000
 
 # Backend (Django)
-MANAGE = cd ./backend && poetry run python manage.py
+MANAGE = $(POETRY) run python manage.py
 migrate:
 	$(MANAGE) migrate
 migrations:
 	$(MANAGE) makemigrations
 collectstatic:
 	$(MANAGE) collectstatic --noinput
+test:
+	$(MANAGE) test
 run-backend:
 	$(MANAGE) runserver 0.0.0.0:8000
 shell:
@@ -34,9 +35,15 @@ createsuperuser:
 	$(MANAGE) createsuperuser
 update-db: migrations migrate
 
-# Kombinierte Befehle
-update: update-db collectstatic install-pre-commit pre-commit
+# Pre-commit
+install-pre-commit:
+	$(POETRY) run pre-commit uninstall && $(POETRY) run pre-commit install
+pre-commit:
+	$(POETRY) run pre-commit run --all-files
 
-.PHONY: install dependencies backend-install frontend-install run-frontend install-pre-commit pre-commit \
-        git-status git-add git-commit git-prepare git-pull git-push git-force-pull git-fetch git-merge \
-        migrate migrations collectstatic run-backend shell createsuperuser update-db update
+# Kombinierte Befehle
+update: test install-pre-commit pre-commit install update-db collectstatic
+
+.PHONY: install dependencies backend-install frontend-install backend-dependencies frontend-dependencies \
+		run-frontend migrate migrations collectstatic test run-backend shell createsuperuser update-db \
+		install-pre-commit pre-commit update

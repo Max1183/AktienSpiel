@@ -1,5 +1,6 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
+
 from stocks import views as stock_views
 
 from . import views
