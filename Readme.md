@@ -46,8 +46,8 @@ Jeder, der die Zusammenarbeit behindert, wird mit sofortiger Wirkung aus dem Pro
 
 ## Verwendung
 
-1. Öffne den Browser und navigiere zur URL, auf der der Entwicklungsserver läuft (z.B. http://localhost:3000).
-2. Melde dich mit deinen Anmeldedaten an.
+1. Öffne den Browser und navigiere zur URL, auf der der Entwicklungsserver läuft: http://localhost:3000.
+2. Das Backend ist unter http://localhost:8000 erreichbar.
 
 ## Tests
 

@@ -104,7 +104,7 @@ class Transaction(models.Model):
     stock = models.ForeignKey(Stock, on_delete=models.CASCADE)
 
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="open")
-    transaction_type = models.CharField(max_length=5, choices=TRANSACTION_TYPE_CHOICES)
+    transaction_type = models.CharField(max_length=10, choices=TRANSACTION_TYPE_CHOICES)
 
     amount = models.IntegerField(default=0)
     price = models.DecimalField(max_digits=20, decimal_places=2, default=0)
