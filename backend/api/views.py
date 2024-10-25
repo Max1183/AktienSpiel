@@ -2,6 +2,7 @@ from django.contrib.auth.models import User
 from django.db import transaction
 from rest_framework import generics, mixins, viewsets
 from rest_framework.permissions import AllowAny, IsAuthenticated
+
 from stocks.models import Stock, StockHolding
 
 from .serializers import (
@@ -48,5 +49,5 @@ class TransactionViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
     """Viewset zum Erstellen neuer Transaktionen."""
 
     serializer_class = TransactionSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
     queryset = None

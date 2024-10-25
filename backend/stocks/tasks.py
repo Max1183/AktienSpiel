@@ -1,12 +1,9 @@
 import json
-import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 
 import yfinance as yf
-from django.core.signals import request_started
 from django.db import transaction
-from django.dispatch import receiver
 
 from .models import History, Stock
 
@@ -93,8 +90,8 @@ def update_stock_data(element, ticker):
 
 
 def stock_updater():
+    time.sleep(5)
     load_stock_data()
-    time.sleep(10)
 
     while True:
         print("Daten werden aktualisiert...")
@@ -113,12 +110,3 @@ def stock_updater():
         time_taken = int(time.time() - start_time)
         print(f"Daten wurden in {time_taken} Sekunden erfolgreich aktualisiert.")
         time.sleep(max(0, SLEEP_TIME * 60 - time_taken))
-
-
-background_thread = threading.Thread(target=stock_updater, daemon=True)
-
-
-@receiver(request_started)
-def start_background_task(sender, **kwargs):
-    if not background_thread.is_alive():
-        background_thread.start()

@@ -1,7 +1,12 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
+
 from stocks.models import History, Stock, StockHolding, Transaction
 from stocks.transactions import execute_transaction
+
+
+def calculate_fee(current_price, amount):
+    return max(15, int(float(current_price * amount) * 0.001))
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -19,6 +24,7 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class HistorySerializer(serializers.ModelSerializer):
+    """Serializer für Aktienhistorie."""
 
     class Meta:
         model = History
@@ -40,9 +46,11 @@ class StockSerializer(serializers.ModelSerializer):
 class StockHoldingSerializer(serializers.ModelSerializer):
     """Serializer für Aktienbestände."""
 
+    stock = StockSerializer(read_only=True)
+
     class Meta:
         model = StockHolding
-        fields = ["id", "team", "stock", "amount"]
+        fields = ["id", "stock", "amount"]
         read_only_fields = fields
 
 
@@ -63,31 +71,33 @@ class TransactionSerializer(serializers.ModelSerializer):
         transaction_type = data["transaction_type"]
 
         if amount <= 0:
-            raise serializers.ValidationError(
-                {"amount": "Die Menge muss positiv sein."}
-            )
+            raise serializers.ValidationError({"detail": ["Ungültige Anzahl."]})
 
         if transaction_type == "buy":
-            cost = stock.current_price * amount + max(
-                15, stock.current_price * amount * 0.001
+            price = amount * stock.current_price + calculate_fee(
+                stock.current_price, amount
             )
-            if team.balance < cost:
-                raise serializers.ValidationError("Nicht genügend Guthaben.")
+            if team.balance < price:
+                raise serializers.ValidationError(
+                    {"detail": ["Nicht genügend Guthaben."]}
+                )
 
         elif transaction_type == "sell":
             try:
                 stock_holding = StockHolding.objects.get(team=team, stock=stock)
                 if stock_holding.amount < amount:
-                    raise serializers.ValidationError("Nicht genügend Aktien im Depot.")
+                    raise serializers.ValidationError(
+                        {"detail": ["Nicht genügend Aktien im Depot."]}
+                    )
 
             except StockHolding.DoesNotExist:
                 raise serializers.ValidationError(
-                    "Sie besitzen keine Aktien dieses Typs."
+                    {"detail": ["Sie besitzen keine Aktien dieses Typs."]}
                 )
 
         else:
             raise serializers.ValidationError(
-                {"transaction_type": "Ungültiger Transaktionstyp."}
+                {"detail": ["Ungültiger Transaktionstyp."]}
             )
 
         return data
@@ -97,9 +107,9 @@ class TransactionSerializer(serializers.ModelSerializer):
         team = self.context["request"].user.profile.team
         validated_data["team"] = team
         validated_data["price"] = validated_data["stock"].current_price
-        fee = max(15, validated_data["price"] * validated_data["amount"] * 0.001)
+        fee = calculate_fee(validated_data["price"], validated_data["amount"])
         validated_data["fee"] = fee
 
-        transaction = super().save(**validated_data)
+        transaction = Transaction.objects.create(**validated_data)
         execute_transaction(transaction)
         return transaction
