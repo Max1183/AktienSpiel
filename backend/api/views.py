@@ -49,5 +49,5 @@ class TransactionViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
     """Viewset zum Erstellen neuer Transaktionen."""
 
     serializer_class = TransactionSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
     queryset = None

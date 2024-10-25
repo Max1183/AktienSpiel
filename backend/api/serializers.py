@@ -71,31 +71,33 @@ class TransactionSerializer(serializers.ModelSerializer):
         transaction_type = data["transaction_type"]
 
         if amount <= 0:
-            raise serializers.ValidationError(
-                {"amount": "Die Menge muss positiv sein."}
-            )
+            raise serializers.ValidationError({"detail": ["Ungültige Anzahl."]})
 
         if transaction_type == "buy":
             price = amount * stock.current_price + calculate_fee(
                 stock.current_price, amount
             )
             if team.balance < price:
-                raise serializers.ValidationError("Nicht genügend Guthaben.")
+                raise serializers.ValidationError(
+                    {"detail": ["Nicht genügend Guthaben."]}
+                )
 
         elif transaction_type == "sell":
             try:
                 stock_holding = StockHolding.objects.get(team=team, stock=stock)
                 if stock_holding.amount < amount:
-                    raise serializers.ValidationError("Nicht genügend Aktien im Depot.")
+                    raise serializers.ValidationError(
+                        {"detail": ["Nicht genügend Aktien im Depot."]}
+                    )
 
             except StockHolding.DoesNotExist:
                 raise serializers.ValidationError(
-                    "Sie besitzen keine Aktien dieses Typs."
+                    {"detail": ["Sie besitzen keine Aktien dieses Typs."]}
                 )
 
         else:
             raise serializers.ValidationError(
-                {"transaction_type": "Ungültiger Transaktionstyp."}
+                {"detail": ["Ungültiger Transaktionstyp."]}
             )
 
         return data
