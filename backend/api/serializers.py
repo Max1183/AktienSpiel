@@ -1,7 +1,7 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
 
-from stocks.models import History, Stock, StockHolding, Transaction
+from stocks.models import History, Stock, StockHolding, Team, Transaction
 from stocks.transactions import execute_transaction
 
 
@@ -21,6 +21,20 @@ class UserSerializer(serializers.ModelSerializer):
         """Erstellt einen neuen Benutzer."""
         user = User.objects.create_user(**validated_data)
         return user
+
+
+class TeamSerializer(serializers.ModelSerializer):
+    """Serializer für Teams."""
+
+    portfolio_value = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Team
+        fields = ["id", "name", "balance", "portfolio_value"]
+        read_only_fields = fields
+
+    def get_portfolio_value(self, obj):
+        return float(obj.portfolio_value().replace("€", ""))
 
 
 class HistorySerializer(serializers.ModelSerializer):

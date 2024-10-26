@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User
 from django.db import transaction
 from rest_framework import generics, mixins, viewsets
+from rest_framework.generics import RetrieveAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 
 from stocks.models import Stock, StockHolding
@@ -8,6 +9,7 @@ from stocks.models import Stock, StockHolding
 from .serializers import (
     StockHoldingSerializer,
     StockSerializer,
+    TeamSerializer,
     TransactionSerializer,
     UserSerializer,
 )
@@ -23,6 +25,16 @@ class CreateUserView(generics.CreateAPIView):
     @transaction.atomic
     def post(self, request, *args, **kwargs):
         return super().post(request, *args, **kwargs)
+
+
+class TeamViewSet(RetrieveAPIView):
+    """Viewset für Teams."""
+
+    serializer_class = TeamSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        return self.request.user.profile.team
 
 
 class StockViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):

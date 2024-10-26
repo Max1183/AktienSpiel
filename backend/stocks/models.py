@@ -121,3 +121,7 @@ class Transaction(models.Model):
         fee = (1 if self.transaction_type == "buy" else -1) * self.fee
         total_price = self.amount * self.price + fee
         return str(round(total_price, 2)) + "€"
+
+
+class ThreadControl(models.Model):
+    started = models.BooleanField(default=False, unique=True)

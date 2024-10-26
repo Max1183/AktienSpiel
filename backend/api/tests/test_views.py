@@ -7,7 +7,7 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 from rest_framework_simplejwt.tokens import RefreshToken
 
-# from api.serializers import calculate_fee
+from api.serializers import TeamSerializer  # , calculate_fee
 from stocks.models import Stock, StockHolding, Team, Transaction
 
 
@@ -22,9 +22,43 @@ class TestCreateUserView(TestCase):
         }
         response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(
-            User.objects.count(), 1
-        )  # Überprüfen Sie, ob ein Benutzer erstellt wurde
+        self.assertEqual(User.objects.count(), 1)
+
+
+class TestTeamViewSet(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="testuser", password="testpassword"
+        )
+        self.team = Team.objects.create(name="Test Team", balance=1000)
+        self.user.profile.team = self.team
+        self.user.profile.save()
+
+        refresh = RefreshToken.for_user(self.user)
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}")
+
+        self.stock1 = Stock.objects.create(
+            name="Stock 1", ticker="S1", current_price=Decimal("50.00")
+        )
+        self.stock2 = Stock.objects.create(
+            name="Stock 2", ticker="S2", current_price=Decimal("100.00")
+        )
+        StockHolding.objects.create(team=self.team, stock=self.stock1, amount=2)
+        StockHolding.objects.create(team=self.team, stock=self.stock2, amount=5)
+
+        self.url = reverse("team-detail")
+
+    def test_retrieve_team_success(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        serializer = TeamSerializer(instance=self.team)
+        self.assertEqual(response.data, serializer.data)
+
+    def test_retrieve_team_unauthorized(self):
+        self.client.credentials(HTTP_AUTHORIZATION=None)  # Entferne die Autorisierung
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
 
 class TestStockViewSet(APITestCase):
