@@ -1,5 +1,5 @@
 import {useState} from 'react'
-import Layout from '../components/Layout'
+import Layout from '../components/Layout/Layout'
 
 function Start() {
     return <Layout>
@@ -16,7 +16,7 @@ function Start() {
             <div className="col-sm-8 p-3">
                 <div className="bg-primary-subtle p-3 shadow rounded">
                     <h2>Schwarzes Brett</h2>
-                    <p>Das Spiel beginnt am 01.11.2024</p>
+                    <p>Das Spiel beginnt am 01.12.2024</p>
                 </div>
             </div>
             <div className="col-sm-4 p-3">

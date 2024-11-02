@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router-dom';
-import SearchBar from './SearchBar'
-import "../styles/Navbar.css";
+import SearchBar from '../SearchBar'
+import "../../styles/Navbar.css";
 
 function Navbar ({ small }) {
     const navbar_small = (
@@ -50,8 +50,28 @@ function Navbar ({ small }) {
                                     WETTBEWERB
                                 </NavLink>
                             </li>
+                            <li className="nav-item">
+                                <NavLink
+                                    to="/user/profile/"
+                                    className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}
+                                    aria-current={({ isActive }) => (isActive ? "page" : undefined)}
+                                >
+                                    PROFIL
+                                </NavLink>
+                            </li>
+                            <li className="nav-item">
+                                <NavLink
+                                    to="/user/team/"
+                                    className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}
+                                    aria-current={({ isActive }) => (isActive ? "page" : undefined)}
+                                >
+                                    TEAM
+                                </NavLink>
+                            </li>
                         </ul>
-                        <SearchBar />
+                        <div className="mt-3">
+                            <SearchBar />
+                        </div>
                     </div>
                 </div>
             </div>

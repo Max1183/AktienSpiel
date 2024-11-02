@@ -1,7 +1,7 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
 
-from stocks.models import History, Stock, StockHolding, Transaction
+from stocks.models import History, Stock, StockHolding, Team, Transaction
 from stocks.transactions import execute_transaction
 
 
@@ -21,6 +21,20 @@ class UserSerializer(serializers.ModelSerializer):
         """Erstellt einen neuen Benutzer."""
         user = User.objects.create_user(**validated_data)
         return user
+
+
+class TeamSerializer(serializers.ModelSerializer):
+    """Serializer für Teams."""
+
+    portfolio_value = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Team
+        fields = ["id", "name", "balance", "portfolio_value"]
+        read_only_fields = fields
+
+    def get_portfolio_value(self, obj):
+        return float(obj.portfolio_value().replace("€", ""))
 
 
 class HistorySerializer(serializers.ModelSerializer):
@@ -54,14 +68,64 @@ class StockHoldingSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
 
-class TransactionSerializer(serializers.ModelSerializer):
-    """Serializer für Transaktionen."""
+class TransactionListSerializer(serializers.ModelSerializer):
+    """Serializer für die Liste der Transaktionen."""
 
-    stock = serializers.PrimaryKeyRelatedField(queryset=Stock.objects.all())
+    stock = StockSerializer(read_only=True)
+    total_price = serializers.SerializerMethodField()
 
     class Meta:
         model = Transaction
-        fields = ["stock", "transaction_type", "amount"]
+        fields = [
+            "id",
+            "stock",
+            "status",
+            "transaction_type",
+            "amount",
+            "price",
+            "fee",
+            "total_price",
+            "description",
+            "date",
+        ]
+        read_only_fields = [
+            "id",
+            "stock",
+            "status",
+            "transaction_type",
+            "amount",
+            "price",
+            "fee",
+            "total_price",
+            "date",
+        ]
+
+    def get_total_price(self, obj):
+        return float(obj.total_price().replace("€", ""))
+
+
+class TransactionUpdateSerializer(serializers.ModelSerializer):
+    """Serializer zum Aktualisieren der Beschreibung."""
+
+    class Meta:
+        model = Transaction
+        fields = ["description"]
+
+
+class TransactionCreateSerializer(serializers.ModelSerializer):
+    """Serializer für das Erstellen von Transaktionen."""
+
+    stock = serializers.PrimaryKeyRelatedField(queryset=Stock.objects.all())
+    description = serializers.CharField(required=False, allow_blank=True)
+
+    class Meta:
+        model = Transaction
+        fields = ["stock", "transaction_type", "amount", "description"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.context["request"].method == "GET":
+            self.fields["stock"].read_only = True
 
     def validate(self, data):
         """Validiert die Transaktionsdaten."""
