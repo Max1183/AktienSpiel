@@ -1,7 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import Layout from '../components/Layout'
+import Layout from '../components/Layout/Layout'
 import NavigationButton from '../components/NavigationButton'
-import StockHoldings from '../components/StockHoldings'
+import StockHoldings from '../components/Depot/StockHoldings'
+import Transactions from '../components/Depot/Transactions'
+import Analysis from '../components/Depot/Analysis'
+import Watchlist from '../components/Depot/Watchlist'
+import api from '../api';
+import LoadingSite from '../components/Loading/LoadingSite';
 
 function Depot() {
     const [currentSite, setCurrentSite] = useState('Depot');
@@ -25,10 +30,15 @@ function Depot() {
         getTeam();
     }, []);
 
-    if (isLoading) {
+    if (isLoading) return <LoadingSite />;
+
+    if (!team) {
+        console.log(err);
         return <>
-            <p>Lädt...</p>
-        </>;
+            <h2>Fehler beim Laden des Depots!</h2>
+            {err && <p>Nachricht: {err}</p>}
+            <p>Zurück zur <a href="/">Startseite</a></p>
+        </>
     }
 
     const handleDepot = () => {
@@ -57,13 +67,13 @@ function Depot() {
         {
             (() => {
                 if (currentSite === 'Depot') {
-                    return <StockHoldings />
+                    return <StockHoldings team={team} />
                 } else if (currentSite === 'Aufträge') {
-                    return <div>Aufträge</div>
+                    return <Transactions team={team} />
                 } else if (currentSite === 'Auswertung') {
-                    return <div>Auswertung</div>
+                    return <Analysis team={team} />
                 } else if (currentSite === 'Watchlist') {
-                    return <div>Watchlist</div>
+                    return <Watchlist team={team} />
                 }
             })()
         }

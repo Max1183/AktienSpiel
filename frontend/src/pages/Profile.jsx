@@ -1,8 +1,10 @@
-import Layout from '../components/Layout'
+import Layout from '../components/Layout/Layout'
 
 function Profile() {
     return <Layout>
-        <h1>Profil</h1>
+        <div className="bg-primary-subtle p-3 shadow rounded p-3">
+            <h1>Mein Profil</h1>
+        </div>
     </Layout>
 }
 

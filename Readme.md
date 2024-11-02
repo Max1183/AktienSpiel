@@ -13,6 +13,8 @@ Dieses Projekt ist ein Spiel, bei dem die Spieler Aktien kaufen und zu verkaufen
 - [Tests](#tests)
   - [Backend](#backend-tests)
   - [Frontend](#frontend-tests)
+- [Git-Workflow](#git-workflow)
+- [Lizenz](#lizenz)
 
 ## Features
 
@@ -60,3 +62,26 @@ Jeder, der die Zusammenarbeit behindert, wird mit sofortiger Wirkung aus dem Pro
 
 1. Navigiere in den Frontend-Ordner: `cd frontend`
 2. Führe die Tests aus: `npm run test`
+
+## Git Workflow
+1. Wechsle zum Develop-Branch: `git checkout develop`
+2. Stelle sicher, dass dein Develop-Branch auf dem aktuellen Stand ist: `git pull origin develop`
+3. Erstelle einen neuen Feature Branch für deine Änderungen: `git checkout -b feature/new-feature`
+4. Nimm Änderungen vor und füge sie zu git hinzu: `git add .`
+5. Commite deine Änderungen: `git commit -m "Beschreibung der Änderungen"`
+6. Wechsle zum Development Branch: `git checkout develop`
+7. Stelle sicher, dass dein Develop-Branch auf dem aktuellen Stand ist: `git pull origin develop`
+8. Führe einen Merge aus: `git merge feature/new-feature`
+9. Lösche den Branch, wenn er nicht mehr benötigt wird: `git branch -d feature/new-feature`
+10. Pushe deine Änderungen: `git push origin develop`
+11. Erstelle einen Pull Request von `develop` nach `main` auf GitHub.
+12. Nach erfolgreichem Review und Tests wird der Pull Request in den main-Branch gemerged.
+13. Aktualisiere deinen lokalen main-Branch: `git checkout main` & `git pull origin main`
+
+## Contributing
+
+Wenn du einen Fehler findest oder Verbesserungsvorschläge hast, erstelle bitte ein Issue oder einen Pull Request.
+
+## License
+
+Dieses Projekt ist unter der MIT-Lizenz lizenziert.

@@ -110,7 +110,7 @@ class Transaction(models.Model):
     price = models.DecimalField(max_digits=20, decimal_places=2, default=0)
     fee = models.DecimalField(max_digits=20, decimal_places=2, default=0)
 
-    description = models.TextField(default="")
+    description = models.TextField(blank=True)
     date = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -121,7 +121,3 @@ class Transaction(models.Model):
         fee = (1 if self.transaction_type == "buy" else -1) * self.fee
         total_price = self.amount * self.price + fee
         return str(round(total_price, 2)) + "€"
-
-
-class ThreadControl(models.Model):
-    started = models.BooleanField(default=False, unique=True)

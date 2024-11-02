@@ -4,13 +4,15 @@ from rest_framework import generics, mixins, viewsets
 from rest_framework.generics import RetrieveAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 
-from stocks.models import Stock, StockHolding
+from stocks.models import Stock, StockHolding, Transaction
 
 from .serializers import (
     StockHoldingSerializer,
     StockSerializer,
     TeamSerializer,
-    TransactionSerializer,
+    TransactionCreateSerializer,
+    TransactionListSerializer,
+    TransactionUpdateSerializer,
     UserSerializer,
 )
 
@@ -57,9 +59,31 @@ class StockHoldingViewSet(viewsets.ReadOnlyModelViewSet):
         ).select_related("team", "stock")
 
 
-class TransactionViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
+class TransactionViewSet(
+    mixins.CreateModelMixin,
+    mixins.ListModelMixin,
+    mixins.UpdateModelMixin,
+    viewsets.GenericViewSet,
+):
     """Viewset zum Erstellen neuer Transaktionen."""
 
-    serializer_class = TransactionSerializer
-    permission_classes = [AllowAny]
-    queryset = None
+    permission_classes = [IsAuthenticated]
+
+    def get_serializer_class(self):
+        if self.action == "list":
+            return TransactionListSerializer
+        elif self.action == "create":
+            return TransactionCreateSerializer
+        elif self.action == "update" or self.action == "partial_update":
+            return TransactionUpdateSerializer
+        return TransactionListSerializer
+
+    def get_queryset(self):
+        return Transaction.objects.filter(team=self.request.user.profile.team)
+
+    def perform_update(self, serializer):
+        instance = self.get_object()
+        instance.description = serializer.validated_data.get(
+            "description", instance.description
+        )
+        instance.save()

@@ -1,16 +1,18 @@
-import Layout from '../components/Layout'
+import Layout from '../components/Layout/Layout'
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api';
 import Chart from 'chart.js/auto';
 import * as bootstrap from 'bootstrap';
+import LoadingSite from '../components/Loading/LoadingSite';
+
 
 function StockDetail() {
     const { id } = useParams();
     const [stock, setStock] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [err, setErr] = useState(null);
-    const [activeTimeSpan, setActiveTimeSpan] = useState('1 Year');
+    const [activeTimeSpan, setActiveTimeSpan] = useState('Year');
     const [chart, setChart] = useState(null);
 
     const [buy, setBuy] = useState(true);
@@ -80,11 +82,8 @@ function StockDetail() {
         }
     }, [stock, activeTimeSpan]);
 
-
     if (isLoading) {
-        return <Layout>
-            <p>Lädt...</p>
-        </Layout>;
+        return <LoadingSite />;
     }
 
     if (!stock) {
@@ -113,8 +112,7 @@ function StockDetail() {
             }).then(res => {
                 if (res.status === 201) {
                     alert(`${buy ? 'Kauf' : 'Verkauf'} von ${amount} Aktien von ${stock.name} durchgeführt!`);
-                    setAmount(0);
-                    setBuy(true);
+                    navigate('/depot');
                 }
                 else alert('Fehler beim erstellen des Order-Auftrags');
             }).catch((err) => console.log(err));
@@ -124,7 +122,7 @@ function StockDetail() {
     return <Layout>
         <div className="row">
             <div className="col-lg-6 p-2">
-                <div className="card bg-light p-3 h-100">
+                <div className="bg-primary-subtle p-3 shadow rounded p-3 h-100">
                     <h2>{stock.name}</h2>
                     <p>Ticker: {stock.ticker}</p>
 
@@ -147,7 +145,7 @@ function StockDetail() {
                 </div>
             </div>
             <div className="col-lg-6 p-2">
-                <div className=" card bg-light p-3 h-100 d-flex flex-column">
+                <div className="bg-primary-subtle p-3 shadow rounded p-3 h-100 d-flex flex-column">
                     <h2>Order-Formular</h2>
 
                     <div className="row bg-info p-2 border rounded mt-1 mb-3 fs-5">

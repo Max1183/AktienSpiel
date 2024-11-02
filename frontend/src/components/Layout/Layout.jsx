@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import Navbar from '../components/Navbar'
-import Footer from '../components/Footer'
-import Navigation from '../components/Navigation'
+import Navbar from '../Layout/Navbar'
+import Footer from '../Layout/Footer'
+import Navigation from '../Layout/Navigation'
 
 function useWindowSize() {
   const [windowSize, setWindowSize] = useState({

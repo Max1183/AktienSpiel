@@ -3,6 +3,7 @@ import { jwtDecode } from "jwt-decode";
 import api from "../api";
 import { REFRESH_TOKEN, ACCESS_TOKEN } from "../constants";
 import { useState, useEffect } from "react";
+import LoadingSite from "./Loading/LoadingSite";
 
 
 function ProtectedRoute({ children }) {
@@ -48,7 +49,7 @@ function ProtectedRoute({ children }) {
     };
 
     if (isAuthorized === null) {
-        return <div>Loading...</div>;
+        return <LoadingSite withLayout={false} />;
     }
 
     return isAuthorized ? children : <Navigate to="/login" />;

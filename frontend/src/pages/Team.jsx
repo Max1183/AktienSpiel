@@ -1,8 +1,10 @@
-import Layout from '../components/Layout'
+import Layout from '../components/Layout/Layout'
 
 function Team() {
     return <Layout>
-        <h1>Dein Team</h1>
+        <div className="bg-primary-subtle p-3 shadow rounded p-3">
+            <h1>Mein Team</h1>
+        </div>
     </Layout>
 }
 
