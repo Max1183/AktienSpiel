@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import api from '../../api';
 import InfoField from '../InfoField';
 import LoadingSite from '../Loading/LoadingSite';
@@ -10,7 +11,8 @@ function formatNumber(number) {
     return `${integerPart},${parts[1]}€`;
 }
 
-function StockHoldings( { team } ) {
+function StockHoldings() {
+    const { team } = useOutletContext();
     const [stockHoldings, setStockHoldings] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [err, setErr] = useState(null);
@@ -32,7 +34,7 @@ function StockHoldings( { team } ) {
     }, []);
 
     if (isLoading) {
-        return <LoadingSite withLayout={false} />;
+        return <LoadingSite />;
     }
 
     if (!stockHoldings) {

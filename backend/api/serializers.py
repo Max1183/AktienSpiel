@@ -50,11 +50,20 @@ class StockSerializer(serializers.ModelSerializer):
     """Serializer für Aktien."""
 
     history_entries = HistorySerializer(many=True, read_only=True)
+    amount = serializers.SerializerMethodField()
 
     class Meta:
         model = Stock
-        fields = ["id", "name", "ticker", "current_price", "history_entries"]
+        fields = ["id", "name", "ticker", "current_price", "history_entries", "amount"]
         read_only_fields = fields
+
+    def get_amount(self, obj):
+        team = self.context["request"].user.profile.team
+        try:
+            stock_holding = StockHolding.objects.get(team=team, stock=obj)
+            return stock_holding.amount
+        except StockHolding.DoesNotExist:
+            return 0
 
 
 class StockHoldingSerializer(serializers.ModelSerializer):

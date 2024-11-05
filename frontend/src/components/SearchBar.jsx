@@ -18,6 +18,8 @@ function SearchBar({ oldSearchTerm }) {
                 placeholder="Nach Aktien suchen..."
                 aria-label="Search"
                 value={searchTerm}
+                minLength={3}
+                maxLength={100}
                 onChange={(e) => setSearchTerm(e.target.value)}
             />
         </form>

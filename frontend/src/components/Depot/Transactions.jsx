@@ -1,5 +1,4 @@
-import React from 'react';
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react';
 import api from '../../api';
 import LoadingSite from '../Loading/LoadingSite';
 import TransactionItem from './TransactionItem';
@@ -27,7 +26,7 @@ function Transactions({ team }) {
     }, []);
 
     if (isLoading) {
-        return <LoadingSite withLayout={false} />;
+        return <LoadingSite />;
     }
 
     if (!transactions) {

@@ -1,9 +1,7 @@
-import Layout from '../components/Layout/Layout'
-
 function Contest() {
-    return <Layout>
+    return <>
         <h1>Wettbewerb</h1>
-    </Layout>
+    </>
 }
 
 export default Contest
