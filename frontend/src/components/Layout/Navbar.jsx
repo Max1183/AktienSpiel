@@ -34,7 +34,7 @@ function Navbar ({ small }) {
                             </li>
                             <li className="nav-item">
                                 <NavLink
-                                  to="/depot/"
+                                  to="/depot"
                                   className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}
                                   aria-current={({ isActive }) => (isActive ? "page" : undefined)}
                                 >
@@ -43,7 +43,7 @@ function Navbar ({ small }) {
                             </li>
                             <li className="nav-item">
                                 <NavLink
-                                    to="/contest/"
+                                    to="/contest"
                                     className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}
                                     aria-current={({ isActive }) => (isActive ? "page" : undefined)}
                                 >
@@ -52,7 +52,7 @@ function Navbar ({ small }) {
                             </li>
                             <li className="nav-item">
                                 <NavLink
-                                    to="/user/profile/"
+                                    to="/user/profile"
                                     className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}
                                     aria-current={({ isActive }) => (isActive ? "page" : undefined)}
                                 >
@@ -61,7 +61,7 @@ function Navbar ({ small }) {
                             </li>
                             <li className="nav-item">
                                 <NavLink
-                                    to="/user/team/"
+                                    to="/user/team"
                                     className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}
                                     aria-current={({ isActive }) => (isActive ? "page" : undefined)}
                                 >
@@ -97,7 +97,7 @@ function Navbar ({ small }) {
                     </li>
                     <li className="nav-item">
                         <NavLink
-                          to="/depot/"
+                          to="/depot"
                           className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}
                           aria-current={({ isActive }) => (isActive ? "page" : undefined)}
                         >
@@ -106,7 +106,7 @@ function Navbar ({ small }) {
                     </li>
                     <li className="nav-item">
                         <NavLink
-                          to="/contest/"
+                          to="/contest"
                           className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}
                           aria-current={({ isActive }) => (isActive ? "page" : undefined)}
                         >

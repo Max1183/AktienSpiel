@@ -119,8 +119,28 @@ function StockDetail() {
         }
     }
 
+    const canBuy = () => {
+        return parseInt(team.balance) >= stock.current_price + 15;
+    }
+
+    const canSell = () => {
+        return stock.amount > 0;
+    }
+
     const getFee = () => {
         return amount ? Math.max(15, parseInt(stock.current_price * amount * 0.001, 10)) : 0;
+    }
+
+    const getTotal = () => {
+        return amount * stock.current_price + getFee() * (buy ? 1 : -1);
+    }
+
+    const getMaxAmount = () => {
+        return buy ? Math.floor(team.balance / stock.current_price) : stock.amount
+    }
+
+    const isDisabled = () => {
+        return amount < 1 || amount > getMaxAmount() || (buy && getTotal() > team.balance) || (!buy && amount > stock.amount);
     }
 
     return <div className="row">
@@ -179,8 +199,8 @@ function StockDetail() {
                             </p>
                         </div>
                         <div className="col-sm-8 mb-3">
-                            <button type="button" onClick={handleBuy} className={`btn btn-outline-success me-3 ${buy && 'active'} ${parseInt(team.balance) < parseInt(stock.current_price) && 'disabled'}`}>Kaufen</button>
-                            <button type="button" onClick={handleSell} className={`btn btn-outline-danger ${!buy && 'active'} ${stock.amount === 0 && 'disabled'}`}>Verkaufen</button>
+                            <button type="button" onClick={handleBuy} className={`btn btn-outline-success me-3 ${buy && 'active'} ${!canBuy() && 'disabled'}`}>Kaufen</button>
+                            <button type="button" onClick={handleSell} className={`btn btn-outline-danger ${!buy && 'active'} ${!canSell() && 'disabled'}`}>Verkaufen</button>
                         </div>
                     </div>
                     <div className="row mb-2">
@@ -195,14 +215,14 @@ function StockDetail() {
                                 placeholder="Gib die Anzahl der Aktien ein..."
                                 onChange={(e) => setAmount(e.target.value)}
                                 min={1}
-                                max={buy ? Math.floor(team.balance / stock.current_price) : stock.amount}
+                                max={getMaxAmount()}
                             />
                         </div>
                     </div>
                     <p>Gebühren ca.: {getFee()}€</p>
-                    <p className="m-0">Gesamt ca.: {amount * stock.current_price + getFee() * (buy ? 1 : -1)}€</p>
+                    <p className="m-0">Gesamt ca.: {getTotal()}€</p>
                     <div className="mt-auto mt-3">
-                        <button type="submit" className="btn btn-primary mt-3">Order-Auftrag erstellen</button>
+                        <button type="submit" className={`btn btn-primary mt-3 ${isDisabled() && 'disabled'}`}>Order-Auftrag erstellen</button>
                     </div>
                 </form>
             </div>
