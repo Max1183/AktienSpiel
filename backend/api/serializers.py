@@ -1,7 +1,7 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
 
-from stocks.models import History, Stock, StockHolding, Team, Transaction
+from stocks.models import History, Stock, StockHolding, Team, Transaction, Watchlist
 from stocks.transactions import execute_transaction
 
 
@@ -64,6 +64,35 @@ class StockSerializer(serializers.ModelSerializer):
             return stock_holding.amount
         except StockHolding.DoesNotExist:
             return 0
+
+
+class WatchlistSerializer(serializers.ModelSerializer):
+    """Serializer für die Watchlist."""
+
+    stock = StockSerializer(read_only=True)
+
+    class Meta:
+        model = Watchlist
+        fields = ["id", "team", "stock", "note", "date"]
+        read_only_fields = ["team"]
+
+
+class WatchlistCreateSerializer(serializers.ModelSerializer):
+    """Serializer für die Erstellung von Watchlist-Einträgen."""
+
+    stock = serializers.PrimaryKeyRelatedField(queryset=Stock.objects.all())
+
+    class Meta:
+        model = Watchlist
+        fields = ["stock", "note"]
+
+
+class WatchlistUpdateSerializer(serializers.ModelSerializer):
+    """Serializer zum Aktualisieren der Beschreibung eines Watchlist-Eintrags."""
+
+    class Meta:
+        model = Watchlist
+        fields = ["note"]
 
 
 class StockHoldingSerializer(serializers.ModelSerializer):

@@ -75,7 +75,7 @@ function App() {
     const small = width < 992;
     const breakpoint = 992;
 
-    return <BrowserRouter>
+    return <BrowserRouter future={{v7_relativeSplatPath: true,}}>
         <main className="content">
             <Navbar small={small} />
             <section className="container mt-3">

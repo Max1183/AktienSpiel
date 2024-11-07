@@ -16,7 +16,6 @@ function Depot() {
             try {
                 const response = await api.get(`/api/team/`);
                 setTeam(response.data)
-                setErr(null);
             } catch (error) {
                 setErr(error.message);
             } finally {

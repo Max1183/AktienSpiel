@@ -103,6 +103,23 @@ class TeamModelTests(TestCase):
         self.assertEqual(self.team.balance, decimal.Decimal("100050.00"))
 
 
+class WatchlistModelTests(TestCase):
+    def setUp(self):
+        self.team = Team.objects.create(name="Test Team")
+        self.stock = Stock.objects.create(
+            name="Test Stock", ticker="TST", current_price=decimal.Decimal("100.50")
+        )
+
+    def test_watchlist_creation(self):
+        watchlist = self.team.watchlist.create(stock=self.stock)
+        self.assertEqual(watchlist.team, self.team)
+        self.assertEqual(watchlist.stock, self.stock)
+
+    def test_watchlist_str(self):
+        watchlist = self.team.watchlist.create(stock=self.stock)
+        self.assertEqual(str(watchlist), "Test Stock in Watchlist of Test Team")
+
+
 class UserProfileModelTests(TestCase):
     def setUp(self):
         Team.objects.create(name="default")
