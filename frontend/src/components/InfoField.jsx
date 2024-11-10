@@ -3,7 +3,7 @@ function InfoField({ label, value }) {
         <div className="col p-2">
             <div className="card p-3 h-100">
                 <p className="mb-0 fw-bold mb-auto">{value}</p>
-                <small className="">{label}</small>
+                <small>{label}</small>
             </div>
         </div>
     );

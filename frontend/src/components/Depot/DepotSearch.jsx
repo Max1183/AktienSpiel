@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../../api';
 import { useSearchParams } from 'react-router-dom';
 import SearchBar from '../SearchBar';
+import { formatCurrency } from '../../utils/helpers';
 
 function DepotSearch() {
     const [searchParams] = useSearchParams();
@@ -44,7 +45,10 @@ function DepotSearch() {
         <div className="list-group">
             {searchResults.map((stock) => (
                 <a key={stock.id} href={'/depot/stocks/' + stock.id} className="list-group-item list-group-item-action">
-                    {stock.name} - {stock.current_price}€
+                    <div className="d-flex w-100 justify-content-between">
+                        <p className="mb-0">{stock.name}</p>
+                        <p className="mb-0">{formatCurrency(stock.current_price)}</p>
+                    </div>
                 </a>
             ))}
         </div>

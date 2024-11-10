@@ -4,7 +4,8 @@ import api from '../../api';
 import Chart from 'chart.js/auto';
 import * as bootstrap from 'bootstrap';
 import LoadingSite from '../Loading/LoadingSite';
-
+import WatchlistMarker from './WatchlistMarker';
+import { formatCurrency } from '../../utils/helpers';
 
 function StockDetail() {
     const { team } = useOutletContext();
@@ -146,7 +147,10 @@ function StockDetail() {
     return <div className="row">
         <div className="col-lg-6 p-2">
             <div className="bg-primary-subtle p-3 shadow rounded p-3 h-100">
-                <h2>{stock.name}</h2>
+                <div className="d-flex justify-content-between">
+                    <h2>{stock.name}</h2>
+                    <WatchlistMarker stock_id={stock.id} watchlist={stock.watchlist_id} />
+                </div>
                 <p>Ticker: {stock.ticker}</p>
 
                 <canvas className="mb-3" id="stock-chart"></canvas>
@@ -164,7 +168,7 @@ function StockDetail() {
                         </button>
                     ))}
                 </div>
-                <p className="mt-3 fs-4">Geldkurs: {stock.current_price}€</p>
+                <p className="mt-3 fs-4">Geldkurs: {formatCurrency(stock.current_price)}</p>
             </div>
         </div>
         <div className="col-lg-6 p-2">
@@ -175,7 +179,7 @@ function StockDetail() {
                     {buy ? (
                         <>
                             <span className='col-8'>Verfügbares Kapital:</span>
-                            <span className='col-4 text-end'>{team.balance}€</span>
+                            <span className='col-4 text-end'>{formatCurrency(team.balance)}</span>
                         </>
                     ) : (
                         <>
@@ -219,8 +223,8 @@ function StockDetail() {
                             />
                         </div>
                     </div>
-                    <p>Gebühren ca.: {getFee()}€</p>
-                    <p className="m-0">Gesamt ca.: {getTotal()}€</p>
+                    <p>Gebühren ca.: {formatCurrency(getFee())}</p>
+                    <p className="m-0">Gesamt ca.: {formatCurrency(getTotal())}</p>
                     <div className="mt-auto mt-3">
                         <button type="submit" className={`btn btn-primary mt-3 ${isDisabled() && 'disabled'}`}>Order-Auftrag erstellen</button>
                     </div>

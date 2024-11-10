@@ -1,9 +1,10 @@
 from django.contrib.auth.models import User
 from django.db import transaction
-from rest_framework import generics, mixins, viewsets
+from rest_framework import generics, mixins, serializers, status, viewsets
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.response import Response
 
-from stocks.models import Stock, StockHolding, Transaction
+from stocks.models import Stock, StockHolding, Transaction, Watchlist
 
 from .serializers import (
     StockHoldingSerializer,
@@ -58,10 +59,27 @@ class WatchlistCreate(generics.CreateAPIView):
     permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer):
-        if serializer.is_valid():
+        team = self.request.user.profile.team
+        if Watchlist.objects.filter(
+            team=team, stock=serializer.validated_data["stock"]
+        ).exists():
+            raise serializers.ValidationError("Stock is already in the watchlist.")
+        elif serializer.is_valid():
             serializer.save(team=self.request.user.profile.team)
         else:
             print(serializer.errors)
+
+    def create(self, request, *args, **kwargs):  # Überschreibe die create-Methode
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)  # Wirft eine Exception, wenn ungültig
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+
+        return Response(
+            {"id": serializer.instance.id, "message": "Watchlist item created"},
+            status=status.HTTP_201_CREATED,
+            headers=headers,
+        )
 
 
 class WatchlistUpdate(generics.UpdateAPIView):

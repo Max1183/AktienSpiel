@@ -1,17 +1,6 @@
 import React, { useState } from 'react';
 import api from '../../api';
-
-function formatDate(dateString) {
-    const date = new Date(dateString);
-
-    const optionsDate = { year: 'numeric', month: '2-digit', day: '2-digit' };
-    const optionsTime = { hour: '2-digit', minute: '2-digit' };
-
-    const formattedDate = date.toLocaleDateString('de-DE', optionsDate);
-    const formattedTime = date.toLocaleTimeString('de-DE', optionsTime);
-
-    return `${formattedDate} ${formattedTime}`;
-}
+import { formatDate, formatCurrency } from '../../utils/helpers';
 
 function WatchlistItem({ watchlist, onDelete }) {
     const [newNote, setNewNote] = useState(watchlist.note);
@@ -53,7 +42,7 @@ function WatchlistItem({ watchlist, onDelete }) {
                 </div>
                 <div className="d-flex w-100 justify-content-between">
                     <div>
-                        <p className="mb-1">Preis: {watchlist.stock.current_price}€</p>
+                        <p className="mb-1">Preis: {formatCurrency(watchlist.stock.current_price)}</p>
                     </div>
                     <div>
                         <button type="button" className="btn btn-primary mt-auto me-1" onClick={handleShow}>
@@ -77,7 +66,7 @@ function WatchlistItem({ watchlist, onDelete }) {
                             </div>
                             <div className="modal-body">
                                 <p>
-                                    Preis: {watchlist.stock.current_price}€<br />
+                                    Preis: {formatCurrency(watchlist.stock.current_price)}<br />
                                     Datum: {formatDate(watchlist.date)}<br />
                                 </p>
                                 <div className="mb-3">

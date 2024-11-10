@@ -8,7 +8,7 @@ function Start() {
                 <p>Ihr habt die Möglichkeit den echten Börsenhandel kennenzulernen - kostenlos, realitätsnah und ganz ohne Risiko.</p>
                 <p>Dabei startet ihr mit einem virtuellen Startkapital von 100.000 Euro und könnt damit echte Aktien kaufen und verkaufen. Wenn ihr euch gut vorbereitet habt, könnt ihr sogar einen Gewinn erzielen.</p>
                 <p>Viel Erfolg und Spaß beim Handeln!</p>
-                <a href="/depot/" className="btn btn-primary">Zum Depot</a>
+                <a href="/depot" className="btn btn-primary">Zum Depot</a>
             </div>
         </div>
         <div className="col-sm-8 p-3">

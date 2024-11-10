@@ -46,7 +46,10 @@ function Watchlist({ team }) {
     return <div className="bg-primary-subtle p-3 shadow rounded p-3">
         <h2 className="mb-0">Watchlist</h2>
         {watchlist.length === 0 ? (
-            <p>Keine Aktien in der Watchlist</p>
+            <>
+                <p>Du hast noch keine Aktien in der Watchlist</p>
+                <p>Klicke <a href="/depot/search/">hier</a>, um nach Aktien zu suchen.</p>
+            </>
         ) : (
             <div className="list-group rounded mt-3">
                 {watchlist.map((list) => (

@@ -3,13 +3,7 @@ import { useOutletContext } from 'react-router-dom';
 import api from '../../api';
 import InfoField from '../InfoField';
 import LoadingSite from '../Loading/LoadingSite';
-
-function formatNumber(number) {
-    const roundedNumber = number.toFixed(2);
-    const parts = roundedNumber.split('.');
-    const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-    return `${integerPart},${parts[1]}€`;
-}
+import { formatCurrency } from '../../utils/helpers';
 
 function StockHoldings() {
     const { team } = useOutletContext();
@@ -49,10 +43,10 @@ function StockHoldings() {
                     <a key={stockHolding.id} href={`/depot/stocks/${stockHolding.stock.id}`} className="list-group-item list-group-item-action list-group-item-light">
                         <div className="d-flex w-100 justify-content-between">
                             <h5 className="mb-1">{stockHolding.stock.name}</h5>
-                            <small>Kurs: {stockHolding.stock.current_price}€</small>
+                            <small>Kurs: {formatCurrency(stockHolding.stock.current_price)}</small>
                         </div>
                         <p className="mb-1">Anzahl: {stockHolding.amount}</p>
-                        <small>Gesamtwert: {formatNumber(stockHolding.amount * stockHolding.stock.current_price)}</small>
+                        <small>Gesamtwert: {formatCurrency(stockHolding.amount * stockHolding.stock.current_price)}</small>
                     </a>
                 ))}
             </div>
@@ -71,12 +65,12 @@ function StockHoldings() {
                 <div className="bg-primary-subtle p-3 shadow rounded p-3 h-100">
                     <h2>Portfolio Übersicht</h2>
                     <div className="row row-cols-2 row-cols-md-3">
-                        <InfoField label="Summe Positionen" value={(team.portfolio_value - team.balance).toFixed(2) + "€"} />
-                        <InfoField label="Barbestand" value={team.balance + "€"} />
-                        <InfoField label="Gesamter Depotwert" value={(team.portfolio_value).toFixed(2) + "€"} />
-                        <InfoField label="Performance abs." value={(team.portfolio_value - 100000).toFixed(2) + "€"} />
+                        <InfoField label="Summe Positionen" value={formatCurrency(team.portfolio_value - team.balance)} />
+                        <InfoField label="Barbestand" value={formatCurrency(team.balance)} />
+                        <InfoField label="Gesamter Depotwert" value={formatCurrency(team.portfolio_value)} />
+                        <InfoField label="Performance abs." value={formatCurrency(team.portfolio_value - 100000)} />
                         <InfoField label="Performance %" value={(team.portfolio_value / 100000 * 100 - 100).toFixed(2) + "%"} />
-                        <InfoField label="Trades" value={0} />
+                        <InfoField label="Trades" value={team.trades} />
                     </div>
                 </div>
             </div>
