@@ -3,11 +3,13 @@ import api from '../../api';
 import { useSearchParams } from 'react-router-dom';
 import SearchBar from '../SearchBar';
 import { formatCurrency } from '../../utils/helpers';
+import { useAlert } from '../Alerts/AlertProvider';
 
 function DepotSearch() {
     const [searchParams] = useSearchParams();
     const query = searchParams.get('q') || '';
     const [searchResults, setSearchResults] = useState([]);
+    const { addAlert } = useAlert();
 
     useEffect(() => {
         const getSearchResults = async () => {
@@ -20,7 +22,7 @@ function DepotSearch() {
                 const res = await api.get(`/api/search/?q=${query}`);
                 setSearchResults(res.data);
             } catch (err) {
-                alert(err);
+                addAlert('Fehler bei der Suche', 'danger');
                 console.error("Fehler bei der Suche:", err);
             }
         };

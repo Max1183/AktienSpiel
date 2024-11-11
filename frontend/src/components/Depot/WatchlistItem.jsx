@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import api from '../../api';
 import { formatDate, formatCurrency } from '../../utils/helpers';
+import { useAlert } from '../../components/Alerts/AlertProvider';
 
 function WatchlistItem({ watchlist, onDelete }) {
-    const [newNote, setNewNote] = useState(watchlist.note);
+    const [newNote, setNewNote] = useState(watchlist.note ?? "");
     const [showModal, setShowModal] = useState(false);
+    const { addAlert } = useAlert();
 
     const handleClose = () => setShowModal(false);
     const handleShow = (e) => {
@@ -19,15 +21,13 @@ function WatchlistItem({ watchlist, onDelete }) {
                 const res = await api.patch(`/api/watchlist/${watchlist.id}/`, {
                     note: newNote
                 });
-                if (res.status === 200 || res.status === 201) {
-                    console.log(`Beschreibung der Watchlist erfolgreich geändert!`);
-                } else if (res.status === 204) {
-                    console.log('No content');
+                if (res.status === 200 || res.status === 201 || res.status === 204) {
+                    addAlert('Beschreibung der Watchlist erfolgreich geändert!', 'success');
                 } else {
-                    alert('Fehler beim Ändern der Beschreibung.');
+                    addAlert('Fehler beim Ändern der Beschreibung.', 'danger');
                 }
             } catch (err) {
-                alert(err);
+                addAlert(err, 'danger');
             }
         }
         handleClose();

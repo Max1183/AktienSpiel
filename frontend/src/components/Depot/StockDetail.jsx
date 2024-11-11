@@ -7,6 +7,7 @@ import LoadingSite from '../Loading/LoadingSite';
 import WatchlistMarker from './WatchlistMarker';
 import Tooltip from '../Tooltip';
 import { formatCurrency } from '../../utils/helpers';
+import { useAlert } from '../Alerts/AlertProvider';
 
 function StockDetail() {
     const { team } = useOutletContext();
@@ -21,6 +22,7 @@ function StockDetail() {
     const [amount, setAmount] = useState(0);
 
     const navigate = useNavigate();
+    const { addAlert } = useAlert();
 
     useEffect(() => {
         const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
@@ -39,7 +41,7 @@ function StockDetail() {
                 setErr(null);
             } catch (error) {
                 setErr(error.message);
-                console.log(err);
+                addAlert('Fehler beim Laden des Aktienkurses', 'danger');
             } finally {
                 setIsLoading(false);
             }
@@ -113,10 +115,10 @@ function StockDetail() {
                 amount: amount
             }).then(res => {
                 if (res.status === 201) {
-                    alert(`${buy ? 'Kauf' : 'Verkauf'} von ${amount} Aktien von ${stock.name} durchgeführt!`);
+                    addAlert(`${buy ? 'Kauf' : 'Verkauf'} von ${amount} Aktien von ${stock.name} durchgeführt!`, 'success');
                     navigate('/depot');
                 }
-                else alert('Fehler beim erstellen des Order-Auftrags');
+                else alert('Fehler beim erstellen des Order-Auftrags', 'danger');
             }).catch((err) => console.log(err));
         }
     }

@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import api from '../../api';
 import { formatDate, formatCurrency } from '../../utils/helpers';
+import { useAlert } from '../../components/Alerts/AlertProvider';
 
 function TransactionItem({ transaction }) {
     const [newDescription, setNewDescription] = useState(transaction.description);
     const [showModal, setShowModal] = useState(false);
+    const { addAlert } = useAlert();
 
     const handleClose = () => setShowModal(false);
     const handleShow = (e) => {
@@ -19,15 +21,14 @@ function TransactionItem({ transaction }) {
                 const res = await api.patch(`/api/transactions/${transaction.id}/`, {
                     description: newDescription
                 });
-                if (res.status === 200 || res.status === 201) {
-                    console.log(`Beschreibung der Aktie erfolgreich geändert!`);
-                } else if (res.status === 204) {
-                    console.log('No content');
+                if (res.status === 200 || res.status === 201 || res.status === 204) {
+                    addAlert(`Beschreibung der Aktie erfolgreich geändert!`, 'success');
                 } else {
-                    alert('Fehler beim Ändern der Beschreibung.');
+                    addAlert('Fehler beim Ändern der Beschreibung.', 'danger');
                 }
             } catch (err) {
-                alert(err);
+                addAlert('Fehler beim Ändern der Beschreibung.', 'danger');
+                console.log(err);
             }
         }
         handleClose();

@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import api from '../../api'
 import LoadingSite from '../../components/Loading/LoadingSite';
 import WatchlistItem from './WatchlistItem';
+import { useAlert } from '../../components/Alerts/AlertProvider';
 
 function Watchlist({ team }) {
     const [watchlist, setWatchlist] = useState([])
     const [isLoading, setIsLoading] = useState(true);
     const [err, setErr] = useState(null);
+    const { addAlert } = useAlert();
 
     const getWatchlist = async () => {
         try {
@@ -26,6 +28,7 @@ function Watchlist({ team }) {
     if (isLoading) return <LoadingSite />;
 
     if (!watchlist) {
+        addAlert('Fehler beim Laden der Watchliste', 'danger');
         console.log(err);
         return <>
             <h2>Fehler beim Laden des Depots!</h2>
@@ -37,10 +40,10 @@ function Watchlist({ team }) {
     const deleteWatchlist = (e, id) => {
         e.preventDefault();
         api.delete(`/api/watchlist/delete/${id}/`).then((res) => {
-            if (res.status === 204) alert('Watchlist deleted');
-            else alert('Failed to delete watchlist');
+            if (res.status === 204) addAlert('Watchlisteintrag erfolgreich entfernt', 'success');
+            else addAlert('Fehler beim Löschen des Watchlisteintrags', 'danger');
             getWatchlist();
-        }).catch((err) => alert(err));
+        }).catch((err) => addAlert(err, 'danger'));
     };
 
     return <div className="bg-primary-subtle p-3 shadow rounded p-3">

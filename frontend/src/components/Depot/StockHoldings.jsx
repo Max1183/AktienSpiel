@@ -4,12 +4,14 @@ import api from '../../api';
 import InfoField from '../InfoField';
 import LoadingSite from '../Loading/LoadingSite';
 import { formatCurrency } from '../../utils/helpers';
+import { useAlert } from '../Alerts/AlertProvider';
 
 function StockHoldings() {
     const { team } = useOutletContext();
     const [stockHoldings, setStockHoldings] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [err, setErr] = useState(null);
+    const { addAlert } = useAlert();
 
     useEffect(() => {
         const getStockHoldings = async () => {
@@ -31,7 +33,7 @@ function StockHoldings() {
         if (isLoading) {
             return <LoadingSite />;
         } else if (!stockHoldings) {
-            console.log(err);
+            addAlert('Fehler beim Laden der Aktien!', 'danger');
             return <>
                 <h2>Fehler beim Laden der Aktien!</h2>
                 {err && <p>Nachricht: {err}</p>}

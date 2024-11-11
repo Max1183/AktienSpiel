@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import {BrowserRouter, Routes, Route, Navigate} from 'react-router-dom'
 import ProtectedRoute from './components/ProtectedRoute'
+import { AlertProvider, useAlert } from './components/Alerts/AlertProvider'
+import AlertList from './components/Alerts/AlertList'
 
 import Login from './pages/Login'
 import Register from './pages/Register'
@@ -48,26 +50,26 @@ function Protected(Component, path) {
 }
 
 function useWindowSize() {
-  const [windowSize, setWindowSize] = useState({
-    width: undefined,
-    height: undefined,
-  });
+    const [windowSize, setWindowSize] = useState({
+        width: undefined,
+        height: undefined,
+    });
 
-  useEffect(() => {
-    function handleResize() {
-      setWindowSize({
-        width: window.innerWidth,
-        height: window.innerHeight,
-      });
-    }
+    useEffect(() => {
+        function handleResize() {
+            setWindowSize({
+                width: window.innerWidth,
+                height: window.innerHeight,
+            });
+        }
 
-    window.addEventListener('resize', handleResize);
-    handleResize();
+        window.addEventListener('resize', handleResize);
+        handleResize();
 
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+        return () => window.removeEventListener('resize', handleResize);
+        }, []);
 
-  return windowSize;
+    return windowSize;
 }
 
 function App() {
@@ -75,38 +77,41 @@ function App() {
     const small = width < 992;
     const breakpoint = 992;
 
-    return <BrowserRouter future={{v7_relativeSplatPath: true,}}>
-        <main className="content">
-            <Navbar small={small} />
-            <section className="container mt-3">
+    return <AlertProvider>
+        <BrowserRouter future={{v7_relativeSplatPath: true,}}>
+            <main className="content">
+                <Navbar small={small} />
+                <section className="container mt-3">
+                    <AlertList />
 
-                <Routes>
-                    {Protected(Start, "/")}
+                    <Routes>
+                        {Protected(Start, "/")}
 
-                    <Route path="/depot" element={<ProtectedRoute><Depot /></ProtectedRoute>}>
-                        <Route index element={<StockHoldings />} />
-                        <Route path="transactions" element={<Transactions />} />
-                        <Route path="analysis" element={<Analysis />} />
-                        <Route path="watchlist" element={<Watchlist />} />
-                        <Route path="search" element={<DepotSearch />} />
-                        <Route path="stocks/:id" element={<StockDetail />} />
-                    </Route>
+                        <Route path="/depot" element={<ProtectedRoute><Depot /></ProtectedRoute>}>
+                            <Route index element={<StockHoldings />} />
+                            <Route path="transactions" element={<Transactions />} />
+                            <Route path="analysis" element={<Analysis />} />
+                            <Route path="watchlist" element={<Watchlist />} />
+                            <Route path="search" element={<DepotSearch />} />
+                            <Route path="stocks/:id" element={<StockDetail />} />
+                        </Route>
 
-                    {Protected(Contest, "/contest")}
+                        {Protected(Contest, "/contest")}
 
-                    {Protected(Profile, "/user/profile")}
-                    {Protected(Team, "/user/team")}
+                        {Protected(Profile, "/user/profile")}
+                        {Protected(Team, "/user/team")}
 
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/logout" element={<Logout />} />
-                    <Route path="/register" element={<RegisterAndLogout />} />
-                    <Route path="*" element={<NotFound />} />
-                </Routes>
+                        <Route path="/login" element={<Login />} />
+                        <Route path="/logout" element={<Logout />} />
+                        <Route path="/register" element={<RegisterAndLogout />} />
+                        <Route path="*" element={<NotFound />} />
+                    </Routes>
 
-            </section>
-            {small ? <Navigation /> : <Footer />}
-        </main>
-    </BrowserRouter>
+                </section>
+                {small ? <Navigation /> : <Footer />}
+            </main>
+        </BrowserRouter>
+    </AlertProvider>
 }
 
 export default App
