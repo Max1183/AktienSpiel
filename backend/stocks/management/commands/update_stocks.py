@@ -34,7 +34,7 @@ class Command(BaseCommand):
 
 
 class StockUpdater:
-    def __init__(self, num_workers=32, update_interval=60):
+    def __init__(self, num_workers=32, update_interval=300):
         self.num_workers = num_workers
         self.update_interval = update_interval
         self.is_running = True
@@ -106,6 +106,10 @@ class StockUpdater:
 
             for name, (period, interval) in self.history_intervals.items():
                 try:
+                    valid_periods = ticker_data.history_metadata.get("validRanges")
+                    if period not in valid_periods:
+                        continue
+
                     hist = ticker_data.history(period=period, interval=interval)
                     values = [float(value["Close"]) for index, value in hist.iterrows()]
 

@@ -12,7 +12,7 @@ function Navbar ({ small }) {
                 <a className="navbar-brand mb-0 h1" href="/">
                     <img src="/Logo.png" className="logo" id="logo" width="183" height="50" alt="Logo" />
                 </a>
-                <a className="navbar-brand mb-0 h1" href="/profile/">
+                <a className="navbar-brand mb-0 h1" href="/user/profile/">
                     <img src="/Profile.png" className="profile" width="40" height="40" alt="Profile" />
                 </a>
                 <div className="offcanvas offcanvas-start" tabIndex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel" data-bs-scroll="true">
@@ -34,7 +34,7 @@ function Navbar ({ small }) {
                             </li>
                             <li className="nav-item">
                                 <NavLink
-                                  to="/depot/"
+                                  to="/depot"
                                   className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}
                                   aria-current={({ isActive }) => (isActive ? "page" : undefined)}
                                 >
@@ -43,7 +43,7 @@ function Navbar ({ small }) {
                             </li>
                             <li className="nav-item">
                                 <NavLink
-                                    to="/contest/"
+                                    to="/contest"
                                     className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}
                                     aria-current={({ isActive }) => (isActive ? "page" : undefined)}
                                 >
@@ -52,7 +52,7 @@ function Navbar ({ small }) {
                             </li>
                             <li className="nav-item">
                                 <NavLink
-                                    to="/user/profile/"
+                                    to="/user/profile"
                                     className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}
                                     aria-current={({ isActive }) => (isActive ? "page" : undefined)}
                                 >
@@ -61,7 +61,7 @@ function Navbar ({ small }) {
                             </li>
                             <li className="nav-item">
                                 <NavLink
-                                    to="/user/team/"
+                                    to="/user/team"
                                     className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}
                                     aria-current={({ isActive }) => (isActive ? "page" : undefined)}
                                 >
@@ -97,7 +97,7 @@ function Navbar ({ small }) {
                     </li>
                     <li className="nav-item">
                         <NavLink
-                          to="/depot/"
+                          to="/depot"
                           className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}
                           aria-current={({ isActive }) => (isActive ? "page" : undefined)}
                         >
@@ -106,7 +106,7 @@ function Navbar ({ small }) {
                     </li>
                     <li className="nav-item">
                         <NavLink
-                          to="/contest/"
+                          to="/contest"
                           className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}
                           aria-current={({ isActive }) => (isActive ? "page" : undefined)}
                         >
@@ -115,7 +115,7 @@ function Navbar ({ small }) {
                     </li>
                 </ul>
                 <SearchBar />
-                <a className="navbar-brand mb-0 h1" href="/profile/">
+                <a className="navbar-brand mb-0 h1" href="/user/profile/">
                     <img src="/Profile.png" className="profile" width="40" height="40" alt="Profile" />
                 </a>
             </div>

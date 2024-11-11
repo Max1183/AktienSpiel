@@ -62,6 +62,16 @@ class Team(models.Model):
         self.save()
 
 
+class Watchlist(models.Model):
+    stock = models.ForeignKey(Stock, on_delete=models.CASCADE)
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="watchlist")
+    note = models.TextField(blank=True, null=True)
+    date = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.stock.name} in Watchlist of {self.team.name}"
+
+
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
     team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="members")

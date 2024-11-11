@@ -1,6 +1,14 @@
 from django.contrib import admin
 
-from .models import History, Stock, StockHolding, Team, Transaction, UserProfile
+from .models import (
+    History,
+    Stock,
+    StockHolding,
+    Team,
+    Transaction,
+    UserProfile,
+    Watchlist,
+)
 
 
 class HistoryInline(admin.TabularInline):
@@ -13,6 +21,11 @@ class StockHoldingInline(admin.TabularInline):
     model = StockHolding
     extra = 0
     readonly_fields = ["stock", "amount"]
+
+
+class WatchlistInline(admin.TabularInline):
+    model = Watchlist
+    extra = 0
 
 
 class UserProfileInLine(admin.StackedInline):
@@ -33,11 +46,11 @@ class StockAdmin(admin.ModelAdmin):
 
 @admin.register(Team)
 class TeamAdmin(admin.ModelAdmin):
-    inlines = [UserProfileInLine, StockHoldingInline]
+    inlines = [UserProfileInLine, StockHoldingInline, WatchlistInline]
     fields = ["name", "team_member_count", "balance", "portfolio_value"]
     list_display = ["name", "team_member_count", "portfolio_value"]
     search_fields = ["name"]
-    readonly_fields = ["balance", "team_member_count", "portfolio_value"]
+    readonly_fields = ["team_member_count", "portfolio_value"]
 
 
 @admin.register(UserProfile)

@@ -1,19 +1,17 @@
 import React, { useEffect, useState } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import api from '../../api';
 import InfoField from '../InfoField';
 import LoadingSite from '../Loading/LoadingSite';
+import { formatCurrency } from '../../utils/helpers';
+import { useAlert } from '../Alerts/AlertProvider';
 
-function formatNumber(number) {
-    const roundedNumber = number.toFixed(2);
-    const parts = roundedNumber.split('.');
-    const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-    return `${integerPart},${parts[1]}€`;
-}
-
-function StockHoldings( { team } ) {
+function StockHoldings() {
+    const { team } = useOutletContext();
     const [stockHoldings, setStockHoldings] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [err, setErr] = useState(null);
+    const { addAlert } = useAlert();
 
     useEffect(() => {
         const getStockHoldings = async () => {
@@ -31,16 +29,36 @@ function StockHoldings( { team } ) {
         getStockHoldings();
     }, []);
 
-    if (isLoading) {
-        return <LoadingSite withLayout={false} />;
-    }
-
-    if (!stockHoldings) {
-        console.log(err);
-        return <>
-            <h2>Fehler beim Laden der Aufträge</h2>
-            {err && <p>Nachricht: {err}</p>}
-        </>
+    const getDepot = () => {
+        if (isLoading) {
+            return <LoadingSite />;
+        } else if (!stockHoldings) {
+            addAlert('Fehler beim Laden der Aktien!', 'danger');
+            return <>
+                <h2>Fehler beim Laden der Aktien!</h2>
+                {err && <p>Nachricht: {err}</p>}
+            </>
+        } else if (stockHoldings.length > 0) {
+            return <div className="list-group rounded mt-3">
+                <h2>Mein Depot</h2>
+                {stockHoldings.map((stockHolding) => (
+                    <a key={stockHolding.id} href={`/depot/stocks/${stockHolding.stock.id}`} className="list-group-item list-group-item-action list-group-item-light">
+                        <div className="d-flex w-100 justify-content-between">
+                            <h5 className="mb-1">{stockHolding.stock.name}</h5>
+                            <small>Kurs: {formatCurrency(stockHolding.stock.current_price)}</small>
+                        </div>
+                        <p className="mb-1">Anzahl: {stockHolding.amount}</p>
+                        <small>Gesamtwert: {formatCurrency(stockHolding.amount * stockHolding.stock.current_price)}</small>
+                    </a>
+                ))}
+            </div>
+        } else {
+            return <>
+                <h2>Mein Depot</h2>
+                <p>Du besitzt noch keine Aktien!</p>
+                <p>Klicke <a href="/depot/search/">hier</a>, um nach Aktien zu suchen.</p>
+            </>
+        }
     }
 
     return <>
@@ -49,12 +67,12 @@ function StockHoldings( { team } ) {
                 <div className="bg-primary-subtle p-3 shadow rounded p-3 h-100">
                     <h2>Portfolio Übersicht</h2>
                     <div className="row row-cols-2 row-cols-md-3">
-                        <InfoField label="Summe Positionen" value={(team.portfolio_value - team.balance).toFixed(2) + "€"} />
-                        <InfoField label="Barbestand" value={team.balance + "€"} />
-                        <InfoField label="Gesamter Depotwert" value={(team.portfolio_value).toFixed(2) + "€"} />
-                        <InfoField label="Performance abs." value={(team.portfolio_value - 100000).toFixed(2) + "€"} />
+                        <InfoField label="Summe Positionen" value={formatCurrency(team.portfolio_value - team.balance)} />
+                        <InfoField label="Barbestand" value={formatCurrency(team.balance)} />
+                        <InfoField label="Gesamter Depotwert" value={formatCurrency(team.portfolio_value)} />
+                        <InfoField label="Performance abs." value={formatCurrency(team.portfolio_value - 100000)} />
                         <InfoField label="Performance %" value={(team.portfolio_value / 100000 * 100 - 100).toFixed(2) + "%"} />
-                        <InfoField label="Trades" value={0} />
+                        <InfoField label="Trades" value={team.trades} />
                     </div>
                 </div>
             </div>
@@ -66,24 +84,7 @@ function StockHoldings( { team } ) {
             </div>
             <div className="col-lg-12 p-2">
                 <div className="bg-primary-subtle p-3 shadow rounded p-3 h-100">
-                    <h2>Mein Depot</h2>
-                    { stockHoldings.length > 0 ? <>
-                        <div className="list-group rounded mt-3">
-                            {stockHoldings.map((stockHolding) => (
-                                <a key={stockHolding.id} href={`/depot/stocks/${stockHolding.stock.id}`} className="list-group-item list-group-item-action list-group-item-light">
-                                    <div className="d-flex w-100 justify-content-between">
-                                        <h5 className="mb-1">{stockHolding.stock.name}</h5>
-                                        <small>Kurs: {stockHolding.stock.current_price}€</small>
-                                    </div>
-                                    <p className="mb-1">Anzahl: {stockHolding.amount}</p>
-                                    <small>Gesamtwert: {formatNumber(stockHolding.amount * stockHolding.stock.current_price)}</small>
-                                </a>
-                            ))}
-                        </div>
-                    </> : <>
-                        <p>Du besitzt noch keine Aktien!</p>
-                        <p>Klicke <a href="/depot/search/">hier</a>, um nach Aktien zu suchen.</p>
-                    </> }
+                    {getDepot()}
                 </div>
             </div>
         </div>

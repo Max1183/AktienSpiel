@@ -8,7 +8,7 @@ from rest_framework.test import APITestCase
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from api.serializers import TeamSerializer  # , calculate_fee
-from stocks.models import Stock, StockHolding, Team, Transaction
+from stocks.models import Stock, StockHolding, Team, Transaction, Watchlist
 
 
 class TestCreateUserView(TestCase):
@@ -58,6 +58,66 @@ class TestTeamViewSet(APITestCase):
     def test_retrieve_team_unauthorized(self):
         self.client.credentials(HTTP_AUTHORIZATION=None)  # Entferne die Autorisierung
         response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+class TestWatchlistViewSet(APITestCase):
+    # Testen Sie den Zugriff auf die Watchlist.
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="testuser", password="testpassword"
+        )
+        refresh = RefreshToken.for_user(self.user)
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}")
+        self.stock1 = Stock.objects.create(
+            name="Stock 1", ticker="S1", current_price=Decimal("50.00")
+        )
+        self.stock2 = Stock.objects.create(
+            name="Stock 1", ticker="S1", current_price=Decimal("50.00")
+        )
+        self.watchlist = Watchlist.objects.create(
+            stock=self.stock2, team=self.user.profile.team
+        )
+
+        self.url = reverse("watchlist-list")
+        self.create_url = reverse("watchlist-create")
+
+    def test_retrieve_watchlist_success(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_retrieve_watchlist_unauthorized(self):
+        self.client.credentials(HTTP_AUTHORIZATION=None)  # Entferne die Autorisierung
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_add_watchlist_item_success(self):
+        data = {"stock": self.stock1.pk}
+        response = self.client.post(self.create_url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_add_watchlist_item_unauthorized(self):
+        self.client.credentials(HTTP_AUTHORIZATION=None)  # Entferne die Autorisierung
+        data = {"stock": self.stock1.pk}
+        response = self.client.post(self.create_url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_add_watchlist_item_invalid_data(self):
+        data = {"stock": "invalid_stock_id"}
+        response = self.client.post(self.create_url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_delete_watchlist_item_success(self):
+        response = self.client.delete(
+            reverse("watchlist-delete", args=[self.watchlist.pk])
+        )
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+    def test_delete_watchlist_item_unauthorized(self):
+        self.client.credentials(HTTP_AUTHORIZATION=None)  # Entferne die Autorisierung
+        response = self.client.delete(
+            reverse("watchlist-delete", args=[self.watchlist.pk])
+        )
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
 

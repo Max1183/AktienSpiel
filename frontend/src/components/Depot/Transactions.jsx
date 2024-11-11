@@ -1,13 +1,14 @@
-import React from 'react';
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react';
 import api from '../../api';
 import LoadingSite from '../Loading/LoadingSite';
 import TransactionItem from './TransactionItem';
+import { useAlert } from '../Alerts/AlertProvider';
 
 function Transactions({ team }) {
     const [transactions, setTransactions] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [err, setErr] = useState(null);
+    const { addAlert } = useAlert();
 
     useEffect(() => {
         const getTransactions = async () => {
@@ -18,6 +19,7 @@ function Transactions({ team }) {
                 setErr(null);
             } catch (error) {
                 setErr(error.message);
+                addAlert('Fehler beim Laden der Transaktionen', 'danger');
             } finally {
                 setIsLoading(false);
             }
@@ -27,7 +29,7 @@ function Transactions({ team }) {
     }, []);
 
     if (isLoading) {
-        return <LoadingSite withLayout={false} />;
+        return <LoadingSite />;
     }
 
     if (!transactions) {

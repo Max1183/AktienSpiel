@@ -1,7 +1,7 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
 
-from stocks.models import History, Stock, StockHolding, Team, Transaction
+from stocks.models import History, Stock, StockHolding, Team, Transaction, Watchlist
 from stocks.transactions import execute_transaction
 
 
@@ -27,14 +27,18 @@ class TeamSerializer(serializers.ModelSerializer):
     """Serializer für Teams."""
 
     portfolio_value = serializers.SerializerMethodField()
+    trades = serializers.SerializerMethodField()
 
     class Meta:
         model = Team
-        fields = ["id", "name", "balance", "portfolio_value"]
+        fields = ["id", "name", "balance", "portfolio_value", "trades"]
         read_only_fields = fields
 
     def get_portfolio_value(self, obj):
         return float(obj.portfolio_value().replace("€", ""))
+
+    def get_trades(self, obj):
+        return Transaction.objects.filter(team=obj).count()
 
 
 class HistorySerializer(serializers.ModelSerializer):
@@ -50,11 +54,66 @@ class StockSerializer(serializers.ModelSerializer):
     """Serializer für Aktien."""
 
     history_entries = HistorySerializer(many=True, read_only=True)
+    amount = serializers.SerializerMethodField()
+    watchlist_id = serializers.SerializerMethodField()
 
     class Meta:
         model = Stock
-        fields = ["id", "name", "ticker", "current_price", "history_entries"]
+        fields = [
+            "id",
+            "name",
+            "ticker",
+            "current_price",
+            "history_entries",
+            "amount",
+            "watchlist_id",
+        ]
         read_only_fields = fields
+
+    def get_amount(self, obj):
+        team = self.context["request"].user.profile.team
+        try:
+            stock_holding = StockHolding.objects.get(team=team, stock=obj)
+            return stock_holding.amount
+        except StockHolding.DoesNotExist:
+            return 0
+
+    def get_watchlist_id(self, obj):
+        team = self.context["request"].user.profile.team
+        try:
+            watchlist_entry = Watchlist.objects.get(team=team, stock=obj)
+            return watchlist_entry.id
+        except Watchlist.DoesNotExist:
+            return None
+
+
+class WatchlistSerializer(serializers.ModelSerializer):
+    """Serializer für die Watchlist."""
+
+    stock = StockSerializer(read_only=True)
+
+    class Meta:
+        model = Watchlist
+        fields = ["id", "team", "stock", "note", "date"]
+        read_only_fields = ["team"]
+
+
+class WatchlistCreateSerializer(serializers.ModelSerializer):
+    """Serializer für die Erstellung von Watchlist-Einträgen."""
+
+    stock = serializers.PrimaryKeyRelatedField(queryset=Stock.objects.all())
+
+    class Meta:
+        model = Watchlist
+        fields = ["stock", "note"]
+
+
+class WatchlistUpdateSerializer(serializers.ModelSerializer):
+    """Serializer zum Aktualisieren der Beschreibung eines Watchlist-Eintrags."""
+
+    class Meta:
+        model = Watchlist
+        fields = ["note"]
 
 
 class StockHoldingSerializer(serializers.ModelSerializer):

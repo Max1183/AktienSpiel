@@ -17,7 +17,7 @@ function Navigation () {
                 </li>
                 <li className="nav-item">
                     <NavLink
-                      to="/depot/"
+                      to="/depot"
                       className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}
                       aria-current={({ isActive }) => (isActive ? "page" : undefined)}
                     >
@@ -26,7 +26,7 @@ function Navigation () {
                 </li>
                 <li className="nav-item">
                     <NavLink
-                      to="/contest/"
+                      to="/contest"
                       className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}
                       aria-current={({ isActive }) => (isActive ? "page" : undefined)}
                     >

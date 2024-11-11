@@ -15,4 +15,18 @@ urlpatterns = [
     path("", include(router.urls)),
     path("users/create/", views.CreateUserView.as_view(), name="create-user"),
     path("team/", views.TeamViewSet.as_view(), name="team-detail"),
+    path(
+        "watchlist/",
+        views.WatchlistList.as_view({"get": "list"}),
+        name="watchlist-list",
+    ),
+    path("watchlist/create/", views.WatchlistCreate.as_view(), name="watchlist-create"),
+    path(
+        "watchlist/<int:pk>/", views.WatchlistUpdate.as_view(), name="watchlist-update"
+    ),
+    path(
+        "watchlist/delete/<int:pk>/",
+        views.WatchlistDelete.as_view(),
+        name="watchlist-delete",
+    ),
 ]
