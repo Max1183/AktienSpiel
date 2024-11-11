@@ -5,6 +5,7 @@ import Chart from 'chart.js/auto';
 import * as bootstrap from 'bootstrap';
 import LoadingSite from '../Loading/LoadingSite';
 import WatchlistMarker from './WatchlistMarker';
+import Tooltip from '../Tooltip';
 import { formatCurrency } from '../../utils/helpers';
 
 function StockDetail() {
@@ -190,28 +191,22 @@ function StockDetail() {
                 </div>
 
                 <form role="form" onSubmit={handleOrder} className="flex-grow-1 d-flex flex-column">
-                    <div className="row">
-                        <div className="col-sm-4">
-                            <p className="fs-5 mb-1">
-                                Orderart: <img
-                                    width="15"
-                                    height="15"
-                                    src="/Tooltip.png"
-                                    data-bs-toggle="tooltip"
-                                    data-bs-placement="top"
-                                    data-bs-title="Wähle eine Option" />
-                            </p>
+                    <div className="row mb-3">
+                        <div className="col-sm-4 d-flex align-items-center">
+                            <p className="fs-5 m-0">Orderart:</p>
+                            <Tooltip text="Wähle eine Option" />
                         </div>
-                        <div className="col-sm-8 mb-3">
+                        <div className="col-sm-8">
                             <button type="button" onClick={handleBuy} className={`btn btn-outline-success me-3 ${buy && 'active'} ${!canBuy() && 'disabled'}`}>Kaufen</button>
                             <button type="button" onClick={handleSell} className={`btn btn-outline-danger ${!buy && 'active'} ${!canSell() && 'disabled'}`}>Verkaufen</button>
                         </div>
                     </div>
-                    <div className="row mb-2">
-                        <div className="col-sm-4">
-                            <p className="fs-5 mb-1">Anzahl:</p>
+                    <div className="row mb-3">
+                        <div className="col-sm-4 d-flex align-items-center">
+                            <p className="fs-5 m-0">Anzahl:</p>
+                            <Tooltip text="Gib die Anzahl der Aktien ein" />
                         </div>
-                        <div className="col-sm-8 mb-3">
+                        <div className="col-sm-8">
                             <input
                                 className="form-control"
                                 type="number"
@@ -223,8 +218,14 @@ function StockDetail() {
                             />
                         </div>
                     </div>
-                    <p>Gebühren ca.: {formatCurrency(getFee())}</p>
-                    <p className="m-0">Gesamt ca.: {formatCurrency(getTotal())}</p>
+                    <div className="d-flex justify-content-between align-items-center">
+                        <p className="m-1 ms-0">Gebühren ca.: {formatCurrency(getFee())}</p>
+                        <Tooltip text="Eine ungefähre Berechnung der Gebühren aufgrund des aktuellen Kurses" />
+                    </div>
+                    <div className="d-flex justify-content-between align-items-center">
+                        <p className="m-1 ms-0">Gesamt ca.: {formatCurrency(getTotal())}</p>
+                        <Tooltip text="Eine ungefähre Berechnung des Gesamtpreises aufgrund des aktuellen Kurses und der Orderart" />
+                    </div>
                     <div className="mt-auto mt-3">
                         <button type="submit" className={`btn btn-primary mt-3 ${isDisabled() && 'disabled'}`}>Order-Auftrag erstellen</button>
                     </div>
