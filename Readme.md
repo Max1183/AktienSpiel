@@ -86,3 +86,7 @@ Wenn du einen Fehler findest oder Verbesserungsvorschläge hast, erstelle bitte 
 ## Lizenz
 
 Dieses Projekt ist unter der MIT-Lizenz lizenziert.
+
+## Deployment
+
+1. Dependencies in `requirement.txt` exportieren `poetry export -f requirements.txt --output requirements.txt --without-hashes --with dev`
