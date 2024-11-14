@@ -2,6 +2,7 @@ from django.contrib import admin
 
 from .models import (
     History,
+    RegistrationRequest,
     Stock,
     StockHolding,
     Team,
@@ -33,6 +34,12 @@ class UserProfileInLine(admin.StackedInline):
     max_num = 0
     can_delete = False
     readonly_fields = ["user"]
+
+
+@admin.register(RegistrationRequest)
+class RegistrationRequestAdmin(admin.ModelAdmin):
+    list_display = ("email", "created_at", "activated")
+    readonly_fields = ["email", "created_at", "activated"]
 
 
 @admin.register(Stock)

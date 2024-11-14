@@ -1,7 +1,42 @@
+import uuid
+
+from django.conf import settings
 from django.contrib import admin
 from django.contrib.auth.models import User
+from django.core.mail import send_mail
 from django.db import models
 from django.db.models import F, Sum
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
+
+
+class RegistrationRequest(models.Model):
+    email = models.EmailField()
+    activation_token = models.UUIDField(default=uuid.uuid4, editable=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    activated = models.BooleanField(default=False)
+
+    def send_activation_email(self):
+        activation_link = f"{settings.FRONTEND_URL}/activate/{self.activation_token}"
+
+        subject = "Bestätigen Sie Ihr Konto beim Aktienspiel"
+        html_message = render_to_string(
+            "stocks/activation_email.html", {"activation_link": activation_link}
+        )
+        plain_message = strip_tags(html_message)
+        to = [self.email]
+
+        send_mail(
+            subject,
+            plain_message,
+            None,
+            to,
+            html_message=html_message,
+            fail_silently=False,
+        )
+
+    def __str__(self):
+        return self.email
 
 
 class Stock(models.Model):
@@ -75,6 +110,9 @@ class Watchlist(models.Model):
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
     team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="members")
+    nickname = models.CharField(max_length=20, blank=True, null=True)
+    nickname_cooldown = models.DateTimeField(blank=True, null=True)
+    # avatar = models.ImageField(upload_to="avatars/", blank=True, null=True)
 
     def __str__(self):
         return f"Profile of {self.user.username}"

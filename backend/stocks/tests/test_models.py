@@ -5,7 +5,31 @@ import pytz  # type: ignore
 from django.contrib.auth.models import User
 from django.test import TestCase
 
-from ..models import History, Stock, StockHolding, Team, Transaction
+from ..models import (
+    History,
+    RegistrationRequest,
+    Stock,
+    StockHolding,
+    Team,
+    Transaction,
+)
+
+
+class RegistrationRequestModelTests(TestCase):
+    def test_registration_request_creation(self):
+        registration_request = RegistrationRequest.objects.create(
+            email="test@example.com"
+        )
+        self.assertEqual(registration_request.email, "test@example.com")
+        self.assertFalse(registration_request.activated)
+        self.assertIsNotNone(registration_request.activation_token)
+        self.assertIsNotNone(registration_request.created_at)
+
+    def test_registration_request_str(self):
+        registration_request = RegistrationRequest.objects.create(
+            email="test@example.com"
+        )
+        self.assertEqual(str(registration_request), "test@example.com")
 
 
 class StockModelTests(TestCase):

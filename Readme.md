@@ -77,7 +77,7 @@ Jeder, der die Zusammenarbeit behindert, wird mit sofortiger Wirkung aus dem Pro
 10. Pushe deine Änderungen: `git push origin develop`
 11. Erstelle einen Pull Request von `develop` nach `main` auf GitHub.
 12. Nach erfolgreichem Review und Tests wird der Pull Request auf Github in den main-Branch gemerged.
-13. Aktualisiere deinen lokalen main-Branch: `git checkout main` & `git pull origin main`
+13. Aktualisiere deinen lokalen main-Branch: `git checkout master` & `git pull origin master`
 
 ## Contributing
 

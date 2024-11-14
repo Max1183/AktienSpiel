@@ -1,0 +1,24 @@
+{% extends "admin/base_site.html" %}  <!-- Erbt vom Django Admin Template -->
+{% load i18n %}
+
+{% block content %}
+
+<h1>Spieler registrieren</h1>
+
+<form method="post" action="">
+    {% csrf_token %}  <!-- CSRF-Schutz! -->
+    <label for="email">E-Mail-Adresse:</label><br>
+    <input type="email" id="email" name="email" required><br><br>
+
+    <input type="submit" value="Registrierungsanfrage senden">
+</form>
+
+{% if messages %}
+    <ul class="messagelist">
+        {% for message in messages %}
+            <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+        {% endfor %}
+    </ul>
+{% endif %}
+
+{% endblock %}
