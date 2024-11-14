@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
+from django.core.exceptions import ValidationError
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
@@ -12,7 +13,7 @@ def search_stocks(request):
     if query:
         results = Stock.objects.filter(name__icontains=query)
         data = [
-            {"id": stock.id, "name": stock.name, "current_price": stock.current_price}
+            {"id": stock.pk, "name": stock.name, "current_price": stock.current_price}
             for stock in results
         ]
     else:
@@ -50,9 +51,12 @@ def register_player(request):
 
 
 def validate_activation_token(request, token):
-    registration_request = get_object_or_404(
-        RegistrationRequest, activation_token=token
-    )
+    try:
+        registration_request = get_object_or_404(
+            RegistrationRequest, activation_token=token
+        )
+    except ValidationError:
+        return JsonResponse({"valid": False, "message": "Ungültiges Token"})
 
     if registration_request.activated:
         return JsonResponse({"valid": False, "message": "Bereits aktiviert"})
