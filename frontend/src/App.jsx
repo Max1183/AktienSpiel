@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import {BrowserRouter, Routes, Route, Navigate} from 'react-router-dom'
+import {BrowserRouter, Routes, Route, Navigate, Outlet} from 'react-router-dom'
 import ProtectedRoute from './components/ProtectedRoute'
 import { AlertProvider, useAlert } from './components/Alerts/AlertProvider'
 import AlertList from './components/Alerts/AlertList'
 
 import Login from './pages/Login'
-import Register from './pages/Register'
 import NotFound from './pages/NotFound'
+import ProfileActivation from './pages/ProfileActivation'
 
 import Start from './pages/Start'
 
@@ -31,11 +31,6 @@ import Navigation from './components/Layout/Navigation'
 function Logout() {
     localStorage.clear()
     return <Navigate to="/login" />
-}
-
-function RegisterAndLogout() {
-    localStorage.clear()
-    return <Register />
 }
 
 function Protected(Component, path) {
@@ -72,6 +67,20 @@ function useWindowSize() {
     return windowSize;
 }
 
+function ProtectedLayout() {
+    const { width } = useWindowSize();
+    const small = width < 992;
+
+    return <ProtectedRoute>
+        <Navbar small={small} />
+        <section className="container mt-3">
+            <AlertList />
+            {location.pathname.startsWith('/depot') ? <Depot /> : <Outlet />}
+        </section>
+        {small ? <Navigation /> : <Footer />}
+    </ProtectedRoute>
+}
+
 function App() {
     const { width } = useWindowSize();
     const small = width < 992;
@@ -80,35 +89,35 @@ function App() {
     return <AlertProvider>
         <BrowserRouter future={{v7_relativeSplatPath: true,}}>
             <main className="content">
-                <Navbar small={small} />
-                <section className="container mt-3">
-                    <AlertList />
+                <Routes>
+                    <Route path="/" element={<ProtectedLayout />}>
+                        <Route index element={<Start />} />
+                    </Route>
 
-                    <Routes>
-                        {Protected(Start, "/")}
+                    <Route path="/depot" element={<ProtectedLayout />}>
+                        <Route index element={<StockHoldings />} />
+                        <Route path="transactions" element={<Transactions />} />
+                        <Route path="analysis" element={<Analysis />} />
+                        <Route path="watchlist" element={<Watchlist />} />
+                        <Route path="search" element={<DepotSearch />} />
+                        <Route path="stocks/:id" element={<StockDetail />} />
+                    </Route>
 
-                        <Route path="/depot" element={<ProtectedRoute><Depot /></ProtectedRoute>}>
-                            <Route index element={<StockHoldings />} />
-                            <Route path="transactions" element={<Transactions />} />
-                            <Route path="analysis" element={<Analysis />} />
-                            <Route path="watchlist" element={<Watchlist />} />
-                            <Route path="search" element={<DepotSearch />} />
-                            <Route path="stocks/:id" element={<StockDetail />} />
-                        </Route>
+                    <Route path="/contest" element={<ProtectedLayout />}>
+                        <Route index element={<Contest />} />
+                    </Route>
 
-                        {Protected(Contest, "/contest")}
+                    <Route path="/user" element={<ProtectedLayout />}>
+                        <Route index element={<Navigate to="/user/profile" />} />
+                        <Route path="profile" element={<Profile />} />
+                        <Route path="team" element={<Team />} />
+                    </Route>
 
-                        {Protected(Profile, "/user/profile")}
-                        {Protected(Team, "/user/team")}
-
-                        <Route path="/login" element={<Login />} />
-                        <Route path="/logout" element={<Logout />} />
-                        <Route path="/register" element={<RegisterAndLogout />} />
-                        <Route path="*" element={<NotFound />} />
-                    </Routes>
-
-                </section>
-                {small ? <Navigation /> : <Footer />}
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/logout" element={<Logout />} />
+                    <Route path="/activate/:token" element={<ProfileActivation />} />
+                    <Route path="*" element={<NotFound />} />
+                </Routes>
             </main>
         </BrowserRouter>
     </AlertProvider>
