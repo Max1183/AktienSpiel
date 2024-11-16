@@ -77,7 +77,7 @@ class SearchStocksViewTests(TestCase):
 class RegisterPlayerViewTests(TestCase):
     def setUp(self):
         self.url = reverse("register_player")
-        self.valid_email = "test@example.com"
+        self.valid_email = "test01@example.com"
         self.invalid_email = "invalid_email"
 
         self.user = User.objects.create_superuser(

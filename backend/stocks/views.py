@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
+from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -27,19 +28,25 @@ def register_player(request):
     if request.method == "POST":
         email = request.POST.get("email")
         try:
-            registration_request, created = RegistrationRequest.objects.get_or_create(
-                email=email
-            )
-            if created:
-                registration_request.send_activation_email()
-                messages.success(
-                    request, f"Eine Aktivierungs-E-Mail wurde an {email} gesendet."
+            if User.objects.filter(email=email).exists():
+                messages.error(
+                    request,
+                    f"Ein Benutzer mit der E-Mail-Adresse {email} existiert bereits.",
                 )
             else:
-                messages.warning(
-                    request,
-                    f"Eine Registrierungsanfrage für {email} existiert bereits.",
+                registration_request, created = (
+                    RegistrationRequest.objects.get_or_create(email=email)
                 )
+                if created:
+                    registration_request.send_activation_email()
+                    messages.success(
+                        request, f"Eine Aktivierungs-E-Mail wurde an {email} gesendet."
+                    )
+                else:
+                    messages.warning(
+                        request,
+                        f"Eine Registrierungsanfrage für {email} existiert bereits.",
+                    )
 
         except Exception as e:  # Fange allgemeine Ausnahmen ab
             messages.error(
