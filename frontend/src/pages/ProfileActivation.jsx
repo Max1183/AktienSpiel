@@ -4,7 +4,7 @@ import api from '../api';
 
 function ProfileActivation({ match }) {
     const [step, setStep] = useState(0);
-    const [formData, setFormData] = useState({ first_name: '', last_name: '', nickname: '', password: '', password_confirmation: '', team_name: '', team_code: ''});
+    const [formData, setFormData] = useState({ first_name: '', last_name: '', username: '', password: '', password_confirmation: '', team_name: '', team_code: ''});
     const [email, setEmail] = useState('');
     const [joinTeam, setJoinTeam] = useState(true);
     const [error, setError] = useState(null);
@@ -52,23 +52,27 @@ function ProfileActivation({ match }) {
         e.preventDefault();
 
         try {
-            const createUserResponse = await api.post('/api/create_user/', {
+            const createUserResponse = await api.post('/api/create-user/', {
                 token: token,
                 email: email,
                 first_name: formData.first_name,
                 last_name: formData.last_name,
-                nickname: formData.nickname,
+                username: formData.username,
                 password: formData.password,
-                team_name: formData.team_name,
                 team_code: formData.team_code,
+                team_name: formData.team_name,
                 join_team: joinTeam
             });
 
-            localstorage.clear();
+            console.log('createUserResponse:', createUserResponse);
+
             navigate('/login');
         } catch (err) {
-            setError(err.message || 'Fehler beim Erstellen des Accounts.');
-            addAlert('Fehler beim Erstellen des Accounts!', 'danger');
+            try {
+                setError(err.response.data.detail[0])
+            } catch (exception) {
+                setError(err.message || 'Fehler beim Erstellen des Accounts.');
+            }
         }
     };
 
@@ -83,28 +87,28 @@ function ProfileActivation({ match }) {
             case 1:
                 return <>
                     <div className="col-md-6">
-                        <label for="inputFirstName" class="form-label">Vorname</label>
-                        <input type="text" name="first_name" onChange={handleChange} value={formData.first_name} class="form-control" id="inputFirstName" />
+                        <label htmlFor="inputFirstName" className="form-label">Vorname</label>
+                        <input type="text" name="first_name" onChange={handleChange} value={formData.first_name} className="form-control" id="inputFirstName" />
                     </div>
                     <div className="col-md-6">
-                        <label for="inputLastName" class="form-label">Nachname</label>
-                        <input type="text" name="last_name" onChange={handleChange} value={formData.last_name} class="form-control" id="inputLastName" />
+                        <label htmlFor="inputLastName" className="form-label">Nachname</label>
+                        <input type="text" name="last_name" onChange={handleChange} value={formData.last_name} className="form-control" id="inputLastName" />
                     </div>
                     <div className="col-12">
-                        <label for="inputNickname" class="form-label">Spitzname</label>
-                        <input type="text" name="nickname" onChange={handleChange} value={formData.nickname} class="form-control" id="inputNickname" />
+                        <label htmlFor="inputUsername" className="form-label">Benutzername</label>
+                        <input type="text" name="username" onChange={handleChange} value={formData.nickname} className="form-control" id="inputUsername" />
                     </div>
                     <div className="col-md-6">
-                        <label for="inputPassword" class="form-label">Passwort</label>
-                        <input type="password" name="password" onChange={handleChange} value={formData.password} class="form-control" id="inputPassword" />
+                        <label htmlFor="inputPassword" className="form-label">Passwort</label>
+                        <input type="password" name="password" onChange={handleChange} value={formData.password} className="form-control" id="inputPassword" />
                     </div>
                     <div className="col-md-6">
-                        <label for="inputPasswordConfirmation" class="form-label">Passwort nochmal eingeben</label>
-                        <input type="password" name="password_confirmation" onChange={handleChange} value={formData.password_confirmation} class="form-control" id="inputPasswordConfirmation" />
+                        <label htmlFor="inputPasswordConfirmation" className="form-label">Passwort nochmal eingeben</label>
+                        <input type="password" name="password_confirmation" onChange={handleChange} value={formData.password_confirmation} className="form-control" id="inputPasswordConfirmation" />
                     </div>
                     <div className="col-12 d-flex justify-content-between">
                         <button className="btn btn-primary" onClick={handlePrevious}>Zurück</button>
-                        <button className="btn btn-primary" onClick={handleNext} disabled={!formData.first_name || !formData.last_name || !formData.nickname || !formData.password || !formData.password_confirmation || formData.password !== formData.password_confirmation || error}>Weiter</button>
+                        <button className="btn btn-primary" onClick={handleNext} disabled={!formData.first_name || !formData.last_name || !formData.username || !formData.password || !formData.password_confirmation || formData.password !== formData.password_confirmation || error}>Weiter</button>
                     </div>
                 </>
             case 2:
@@ -112,24 +116,24 @@ function ProfileActivation({ match }) {
                     <div className="col-12 d-flex">
                         <div className="form-check">
                             <input className="form-check-input" type="radio" name="flexRadioDefault" id="flexRadioDefault1" onChange={() => setJoinTeam(true)} checked={joinTeam} />
-                            <label className="form-check-label" for="flexRadioDefault1">
+                            <label className="form-check-label" htmlFor="flexRadioDefault1">
                                 Team beitreten
                             </label>
                         </div>
                         <div className="form-check ms-5">
                             <input className="form-check-input" type="radio" name="flexRadioDefault" id="flexRadioDefault2" onChange={() => setJoinTeam(false)} checked={!joinTeam} />
-                            <label className="form-check-label" for="flexRadioDefault2">
+                            <label className="form-check-label" htmlFor="flexRadioDefault2">
                                 Team erstellen
                             </label>
                         </div>
                     </div>
                     <div className="col-12">
                         {joinTeam ? <>
-                            <label for="inputTeamCode" class="form-label">Gib den Team-Code ein:</label>
-                            <input type="text" name="team_code" onChange={handleChange} value={formData.team_code} class="form-control" id="inputTeamCode" />
+                            <label htmlFor="inputTeamCode" className="form-label">Gib den Team-Code ein:</label>
+                            <input type="text" name="team_code" onChange={handleChange} value={formData.team_code} className="form-control" id="inputTeamCode" />
                         </> : <>
-                            <label for="inputTeamName" class="form-label">Gib den Team-Namen ein:</label>
-                            <input type="text" name="team_name" onChange={handleChange} value={formData.team_name} class="form-control" id="inputTeamName" />
+                            <label htmlFor="inputTeamName" className="form-label">Gib den Team-Namen ein:</label>
+                            <input type="text" name="team_name" onChange={handleChange} value={formData.team_name} className="form-control" id="inputTeamName" />
                         </>}
                     </div>
                     <div className="col-12 d-flex justify-content-between">
@@ -146,7 +150,7 @@ function ProfileActivation({ match }) {
                                 <br />
                                 <strong>Vorname:</strong> {formData.first_name}<br />
                                 <strong>Nachname:</strong> {formData.last_name}<br />
-                                <strong>Spitzname:</strong> {formData.nickname}<br />
+                                <strong>Benutzername:</strong> {formData.username}<br />
                                 <strong>E-Mail:</strong> {email}<br />
                                 <strong>Team:</strong> {joinTeam ? `Beitreten mit Code "${formData.team_code}"` : `"${formData.team_name}" erstellen`}<br />
                             </p>
@@ -164,11 +168,11 @@ function ProfileActivation({ match }) {
     };
 
     return <div className="container mt-5">
-        {step > 0 && <>
+        {isValid && step > 0 && <>
             <h1>Profil aktivieren</h1>
             <p>Schritt {step} von 3</p>
+            {error && <div className="alert alert-danger">{error}</div>}
         </>}
-        {error && <div className="alert alert-danger">{error}</div>}
         {!isValid ? (
             <div className="text-center mt-5">
                 <h1>Hoppla, dein Token leider nicht gültig</h1>

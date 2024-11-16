@@ -1,3 +1,5 @@
+import binascii
+import os
 import uuid
 
 from django.conf import settings
@@ -6,6 +8,8 @@ from django.contrib.auth.models import User
 from django.core.mail import send_mail
 from django.db import models
 from django.db.models import F, Sum
+from django.db.models.signals import pre_save
+from django.dispatch import receiver
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 
@@ -76,6 +80,7 @@ class Team(models.Model):
     name = models.CharField(max_length=20)
     balance = models.DecimalField(max_digits=20, decimal_places=2, default=100000)
     stocks = models.ManyToManyField(Stock, through="StockHolding")
+    code = models.CharField(max_length=8, unique=True, blank=True)
 
     def __str__(self):
         return self.name
@@ -97,6 +102,18 @@ class Team(models.Model):
         self.save()
 
 
+@receiver(pre_save, sender=Team)
+def generate_team_code(sender, instance, **kwargs):
+    if not instance.code:
+        while True:
+            random_bytes = os.urandom(4)
+            code = binascii.hexlify(random_bytes).decode("utf-8")[:8]
+
+            if not Team.objects.filter(code=code).exists():
+                instance.code = code
+                break
+
+
 class Watchlist(models.Model):
     stock = models.ForeignKey(Stock, on_delete=models.CASCADE)
     team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="watchlist")
@@ -110,8 +127,8 @@ class Watchlist(models.Model):
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
     team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="members")
-    nickname = models.CharField(max_length=20, blank=True, null=True)
-    nickname_cooldown = models.DateTimeField(blank=True, null=True)
+    first_name = models.CharField(max_length=20, blank=True, null=True)
+    last_name = models.CharField(max_length=20, blank=True, null=True)
     # avatar = models.ImageField(upload_to="avatars/", blank=True, null=True)
 
     def __str__(self):

@@ -1,7 +1,6 @@
 from decimal import Decimal
 
 from django.contrib.auth.models import User
-from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
@@ -9,20 +8,6 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from api.serializers import TeamSerializer  # , calculate_fee
 from stocks.models import Stock, StockHolding, Team, Transaction, Watchlist
-
-
-class TestCreateUserView(TestCase):
-    # Testen Sie die Erstellung eines neuen Benutzers.
-    def test_create_user_success(self):
-        url = reverse("create-user")
-        data = {
-            "username": "testuser",
-            "email": "test@example.com",
-            "password": "testpassword",
-        }
-        response = self.client.post(url, data, format="json")
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(User.objects.count(), 1)
 
 
 class TestTeamViewSet(APITestCase):

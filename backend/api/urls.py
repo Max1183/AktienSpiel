@@ -13,7 +13,7 @@ router.register(r"transactions", views.TransactionViewSet, basename="transaction
 urlpatterns = [
     path("search/", stock_views.search_stocks, name="stock-search"),
     path("", include(router.urls)),
-    path("users/create/", views.CreateUserView.as_view(), name="create-user"),
+    path("create-user/", views.CreateUserView.as_view(), name="create-user"),
     path("team/", views.TeamViewSet.as_view(), name="team-detail"),
     path(
         "watchlist/",

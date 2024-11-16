@@ -1,7 +1,15 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
 
-from stocks.models import History, Stock, StockHolding, Team, Transaction, Watchlist
+from stocks.models import (
+    History,
+    RegistrationRequest,
+    Stock,
+    StockHolding,
+    Team,
+    Transaction,
+    Watchlist,
+)
 from stocks.transactions import execute_transaction
 
 
@@ -9,17 +17,124 @@ def calculate_fee(current_price, amount):
     return max(15, int(float(current_price * amount) * 0.001))
 
 
-class UserSerializer(serializers.ModelSerializer):
+class UserCreateSerializer(serializers.ModelSerializer):
     """Serializer für Benutzer."""
+
+    token = serializers.UUIDField(write_only=True)
+    first_name = serializers.CharField(max_length=20, write_only=True)
+    last_name = serializers.CharField(max_length=20, write_only=True)
+    team_code = serializers.CharField(max_length=8, required=False, allow_blank=True)
+    team_name = serializers.CharField(required=False, allow_blank=True)
+    join_team = serializers.BooleanField(write_only=True)
 
     class Meta:
         model = User
-        fields = ["id", "username", "email", "password"]
+        fields = [
+            "token",
+            "email",
+            "first_name",
+            "last_name",
+            "username",
+            "password",
+            "team_code",
+            "team_name",
+            "join_team",
+        ]
         extra_kwargs = {"password": {"write_only": True}}
+
+    def validate(self, data):  # noqa: C901
+        """Validiert die Eingaben."""
+        try:
+            registration_request = RegistrationRequest.objects.get(
+                activation_token=data["token"]
+            )
+        except RegistrationRequest.DoesNotExist:
+            raise serializers.ValidationError(
+                {"detail": ["Dieses Token ist ungültig."]}
+            )
+
+        if registration_request.email != data["email"]:
+            raise serializers.ValidationError(
+                {
+                    "detail": [
+                        "Diese E-Mail-Adresse wurde nicht mit diesem Token registriert."
+                    ]
+                }
+            )
+
+        if User.objects.filter(email=data["email"]).exists():
+            raise serializers.ValidationError(
+                {"detail": ["Diese E-Mail-Adresse ist bereits registriert."]}
+            )
+
+        if User.objects.filter(username=data["username"]).exists():
+            raise serializers.ValidationError(
+                {"detail": ["Dieser Nutzername ist bereits vergeben."]}
+            )
+
+        if len(data["password"]) < 8:
+            raise serializers.ValidationError(
+                {"detail": ["Das Passwort muss mindestens 8 Zeichen lang sein."]}
+            )
+
+        join_team = data["join_team"]
+
+        if join_team:
+            if data["team_code"] == "":
+                raise serializers.ValidationError(
+                    {"detail": ["Bitte geben Sie einen Teamcode ein."]}
+                )
+            try:
+                team = Team.objects.get(code=data["team_code"])
+            except Team.DoesNotExist:
+                raise serializers.ValidationError(
+                    {"detail": ["Dieser Teamcode ist ungültig."]}
+                )
+            if team.members.count() >= 4:
+                raise serializers.ValidationError(
+                    {"detail": ["Dieses Team ist bereits voll."]}
+                )
+
+        else:
+            if data["team_name"] == "":
+                raise serializers.ValidationError(
+                    {"detail": ["Bitte geben Sie einen Teamnamen ein."]}
+                )
+            if Team.objects.filter(name=data["team_name"]).exists():
+                raise serializers.ValidationError(
+                    {"detail": ["Dieser Teamname ist bereits vergeben."]}
+                )
+
+        return data
 
     def create(self, validated_data):
         """Erstellt einen neuen Benutzer."""
+        token = validated_data.pop("token")
+        first_name = validated_data.pop("first_name")
+        last_name = validated_data.pop("last_name")
+        team_code = validated_data.pop("team_code", None)
+        team_name = validated_data.pop("team_name", None)
+        join_team = validated_data.pop("join_team")
+
         user = User.objects.create_user(**validated_data)
+
+        if join_team:
+            team = Team.objects.get(code=team_code)
+        else:
+            team = Team.objects.create(
+                name=team_name,
+            )
+
+        user_profile = user.profile
+        user_profile.team = team
+        user_profile.first_name = first_name
+        user_profile.last_name = last_name
+        user_profile.save()
+
+        registration_request = RegistrationRequest.objects.get(activation_token=token)
+        registration_request.activated = True
+        registration_request.save()
+
         return user
 
 
@@ -82,7 +197,7 @@ class StockSerializer(serializers.ModelSerializer):
         team = self.context["request"].user.profile.team
         try:
             watchlist_entry = Watchlist.objects.get(team=team, stock=obj)
-            return watchlist_entry.id
+            return watchlist_entry.pk
         except Watchlist.DoesNotExist:
             return None
 

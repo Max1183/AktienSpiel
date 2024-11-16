@@ -1,4 +1,3 @@
-from django.contrib.auth.models import User
 from django.db import transaction
 from rest_framework import generics, mixins, serializers, status, viewsets
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -13,7 +12,7 @@ from .serializers import (
     TransactionCreateSerializer,
     TransactionListSerializer,
     TransactionUpdateSerializer,
-    UserSerializer,
+    UserCreateSerializer,
     WatchlistCreateSerializer,
     WatchlistSerializer,
     WatchlistUpdateSerializer,
@@ -23,13 +22,15 @@ from .serializers import (
 class CreateUserView(generics.CreateAPIView):
     """View zum Erstellen neuer Benutzer."""
 
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
+    serializer_class = UserCreateSerializer
     permission_classes = [AllowAny]
 
     @transaction.atomic
     def post(self, request, *args, **kwargs):
-        return super().post(request, *args, **kwargs)
+        return super().create(request, *args, **kwargs)
+
+    def perform_create(self, serializer):
+        serializer.save()
 
 
 class TeamViewSet(generics.RetrieveAPIView):
