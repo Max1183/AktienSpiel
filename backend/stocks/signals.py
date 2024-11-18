@@ -10,8 +10,3 @@ def create_profile(sender, instance, created, **kwargs):
     if created:
         team, created = Team.objects.get_or_create(name="default")
         UserProfile.objects.create(user=instance, team=team)
-
-
-@receiver(post_save, sender=User)
-def save_profile(sender, instance, **kwargs):
-    instance.profile.save()

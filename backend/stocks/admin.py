@@ -2,6 +2,7 @@ from django.contrib import admin
 
 from .models import (
     History,
+    RegistrationRequest,
     Stock,
     StockHolding,
     Team,
@@ -35,6 +36,12 @@ class UserProfileInLine(admin.StackedInline):
     readonly_fields = ["user"]
 
 
+@admin.register(RegistrationRequest)
+class RegistrationRequestAdmin(admin.ModelAdmin):
+    list_display = ("email", "created_at", "activated")
+    readonly_fields = ["email", "created_at", "activated"]
+
+
 @admin.register(Stock)
 class StockAdmin(admin.ModelAdmin):
     inlines = [HistoryInline]
@@ -47,15 +54,15 @@ class StockAdmin(admin.ModelAdmin):
 @admin.register(Team)
 class TeamAdmin(admin.ModelAdmin):
     inlines = [UserProfileInLine, StockHoldingInline, WatchlistInline]
-    fields = ["name", "team_member_count", "balance", "portfolio_value"]
+    fields = ["name", "team_member_count", "balance", "portfolio_value", "code"]
     list_display = ["name", "team_member_count", "portfolio_value"]
     search_fields = ["name"]
-    readonly_fields = ["team_member_count", "portfolio_value"]
+    readonly_fields = ["team_member_count", "portfolio_value", "code"]
 
 
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
-    fields = ["user", "team"]
+    fields = ["user", "team", "first_name", "last_name"]
     list_display = ["user", "team"]
     search_fields = ["user"]
 

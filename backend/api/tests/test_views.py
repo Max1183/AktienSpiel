@@ -1,28 +1,87 @@
 from decimal import Decimal
 
 from django.contrib.auth.models import User
-from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from api.serializers import TeamSerializer  # , calculate_fee
-from stocks.models import Stock, StockHolding, Team, Transaction, Watchlist
+from stocks.models import (
+    RegistrationRequest,
+    Stock,
+    StockHolding,
+    Team,
+    Transaction,
+    Watchlist,
+)
 
 
-class TestCreateUserView(TestCase):
-    # Testen Sie die Erstellung eines neuen Benutzers.
-    def test_create_user_success(self):
-        url = reverse("create-user")
-        data = {
-            "username": "testuser",
-            "email": "test@example.com",
-            "password": "testpassword",
+class TestCreateUserView(APITestCase):
+    def setUp(self):
+        self.url = reverse("create-user")
+        self.team = Team.objects.create(name="Team 1")
+        self.team_code = self.team.code
+        self.email = "test@example.com"
+
+        self.registration_request = RegistrationRequest.objects.create(email=self.email)
+        self.token = self.registration_request.activation_token
+
+        self.data = {
+            "token": self.token,
+            "email": self.email,
+            "first_name": "John",
+            "last_name": "Doe",
+            "username": "johndoe",
+            "password": "testpassword1",
+            "team_code": self.team_code,
+            "team_name": "Test Team",
+            "join_team": True,
         }
-        response = self.client.post(url, data, format="json")
+
+    def test_create_user_invalid_token(self):
+        data = self.data.copy()
+        data["token"] = "invalid_token"
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_create_user_invalid_email(self):
+        data = self.data.copy()
+        data["email"] = "invalid_email"
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_create_user_invalid_password(self):
+        data = self.data.copy()
+        data["password"] = "short"
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_create_user_invalid_team_code(self):
+        data = self.data.copy()
+        data["team_code"] = "invalid_code"
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_create_user_invalid_team_name(self):
+        data = self.data.copy()
+        data["team_name"] = ""
+        data["join_team"] = False
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_create_user_valid(self):
+        response = self.client.post(self.url, self.data, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(User.objects.count(), 1)
+
+        user = User.objects.get(username="johndoe")
+        self.assertEqual(user.profile.first_name, "John")
+        self.assertEqual(user.profile.last_name, "Doe")
+        self.assertEqual(user.email, "test@example.com")
+        self.assertEqual(user.profile.team.name, "Team 1")
+        self.assertEqual(user.profile.team.code, self.team_code)
+        self.assertTrue(user.profile.team.members.filter(user=user).exists())
 
 
 class TestTeamViewSet(APITestCase):
