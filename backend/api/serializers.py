@@ -67,19 +67,46 @@ class UserCreateSerializer(serializers.ModelSerializer):
                 {"detail": ["Diese E-Mail-Adresse ist bereits registriert."]}
             )
 
+        if len(data["first_name"]) < 3 or len(data["first_name"]) > 20:
+            raise serializers.ValidationError(
+                {"detail": ["Der Vorname muss zwischen 3 und 20 Zeichen lang sein."]}
+            )
+
+        if len(data["last_name"]) < 3 or len(data["last_name"]) > 20:
+            raise serializers.ValidationError(
+                {"detail": ["Der Nachname muss zwischen 3 und 20 Zeichen lang sein."]}
+            )
+
+        if len(data["username"]) < 3 or len(data["username"]) > 20:
+            raise serializers.ValidationError(
+                {"detail": ["Der Nutzername muss zwischen 3 und 20 Zeichen lang sein."]}
+            )
+
         if User.objects.filter(username=data["username"]).exists():
             raise serializers.ValidationError(
                 {"detail": ["Dieser Nutzername ist bereits vergeben."]}
             )
 
-        if len(data["password"]) < 8:
+        if len(data["password"]) < 8 or len(data["password"]) > 20:
             raise serializers.ValidationError(
-                {"detail": ["Das Passwort muss mindestens 8 Zeichen lang sein."]}
+                {"detail": ["Das Passwort muss zwischen 8 und 20 Zeichen lang sein."]}
             )
 
-        join_team = data["join_team"]
+        if not any(char.isdigit() for char in data["password"]):
+            raise serializers.ValidationError(
+                {"detail": ["Das Passwort muss mindestens eine Zahl enthalten."]}
+            )
 
-        if join_team:
+        if not any(char.isalpha() for char in data["password"]):
+            raise serializers.ValidationError(
+                {
+                    "detail": [
+                        "Das Passwort muss mindestens einen Großbuchstaben enthalten."
+                    ]
+                }
+            )
+
+        if data["join_team"]:
             if data["team_code"] == "":
                 raise serializers.ValidationError(
                     {"detail": ["Bitte geben Sie einen Teamcode ein."]}

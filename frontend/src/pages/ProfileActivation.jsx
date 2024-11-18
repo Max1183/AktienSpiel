@@ -1,18 +1,34 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom'
 import api from '../api';
+import FormField from '../components/FormField';
 
 function ProfileActivation({ match }) {
     const [step, setStep] = useState(0);
-    const [formData, setFormData] = useState({ first_name: '', last_name: '', username: '', password: '', password_confirmation: '', team_name: '', team_code: ''});
-    const [email, setEmail] = useState('');
-    const [joinTeam, setJoinTeam] = useState(true);
     const [error, setError] = useState(null);
+
     const { token } = useParams();
     const [isValid, setIsValid] = useState(true);
+
+    const [email, setEmail] = useState('');
+    const [joinTeam, setJoinTeam] = useState(true);
+    const [joinTeamName, setJoinTeamName] = useState('');
+
+    const [formData, setFormData] = useState({
+        first_name: '',
+        last_name: '',
+        username: '',
+        password: '',
+        password_confirmation: '',
+        team_name: '',
+        team_code: ''
+    });
+    const [validationErrors, setValidationErrors] = useState({});
+
     const navigate = useNavigate();
 
     useEffect(() => {
+        localStorage.clear();
         const fetchData = async () => {
             try {
                 const response = await api.get(`/validate_activation_token/${token}/`);
@@ -29,17 +45,122 @@ function ProfileActivation({ match }) {
         fetchData();
     }, [token]);
 
+    const validateField = async (fieldName, value) => {
+        fieldName = fieldName === 'password_confirmation' ? 'password' : fieldName;
+
+        if (validationErrors[fieldName] !== null) return;
+
+        setValidationErrors({ ...validationErrors, [fieldName]: "Überprüfen..." });
+
+        try {
+            const response = await api.post('/api/validate-form/', {
+                field: fieldName,
+                value: value,
+            });
+
+            if (response.data.valid) {
+                setValidationErrors({ ...validationErrors, [fieldName]: null });
+
+                if (fieldName === 'team_code') {
+                    setJoinTeamName(response.data.team_name);
+                }
+            } else {
+                setValidationErrors({ ...validationErrors, [fieldName]: response.data.message });
+            }
+        } catch (error) {
+            setError(error.message);
+            try {
+                setValidationErrors({ ...validationErrors, [fieldName]: error.response.data.message });
+            } catch (error1) {
+                setError(error.message);
+            }
+        }
+    };
+
+    const validateFrontend = (fieldName, value) => {
+        let error = null;
+
+        switch (fieldName) {
+            case 'first_name':
+                if (value.length < 3 || value.length > 20) {
+                    error = "Vorname muss zwischen 3 und 20 Zeichen lang sein.";
+                }
+                break;
+            case 'last_name':
+                if (value.length < 3 || value.length > 20) {
+                    error = "Nachname muss zwischen 3 und 20 Zeichen lang sein.";
+                }
+                break;
+            case 'username':
+                if (value.length < 3 || value.length > 20) {
+                    error = "Benutzername muss zwischen 3 und 20 Zeichen lang sein.";
+                }
+                break;
+            case 'password':
+            case 'password_confirmation':
+                const other_value = fieldName === 'password' ? formData.password_confirmation : formData.password;
+                if (value.length < 8 || value.length > 20) {
+                    error = "Passwort muss zwischen 8 und 20 Zeichen lang sein.";
+                } else if (value !== other_value) {
+                    error = "Passwort und Passwortbestätigung stimmen nicht überein.";
+                }
+                fieldName = 'password'
+                break;
+            case 'team_name':
+                if (value.length < 3 || value.length > 20) {
+                    error = "Teamname muss zwischen 3 und 20 Zeichen lang sein.";
+                }
+                break;
+            case 'team_code':
+                if (value.length !== 8) {
+                    error = "Teamcode muss 8 Zeichen lang sein.";
+                }
+                break;
+        }
+
+        return [fieldName, error];
+    }
+
     const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+        const fieldName = e.target.name;
+        const value = e.target.value;
+
+        setFormData({ ...formData, [fieldName]: value });
+
+        const [fieldName1, error] = validateFrontend(fieldName, value);
+        setValidationErrors({ ...validationErrors, [fieldName1]: error });
+    };
+
+    const handleBlur = async (e) => {
+        validateField(e.target.name, e.target.value);
+    }
+
+    const isInvalidForm = () => {
+        switch (step) {
+            case 0:
+                return !isValid || error;
+            case 1:
+                return error || validationErrors['first_name'] || validationErrors['last_name'] || validationErrors['username'] || validationErrors['password'] || validationErrors['password_confirmation'];
+            case 2:
+                return error || (joinTeam && validationErrors['team_code']) || (!joinTeam && validationErrors['team_name']);
+            case 3:
+                return error;
+            default:
+                return true;
+        }
     };
 
     const handleNext = () => {
-        if (step === 1 && formData.password !== formData.password_confirmation) {
-            setError("Passwörter stimmen nicht überein.");
-            return;
-        }
         setStep(step + 1);
         setError(null);
+
+        let newValidationErrors = {};
+        Object.entries(formData).forEach(([field_name, value]) => {
+            const [fieldName1, error1] = validateFrontend(field_name, value);
+            newValidationErrors[fieldName1] = error1;
+        });
+
+        setValidationErrors(newValidationErrors);
     };
 
     const handlePrevious = (e) => {
@@ -64,12 +185,10 @@ function ProfileActivation({ match }) {
                 join_team: joinTeam
             });
 
-            console.log('createUserResponse:', createUserResponse);
-
             navigate('/login');
         } catch (err) {
             try {
-                setError(err.response.data.detail[0])
+                setError(err.response.data.detail)
             } catch (exception) {
                 setError(err.message || 'Fehler beim Erstellen des Accounts.');
             }
@@ -82,33 +201,24 @@ function ProfileActivation({ match }) {
                 return <div className="text-center mt-5">
                     <h1>Herzlich Willkommen beim Aktienspiel</h1>
                     <p className="fs-5">Bitte gib zuerst ein paar Informationen an, dann kann es losgehen!</p>
-                    <button type="button" className="btn btn-primary" onClick={handleNext} disabled={!isValid || error}>Weiter</button>
+                    <button type="button" className="btn btn-primary" onClick={handleNext} disabled={isInvalidForm()}>Weiter</button>
                 </div>
             case 1:
                 return <>
-                    <div className="col-md-6">
-                        <label htmlFor="inputFirstName" className="form-label">Vorname</label>
-                        <input type="text" name="first_name" onChange={handleChange} value={formData.first_name} className="form-control" id="inputFirstName" />
-                    </div>
-                    <div className="col-md-6">
-                        <label htmlFor="inputLastName" className="form-label">Nachname</label>
-                        <input type="text" name="last_name" onChange={handleChange} value={formData.last_name} className="form-control" id="inputLastName" />
-                    </div>
-                    <div className="col-12">
-                        <label htmlFor="inputUsername" className="form-label">Benutzername</label>
-                        <input type="text" name="username" onChange={handleChange} value={formData.nickname} className="form-control" id="inputUsername" />
-                    </div>
-                    <div className="col-md-6">
-                        <label htmlFor="inputPassword" className="form-label">Passwort</label>
-                        <input type="password" name="password" onChange={handleChange} value={formData.password} className="form-control" id="inputPassword" />
-                    </div>
-                    <div className="col-md-6">
-                        <label htmlFor="inputPasswordConfirmation" className="form-label">Passwort nochmal eingeben</label>
-                        <input type="password" name="password_confirmation" onChange={handleChange} value={formData.password_confirmation} className="form-control" id="inputPasswordConfirmation" />
-                    </div>
+                    <FormField label="Vorname" type="text" name="first_name" value={formData.first_name}
+                        onChange={handleChange} error={validationErrors.first_name} width="col-md-6" />
+                    <FormField label="Nachname" type="text" name="last_name" value={formData.last_name}
+                        onChange={handleChange} error={validationErrors.last_name} width="col-md-6" />
+                    <FormField label="Benutzername" type="text" name="username" value={formData.username}
+                        onChange={handleChange} onBlur={handleBlur} error={validationErrors.username} />
+                    <FormField label="Passwort" type="password" name="password" value={formData.password}
+                        onChange={handleChange} onBlur={handleBlur} error={validationErrors.password} width="col-md-6" />
+                    <FormField label="Passwort bestätigen" type="password" name="password_confirmation" value={formData.password_confirmation}
+                        onChange={handleChange} onBlur={handleBlur} error={validationErrors.password} width="col-md-6" />
+
                     <div className="col-12 d-flex justify-content-between">
                         <button className="btn btn-primary" onClick={handlePrevious}>Zurück</button>
-                        <button className="btn btn-primary" onClick={handleNext} disabled={!formData.first_name || !formData.last_name || !formData.username || !formData.password || !formData.password_confirmation || formData.password !== formData.password_confirmation || error}>Weiter</button>
+                        <button className="btn btn-primary" onClick={handleNext} disabled={isInvalidForm()}>Weiter</button>
                     </div>
                 </>
             case 2:
@@ -127,18 +237,16 @@ function ProfileActivation({ match }) {
                             </label>
                         </div>
                     </div>
-                    <div className="col-12">
-                        {joinTeam ? <>
-                            <label htmlFor="inputTeamCode" className="form-label">Gib den Team-Code ein:</label>
-                            <input type="text" name="team_code" onChange={handleChange} value={formData.team_code} className="form-control" id="inputTeamCode" />
-                        </> : <>
-                            <label htmlFor="inputTeamName" className="form-label">Gib den Team-Namen ein:</label>
-                            <input type="text" name="team_name" onChange={handleChange} value={formData.team_name} className="form-control" id="inputTeamName" />
-                        </>}
-                    </div>
+                    {joinTeam ? <>
+                        <FormField label="Team-Code" type="text" name="team_code" value={formData.team_code}
+                            onChange={handleChange} onBlur={handleBlur} error={validationErrors.team_code} />
+                    </> : <>
+                        <FormField label="Team-Name" type="text" name="team_name" value={formData.team_name}
+                            onChange={handleChange} onBlur={handleBlur} error={validationErrors.team_name} />
+                    </>}
                     <div className="col-12 d-flex justify-content-between">
                         <button className="btn btn-primary" onClick={handlePrevious}>Zurück</button>
-                        <button className="btn btn-primary" onClick={handleNext} disabled={(!formData.team_code && joinTeam) || (!formData.team_name && !joinTeam) || error}>Weiter</button>
+                        <button className="btn btn-primary" onClick={handleNext} disabled={isInvalidForm()}>Weiter</button>
                     </div>
                 </>
             case 3:
@@ -152,12 +260,12 @@ function ProfileActivation({ match }) {
                                 <strong>Nachname:</strong> {formData.last_name}<br />
                                 <strong>Benutzername:</strong> {formData.username}<br />
                                 <strong>E-Mail:</strong> {email}<br />
-                                <strong>Team:</strong> {joinTeam ? `Beitreten mit Code "${formData.team_code}"` : `"${formData.team_name}" erstellen`}<br />
+                                <strong>Team:</strong> {joinTeam ? `${joinTeamName ? `Team "${joinTeamName}" b` : 'B'}eitreten mit Code "${formData.team_code}"` : `"${formData.team_name}" erstellen`}<br />
                             </p>
                         </div>
                         <div className="col-12 d-flex justify-content-between">
                             <button className="btn btn-primary" onClick={handlePrevious}>Zurück</button>
-                            <button className="btn btn-primary" onClick={handleSubmit} disabled={error}>Bestätigen</button>
+                            <button className="btn btn-primary" onClick={handleSubmit} disabled={isInvalidForm()}>Bestätigen</button>
                         </div>
                     </div>
                 );

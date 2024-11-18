@@ -29,4 +29,5 @@ urlpatterns = [
         views.WatchlistDelete.as_view(),
         name="watchlist-delete",
     ),
+    path("validate-form/", views.ValidateFormView.as_view(), name="validate-form"),
 ]

@@ -1,9 +1,11 @@
+from django.contrib.auth.models import User
 from django.db import transaction
 from rest_framework import generics, mixins, serializers, status, viewsets
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
-from stocks.models import Stock, StockHolding, Transaction, Watchlist
+from stocks.models import Stock, StockHolding, Team, Transaction, Watchlist
 
 from .serializers import (
     StockHoldingSerializer,
@@ -156,3 +158,65 @@ class TransactionViewSet(
             "description", instance.description
         )
         instance.save()
+
+
+class ValidateFormView(APIView):
+    """View zum Validieren von Formulardaten."""
+
+    permission_classes = [AllowAny]
+
+    def post(self, request):  # Noqa: C901
+        try:
+            field = request.data.get("field")
+            value = request.data.get("value")
+            message = ""
+
+            if field == "username":
+                if User.objects.filter(username=value).exists():
+                    message = "Dieser Benutzername existiert bereits."
+
+            elif field == "password":
+                if len(value) < 8:
+                    message = "Das Passwort muss mindestens 8 Zeichen lang sein."
+                elif not any(char.isdigit() for char in value):
+                    message = "Das Passwort muss mindestens eine Zahl enthalten."
+                elif not any(char.isalpha() for char in value):
+                    message = "Das Passwort muss mindestens einen Buchstaben enthalten."
+
+            elif field == "team_code":
+                try:
+                    team = Team.objects.get(code=value)
+
+                    if team.members.count() >= 4:
+                        message = "Das Team ist bereits voll."
+                    else:
+                        return Response(
+                            {"valid": True, "team_name": team.name},
+                            status=status.HTTP_200_OK,
+                        )
+
+                except Team.DoesNotExist:
+                    message = "Ungültiger Teamcode."
+
+            elif field == "team_name":
+                if Team.objects.filter(name=value).exists():
+                    message = "Ein Team mit diesem Namen existiert bereits."
+
+            else:
+                return Response(
+                    {"valid": False, "message": "Ungültige Anfrage!"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        except Exception:
+            return Response(
+                {"valid": False, "message": "Fehler beim Validieren des Formulars."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if message == "":
+            return Response({"valid": True}, status=status.HTTP_200_OK)
+        else:
+            return Response(
+                {"valid": False, "message": message}, status=status.HTTP_200_OK
+            )
