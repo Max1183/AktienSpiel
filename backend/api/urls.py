@@ -15,6 +15,7 @@ urlpatterns = [
     path("", include(router.urls)),
     path("create-user/", views.CreateUserView.as_view(), name="create-user"),
     path("team/", views.TeamViewSet.as_view(), name="team-detail"),
+    path("profile/", views.UserProfileViewSet.as_view(), name="user-profile"),
     path(
         "watchlist/",
         views.WatchlistList.as_view({"get": "list"}),

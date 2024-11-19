@@ -15,6 +15,7 @@ from .serializers import (
     TransactionListSerializer,
     TransactionUpdateSerializer,
     UserCreateSerializer,
+    UserProfileSerializer,
     WatchlistCreateSerializer,
     WatchlistSerializer,
     WatchlistUpdateSerializer,
@@ -33,6 +34,16 @@ class CreateUserView(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         serializer.save()
+
+
+class UserProfileViewSet(generics.RetrieveAPIView):
+    """Viewset für Benutzerprofile."""
+
+    serializer_class = UserProfileSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        return self.request.user.profile
 
 
 class TeamViewSet(generics.RetrieveAPIView):
