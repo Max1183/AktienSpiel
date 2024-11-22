@@ -27,8 +27,7 @@ function TransactionItem({ transaction }) {
                     addAlert('Fehler beim Ändern der Beschreibung.', 'danger');
                 }
             } catch (err) {
-                addAlert('Fehler beim Ändern der Beschreibung.', 'danger');
-                console.log(err);
+                addAlert(err.message, 'danger');
             }
         }
         handleClose();

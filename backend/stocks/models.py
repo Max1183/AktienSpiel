@@ -15,6 +15,9 @@ from django.utils.html import strip_tags
 
 
 class RegistrationRequest(models.Model):
+    user = models.OneToOneField(
+        User, on_delete=models.CASCADE, related_name="registration_request", null=True
+    )
     email = models.EmailField()
     activation_token = models.UUIDField(default=uuid.uuid4, editable=False)
     created_at = models.DateTimeField(auto_now_add=True)

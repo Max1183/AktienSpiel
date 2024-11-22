@@ -1,37 +1,27 @@
 import React, { useState, useEffect } from 'react';
-import api from '../../api';
+import { getRequest } from '../../utils/helpers';
 import { useSearchParams } from 'react-router-dom';
 import SearchBar from '../SearchBar';
 import { formatCurrency } from '../../utils/helpers';
 import { useAlert } from '../Alerts/AlertProvider';
+import LoadingSite from '../Loading/LoadingSite';
 
 function DepotSearch() {
     const [searchParams] = useSearchParams();
     const query = searchParams.get('q') || '';
     const [searchResults, setSearchResults] = useState([]);
+    const [isLoading, setIsLoading] = useState(false);
     const { addAlert } = useAlert();
 
     useEffect(() => {
-        const getSearchResults = async () => {
-            if (query.length < 3) {
-                setSearchResults([]);
-                return;
-            }
-
-            try {
-                const res = await api.get(`/api/search/?q=${query}`);
-                setSearchResults(res.data);
-            } catch (err) {
-                addAlert('Fehler bei der Suche', 'danger');
-                console.error("Fehler bei der Suche:", err);
-            }
-        };
-
-        if (query) {
-            getSearchResults();
-        } else {
+        if (!query || query.length < 3) {
             setSearchResults([]);
+            return;
         }
+
+        getRequest(`/api/search/?q=${query}`, setIsLoading)
+            .then(data => setSearchResults(data))
+            .catch(error => addAlert(error.message, 'danger'));
     }, [query]);
 
     return <div className="bg-primary-subtle p-3 shadow rounded">
@@ -44,6 +34,9 @@ function DepotSearch() {
                 "Geben Sie einen Suchbegriff ein."
             )}
         </p>
+        <div className="mb-3">
+            {isLoading && <LoadingSite />}
+        </div>
         <div className="list-group">
             {searchResults.map((stock) => (
                 <a key={stock.id} href={'/depot/stocks/' + stock.id} className="list-group-item list-group-item-action">

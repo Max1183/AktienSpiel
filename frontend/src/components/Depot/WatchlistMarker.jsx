@@ -12,8 +12,7 @@ function WatchlistMarker({ stock_id, watchlist }) {
                 if (res.status === 204) addAlert('Aktie erfolgreich von der Watchlist entfernt', 'success');
                 else addAlert('Fehler beim Entfernen der Aktie von der Watchlist', 'danger');
             }).catch((err) => {
-                addAlert('Fehler beim Entfernen der Aktie von der Watchlist', 'danger');
-                console.log(err);
+                addAlert(err.message, 'danger');
             });
             setWatchlistId(null);
         } else {
@@ -25,8 +24,7 @@ function WatchlistMarker({ stock_id, watchlist }) {
                     addAlert('Aktie erfolgreich zur Watchlist hinzugefügt', 'success');
                 } else alert('Fehler beim Hinzufügen der Aktie zur Watchlist', 'danger');
             }).catch((err) => {
-                addAlert('Fehler beim Hinzufügen der Aktie zur Watchlist', 'danger');
-                console.log(err);
+                addAlert(err.message, 'danger');
             });
         }
     };

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import api from '../../api'
+import { getRequest } from '../../utils/helpers';
 import LoadingSite from '../../components/Loading/LoadingSite';
 import WatchlistItem from './WatchlistItem';
 import { useAlert } from '../../components/Alerts/AlertProvider';
@@ -7,35 +7,17 @@ import { useAlert } from '../../components/Alerts/AlertProvider';
 function Watchlist({ team }) {
     const [watchlist, setWatchlist] = useState([])
     const [isLoading, setIsLoading] = useState(true);
-    const [err, setErr] = useState(null);
     const { addAlert } = useAlert();
 
-    const getWatchlist = async () => {
-        try {
-            const response = await api.get(`/api/watchlist/`);
-            setWatchlist(response.data)
-        } catch (error) {
-            setErr(error.message);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
     useEffect(() => {
-        getWatchlist();
+        getRequest('/api/watchlist/', setIsLoading)
+            .then(data => setWatchlist(data))
+            .catch(error => addAlert(error.message, 'danger'));
     }, []);
 
     if (isLoading) return <LoadingSite />;
 
-    if (!watchlist) {
-        addAlert('Fehler beim Laden der Watchliste', 'danger');
-        console.log(err);
-        return <>
-            <h2>Fehler beim Laden des Depots!</h2>
-            {err && <p>Nachricht: {err}</p>}
-            <p>Zurück zur <a href="/">Startseite</a></p>
-        </>
-    }
+    if (!watchlist) return <h2>Fehler beim Laden der Watchlist!</h2>;
 
     const deleteWatchlist = (e, id) => {
         e.preventDefault();

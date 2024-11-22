@@ -1,3 +1,5 @@
+import api from '../api';
+
 export const formatDate = (dateString) => {
     const date = new Date(dateString);
 
@@ -12,4 +14,17 @@ export const formatDate = (dateString) => {
 
 export const formatCurrency = (amount) => {
   return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(amount);
+};
+
+export const getRequest = async (url, setIsLoading) => {
+    setIsLoading(true);
+
+    try {
+        const response = await api.get(url);
+        return response.data;
+    } catch (e) {
+        throw new Error(e.message);
+    } finally {
+        setIsLoading(false);
+    }
 };

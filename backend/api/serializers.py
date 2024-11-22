@@ -161,6 +161,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
 
         registration_request = RegistrationRequest.objects.get(activation_token=token)
         registration_request.activated = True
+        registration_request.user = user
         registration_request.save()
 
         return user
@@ -192,7 +193,7 @@ class MemberSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserProfile
-        fields = ["name"]
+        fields = ["id", "name"]
 
     def get_name(self, obj):
         return obj.user.username

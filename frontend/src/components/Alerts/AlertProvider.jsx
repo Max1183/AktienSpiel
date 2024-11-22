@@ -7,7 +7,13 @@ export const AlertProvider = ({ children }) => {
 
     const addAlert = (message, type = 'info') => {
         const newAlert = { id: Date.now(), message, type };
-        setAlerts([...alerts, newAlert]);
+        setAlerts(prevAlerts => {
+            const newAlerts = [...prevAlerts, newAlert];
+            if (newAlerts.length > 3) {
+                newAlerts.shift();
+            }
+            return newAlerts;
+        })
     };
 
     const removeAlert = (id) => {

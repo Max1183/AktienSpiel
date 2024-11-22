@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom'
 import api from '../api';
 import FormField from '../components/FormField';
+import LoadingSite from '../components/Loading/LoadingSite';
 
 function ProfileActivation({ match }) {
     const [step, setStep] = useState(0);
     const [error, setError] = useState(null);
+    const [loading, setLoading] = useState(true);
 
     const { token } = useParams();
     const [isValid, setIsValid] = useState(true);
@@ -40,6 +42,8 @@ function ProfileActivation({ match }) {
                 }
             } catch (error) {
                 setError(error.message);
+            } finally {
+                setLoading(false);
             }
         };
         fetchData();
@@ -274,6 +278,10 @@ function ProfileActivation({ match }) {
                 return null;
         }
     };
+
+    if (isLoading) {
+        return <LoadingSite />
+    }
 
     return <div className="container mt-5">
         {isValid && step > 0 && <>

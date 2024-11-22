@@ -3,8 +3,8 @@ const Alert = ({ alert, removeAlert }) => {
 
     return (
         <div className={alertTypeClass} role="alert">
-          {alert.message}
-          <button type="button" className="btn-close" data-bs-dismiss="alert" aria-label="Close" onClick={() => removeAlert(alert.id)} />
+            {alert.message}
+            <button type="button" className="btn-close" data-bs-dismiss="alert" aria-label="Close" onClick={() => removeAlert(alert.id)} />
         </div>
     );
 };

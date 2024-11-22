@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ProfileLayout from '../components/ProfileLayout';
 import LoadingSite from '../components/Loading/LoadingSite';
-import api from '../api';
+import { getRequest } from '../utils/helpers';
 import { useAlert } from '../components/Alerts/AlertProvider';
 import { formatCurrency } from '../utils/helpers';
 
@@ -11,19 +11,10 @@ function Team() {
     const { addAlert } = useAlert();
 
     useEffect(() => {
-        const getTeam = async () => {
-            try {
-                const response = await api.get(`/api/team/`);
-                setTeam(response.data)
-            } catch (error) {
-                addAlert(error.message, 'danger');
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        getTeam();
-    }, [])
+        getRequest('/api/team/', setIsLoading)
+            .then(data => setTeam(data))
+            .catch(error => addAlert(error.message, 'danger'));
+    }, []);
 
     if (isLoading) return <ProfileLayout>
         <LoadingSite />;
@@ -49,9 +40,9 @@ function Team() {
             <div className="col-lg-6 p-2">
                 <div className="bg-primary-subtle p-3 shadow rounded p-3 h-100">
                     <h2>Team-Mitglieder</h2>
-                    <ul class="list-group mt-3">
+                    <ul className="list-group mt-3">
                         {team.members.map((member) => (
-                            <li class="list-group-item">{member.name}</li>
+                            <li key={member.id} className="list-group-item">{member.name}</li>
                         ))}
                     </ul>
                     <div className="mt-3">

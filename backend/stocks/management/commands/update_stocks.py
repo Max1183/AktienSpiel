@@ -34,7 +34,7 @@ class Command(BaseCommand):
 
 
 class StockUpdater:
-    def __init__(self, num_workers=32, update_interval=300):
+    def __init__(self, num_workers=16, update_interval=300):
         self.num_workers = num_workers
         self.update_interval = update_interval
         self.is_running = True
@@ -49,6 +49,9 @@ class StockUpdater:
         self.stock_queue = queue.Queue()
 
     def start(self):
+        yf.utils.get_json = lambda url, proxy=None, session=None: yf.utils._get_json(
+            url, proxy, session, headers={"User-Agent": "Mozilla/5.0"}
+        )
         for _ in range(self.num_workers):
             worker = threading.Thread(target=self.worker_loop)
             worker.daemon = False

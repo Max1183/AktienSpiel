@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ProfileLayout from '../components/ProfileLayout';
 import LoadingSite from '../components/Loading/LoadingSite';
-import api from '../api';
+import { getRequest } from '../utils/helpers';
 import { useAlert } from '../components/Alerts/AlertProvider';
 
 function Profile() {
@@ -10,19 +10,10 @@ function Profile() {
     const { addAlert } = useAlert();
 
     useEffect(() => {
-        const getProfile = async () => {
-            try {
-                const response = await api.get(`/api/profile/`);
-                setProfile(response.data)
-            } catch (error) {
-                addAlert(error.message, 'danger');
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        getProfile()
-    }, [])
+        getRequest('/api/profile/', setIsLoading)
+            .then(data => setProfile(data))
+            .catch(error => addAlert(error.message, 'danger'));
+    }, []);
 
     if (isLoading) return <ProfileLayout>
         <LoadingSite />;
