@@ -87,7 +87,7 @@ function App() {
     const breakpoint = 992;
 
     return <AlertProvider>
-        <BrowserRouter future={{v7_relativeSplatPath: true,}}>
+        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true, }}>
             <main className="content">
                 <Routes>
                     <Route path="/" element={<ProtectedLayout />}>
@@ -97,15 +97,15 @@ function App() {
                     <Route path="/depot" element={<ProtectedLayout />}>
                         <Route index element={<StockHoldings />} />
                         <Route path="transactions" element={<Transactions />} />
-                        <Route path="analysis" element={<Analysis />} />
+                        {/*<Route path="analysis" element={<Analysis />} />*/}
                         <Route path="watchlist" element={<Watchlist />} />
                         <Route path="search" element={<DepotSearch />} />
                         <Route path="stocks/:id" element={<StockDetail />} />
                     </Route>
 
-                    <Route path="/contest" element={<ProtectedLayout />}>
+                    {/*<Route path="/contest" element={<ProtectedLayout />}>
                         <Route index element={<Contest />} />
-                    </Route>
+                    </Route>*/}
 
                     <Route path="/user" element={<ProtectedLayout />}>
                         <Route index element={<Navigate to="/user/profile" />} />

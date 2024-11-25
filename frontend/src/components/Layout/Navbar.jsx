@@ -1,6 +1,5 @@
 import { NavLink } from 'react-router-dom';
 import SearchBar from '../SearchBar'
-import "../../styles/Navbar.css";
 
 function Navbar ({ small }) {
     const navbar_small = (
@@ -10,7 +9,8 @@ function Navbar ({ small }) {
                     <span className="navbar-toggler-icon"></span>
                 </button>
                 <a className="navbar-brand mb-0 h1" href="/">
-                    <img src="/Logo.png" className="logo" id="logo" width="183" height="50" alt="Logo" />
+                    <img src="/Logo.png" className="mx-3" id="logo" alt="Logo" />
+                    Aktienspiel
                 </a>
                 <a className="navbar-brand mb-0 h1" href="/user/profile/">
                     <img src="/Profile.png" className="profile" width="40" height="40" alt="Profile" />
@@ -41,7 +41,7 @@ function Navbar ({ small }) {
                                   DEPOT
                                 </NavLink>
                             </li>
-                            <li className="nav-item">
+                            {/*<li className="nav-item">
                                 <NavLink
                                     to="/contest"
                                     className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}
@@ -49,7 +49,7 @@ function Navbar ({ small }) {
                                 >
                                     WETTBEWERB
                                 </NavLink>
-                            </li>
+                            </li>*/}
                             <li className="nav-item">
                                 <NavLink
                                     to="/user/profile"
@@ -82,7 +82,8 @@ function Navbar ({ small }) {
         <nav className="navbar bg-dark navbar-expand-lg sticky-top" data-bs-theme="dark">
             <div className="container-fluid">
                 <a className="navbar-brand me-auto mb-0 h1" href="/">
-                    <img src="/Logo.png" className="logo" id="logo" width="183" height="50" alt="Logo" />
+                    <img src="/Logo.png" className="ms-5 me-3" id="logo" alt="Logo" />
+                    Aktienspiel
                 </a>
                 <ul className="navbar-nav me-auto mb-2 mb-lg-0">
                     <li className="nav-item">
@@ -106,11 +107,11 @@ function Navbar ({ small }) {
                     </li>
                     <li className="nav-item">
                         <NavLink
-                          to="/contest"
+                          to="/user/profile"
                           className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}
                           aria-current={({ isActive }) => (isActive ? "page" : undefined)}
                         >
-                          WETTBEWERB
+                          PROFIL
                         </NavLink>
                     </li>
                 </ul>

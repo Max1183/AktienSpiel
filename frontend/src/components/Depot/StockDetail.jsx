@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useOutletContext } from 'react-router-dom';
-import api from '../../api';
+import { getRequest } from '../../utils/helpers';
 import Chart from 'chart.js/auto';
 import * as bootstrap from 'bootstrap';
 import LoadingSite from '../Loading/LoadingSite';
@@ -14,7 +14,6 @@ function StockDetail() {
     const { id } = useParams();
     const [stock, setStock] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [err, setErr] = useState(null);
     const [activeTimeSpan, setActiveTimeSpan] = useState('Year');
     const [chart, setChart] = useState(null);
 
@@ -34,20 +33,9 @@ function StockDetail() {
     }, [stock]);
 
     useEffect(() => {
-        const fetchStock = async () => {
-            try {
-                const response = await api.get(`/api/stocks/${id}/`);
-                setStock(response.data)
-                setErr(null);
-            } catch (error) {
-                setErr(error.message);
-                addAlert('Fehler beim Laden des Aktienkurses', 'danger');
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        fetchStock();
+        getRequest(`/api/stocks/${id}/`, setIsLoading)
+            .then(data => setStock(data))
+            .catch(error => addAlert(error.message, 'danger'));
     }, [id]);
 
     useEffect(() => {
@@ -119,7 +107,7 @@ function StockDetail() {
                     navigate('/depot');
                 }
                 else alert('Fehler beim erstellen des Order-Auftrags', 'danger');
-            }).catch((err) => console.log(err));
+            }).catch((err) => addAlert(err, 'danger'));
         }
     }
 

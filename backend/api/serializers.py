@@ -8,6 +8,7 @@ from stocks.models import (
     StockHolding,
     Team,
     Transaction,
+    UserProfile,
     Watchlist,
 )
 from stocks.transactions import execute_transaction
@@ -160,20 +161,62 @@ class UserCreateSerializer(serializers.ModelSerializer):
 
         registration_request = RegistrationRequest.objects.get(activation_token=token)
         registration_request.activated = True
+        registration_request.user = user
         registration_request.save()
 
         return user
 
 
+class UserSerializer(serializers.ModelSerializer):
+    """Serializer für Benutzer."""
+
+    class Meta:
+        model = User
+        fields = ["id", "username", "email"]
+
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    """Serializer für Benutzerprofile."""
+
+    user = UserSerializer()
+    team_name = serializers.CharField(source="team.name")
+
+    class Meta:
+        model = UserProfile
+        fields = ["first_name", "last_name", "user", "team_name"]
+
+
+class MemberSerializer(serializers.ModelSerializer):
+    """Serializer für Team Members"""
+
+    name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = UserProfile
+        fields = ["id", "name"]
+
+    def get_name(self, obj):
+        return obj.user.username
+
+
 class TeamSerializer(serializers.ModelSerializer):
     """Serializer für Teams."""
 
+    members = MemberSerializer(many=True, read_only=True)
     portfolio_value = serializers.SerializerMethodField()
     trades = serializers.SerializerMethodField()
 
     class Meta:
         model = Team
-        fields = ["id", "name", "balance", "portfolio_value", "trades"]
+        fields = [
+            "id",
+            "name",
+            "balance",
+            "portfolio_value",
+            "trades",
+            "code",
+            "members",
+        ]
         read_only_fields = fields
 
     def get_portfolio_value(self, obj):

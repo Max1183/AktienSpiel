@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import api from '../../api';
+import { getRequest } from '../../utils/helpers';
 import InfoField from '../InfoField';
 import LoadingSite from '../Loading/LoadingSite';
 import { formatCurrency } from '../../utils/helpers';
@@ -10,34 +10,19 @@ function StockHoldings() {
     const { team } = useOutletContext();
     const [stockHoldings, setStockHoldings] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [err, setErr] = useState(null);
     const { addAlert } = useAlert();
 
     useEffect(() => {
-        const getStockHoldings = async () => {
-            try {
-                const response = await api.get(`/api/stockholdings/`);
-                setStockHoldings(response.data)
-                setErr(null);
-            } catch (error) {
-                setErr(error.message);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        getStockHoldings();
+        getRequest('/api/stockholdings/', setIsLoading)
+            .then(data => setStockHoldings(data))
+            .catch(error => addAlert(error.message, 'danger'));
     }, []);
 
     const getDepot = () => {
         if (isLoading) {
             return <LoadingSite />;
         } else if (!stockHoldings) {
-            addAlert('Fehler beim Laden der Aktien!', 'danger');
-            return <>
-                <h2>Fehler beim Laden der Aktien!</h2>
-                {err && <p>Nachricht: {err}</p>}
-            </>
+            return <h2>Fehler beim Laden der Aktien!</h2>;
         } else if (stockHoldings.length > 0) {
             return <div className="list-group rounded mt-3">
                 <h2>Mein Depot</h2>
