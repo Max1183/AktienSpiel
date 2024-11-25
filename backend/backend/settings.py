@@ -147,9 +147,9 @@ SIMPLE_JWT = {
 
 # CORS & CSRF
 
-CORS_ALLOWED_ORIGINS = [os.environ.get("FRONTEND_URL")]
+CORS_ALLOWED_ORIGINS = [os.environ.get("FRONTEND_URL", "http://localhost:3000")]
 CORS_ALLOWS_CREDENTIALS = True
-CSRF_TRUSTED_ORIGINS = [os.environ.get("FRONTEND_URL")]
+CSRF_TRUSTED_ORIGINS = [os.environ.get("FRONTEND_URL", "http://localhost:3000")]
 
 # Security settings (for production with HTTPS)
 
