@@ -23,9 +23,13 @@ function Login() {
             localStorage.setItem(REFRESH_TOKEN, response.data.refresh)
             navigate('/')
         } catch (error) {
-            if (error.response.status === 401) {
-                setError("Benutzername oder Passwort falsch!")
-            } else setError(error.message);
+            try {
+                if (error.response.status === 401) {
+                    setError("Benutzername oder Passwort falsch!")
+                } else setError(error.message);
+            } catch (e) {
+                setError(error.message);
+            }
         } finally {
             setLoading(false)
         }

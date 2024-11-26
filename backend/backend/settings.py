@@ -74,23 +74,21 @@ ASGI_APPLICATION = "backend.asgi.application"
 
 # Database
 
-if DEBUG:
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.postgresql",
-            "NAME": os.environ.get("DB_NAME"),
-            "USER": os.environ.get("DB_USER"),
-            "PASSWORD": os.environ.get("DB_PASSWORD"),
-            "HOST": os.environ.get("DB_HOST", "localhost"),
-            "PORT": os.environ.get("DB_PORT", "5432"),
-        }
-    }
-else:
-    DATABASES = {
-        "default": dj_database_url.config(
-            default="postgres://user:pass@host:port/dbname"
-        )
-    }
+# if DEBUG:
+#     DATABASES = {
+#         "default": {
+#             "ENGINE": "django.db.backends.postgresql",
+#             "NAME": os.environ.get("DB_NAME"),
+#             "USER": os.environ.get("DB_USER"),
+#             "PASSWORD": os.environ.get("DB_PASSWORD"),
+#             "HOST": os.environ.get("DB_HOST", "localhost"),
+#             "PORT": os.environ.get("DB_PORT", "5432"),
+#         }
+#     }
+# else:
+DATABASES = {
+    "default": dj_database_url.config(default="postgres://user:pass@host:port/dbname")
+}
 
 # Password validation
 
@@ -147,9 +145,15 @@ SIMPLE_JWT = {
 
 # CORS & CSRF
 
-CORS_ALLOWED_ORIGINS = [os.environ.get("FRONTEND_URL", "http://localhost:3000")]
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://192.168.2.114:3000",
+]
 CORS_ALLOWS_CREDENTIALS = True
-CSRF_TRUSTED_ORIGINS = [os.environ.get("FRONTEND_URL", "http://localhost:3000")]
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:3000",
+    "http://192.168.2.114:3000",
+]
 
 # Security settings (for production with HTTPS)
 
