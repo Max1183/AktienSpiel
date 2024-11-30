@@ -90,3 +90,5 @@ Dieses Projekt ist unter der MIT-Lizenz lizenziert.
 ## Deployment
 
 1. Dependencies in `requirement.txt` exportieren `poetry export -f requirements.txt --output requirements.txt --without-hashes --with dev`
+2. Docker-Image erstellen `docker build -t backend .`
+3. Docker Container starten `docker run -p 8000:8000 -e PORT=8000 backend`
