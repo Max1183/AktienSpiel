@@ -1,7 +1,9 @@
-specVersion: v1
-type: docker
-ingresses:
-  - name: http
-    port: 8080
-    protocol: http
-    public: true
+schemaVersion: 1.1
+
+endpoints:
+  - name: aktienspiel
+    service:
+      port: 8000
+    type: REST
+    networkVisibilities:
+      - Public
