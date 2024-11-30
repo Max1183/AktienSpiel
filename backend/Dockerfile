@@ -7,7 +7,7 @@ WORKDIR /app
 COPY requirements.txt /app/
 RUN pip install -r requirements.txt
 
-RUN groupadd -r appuser && useradd -r -g appuser appuser
+RUN groupadd -r appuser && useradd -u 10001 -r -g appuser appuser
 
 COPY --chown=appuser:appuser . /app/
 
