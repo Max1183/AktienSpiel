@@ -1,0 +1,7 @@
+specVersion: v1
+type: docker
+ingresses:
+  - name: http
+    port: 8080
+    protocol: http
+    public: true
