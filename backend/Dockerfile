@@ -13,4 +13,4 @@ COPY --chown=10001:10001 . /app/
 
 USER 10001
 
-CMD exec gunicorn backend.wsgi:application --bind 0.0.0.0:$PORT
+CMD exec gunicorn backend.wsgi:application --bind 0.0.0.0:8000
