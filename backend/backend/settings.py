@@ -20,7 +20,7 @@ DEBUG = os.environ.get("DEBUG") == "True"
 if DEBUG:
     ALLOWED_HOSTS = ["localhost", "127.0.0.1", "0.0.0.0", "192.168.2.117"]
 else:
-    allowed_hosts_string = os.environ.get("RAILWAY_STATIC_URL")
+    allowed_hosts_string = os.environ.get("ALLOWED_HOSTS")
     ALLOWED_HOSTS = allowed_hosts_string.split(",") if allowed_hosts_string else []
 
 # Application definition
