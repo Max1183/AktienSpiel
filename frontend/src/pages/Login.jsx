@@ -26,7 +26,10 @@ function Login() {
             try {
                 if (error.response.status === 401) {
                     setError("Benutzername oder Passwort falsch!")
-                } else setError(error.message);
+                } else {
+                    console.error(error);
+                    setError(error.message);
+                }
             } catch (e) {
                 setError(error.message);
             }
