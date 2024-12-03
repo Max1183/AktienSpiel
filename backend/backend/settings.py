@@ -17,13 +17,8 @@ SECRET_KEY = os.environ.get("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get("DEBUG") == "True"
 
-ALLOWED_HOSTS = ["*"]
-
-# if DEBUG:
-#     ALLOWED_HOSTS = ["localhost", "127.0.0.1", "0.0.0.0", "192.168.2.117"]
-# else:
-#     allowed_hosts_string = os.environ.get("ALLOWED_HOSTS")
-#     ALLOWED_HOSTS = allowed_hosts_string.split(",") if allowed_hosts_string else []
+allowed_hosts_string = os.environ.get("ALLOWED_HOSTS")
+ALLOWED_HOSTS = allowed_hosts_string.split(",") if allowed_hosts_string else []
 
 # Application definition
 
@@ -146,15 +141,10 @@ SIMPLE_JWT = {
 
 # CORS & CSRF
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://192.168.2.114:3000",
-]
+FRONTEND_URL = os.environ.get("FRONTEND_URL")
+CORS_ALLOWED_ORIGINS = [FRONTEND_URL] if FRONTEND_URL else []
+CSRF_TRUSTED_ORIGINS = [FRONTEND_URL] if FRONTEND_URL else []
 CORS_ALLOWS_CREDENTIALS = True
-CSRF_TRUSTED_ORIGINS = [
-    "http://localhost:3000",
-    "http://192.168.2.114:3000",
-]
 
 # Security settings (for production with HTTPS)
 
@@ -165,6 +155,7 @@ SECURE_HSTS_PRELOAD = True
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 SECURE_REFERRER_POLICY = "same-origin"
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 # Debug Toolbar (nur für Entwicklung)
 if DEBUG:
@@ -172,6 +163,7 @@ if DEBUG:
         "127.0.0.1",
     ]
 
+# Email settings
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
@@ -179,5 +171,3 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = os.environ.get("EMAIL_USER")
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_PASS")
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
-
-FRONTEND_URL = os.environ.get("FRONTEND_URL")
