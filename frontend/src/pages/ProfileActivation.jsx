@@ -279,7 +279,7 @@ function ProfileActivation({ match }) {
         }
     };
 
-    if (isLoading) {
+    if (loading) {
         return <LoadingSite />
     }
 
