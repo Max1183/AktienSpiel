@@ -125,7 +125,7 @@ class StockViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
     """Viewset für Aktien Details."""
 
     serializer_class = StockSerializer
-    queryset = Stock.objects.all()
+    queryset = Stock.objects.filter(current_price__gt=0)
     permission_classes = [IsAuthenticated]
 
 

@@ -30,7 +30,7 @@ function WatchlistMarker({ stock_id, watchlist }) {
     };
 
     return <button className="btn btn-sm" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Watchlist" onClick={handleToggleWatchlist}>
-        <img src={`/Icons/WatchlistIcon${watchlist_id ? 'Active' : ''}.png`} alt="Watchlist" className="img-fluid" style={{ width: '30px', height: '30px' }} />
+        <img src={`/Icons/WatchlistIcon${watchlist_id ? 'Active' : ''}.png`} alt="Watchlist" style={{ width: '30px', height: '30px' }} />
     </button>
 }
 

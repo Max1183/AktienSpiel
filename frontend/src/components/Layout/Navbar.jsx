@@ -8,9 +8,9 @@ function Navbar ({ small }) {
                 <button className="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar" aria-label="Toggle navigation">
                     <span className="navbar-toggler-icon"></span>
                 </button>
-                <a className="navbar-brand mb-0 h1" href="/">
+                <a className="navbar-brand mb-0 d-flex align-items-center" href="/">
                     <img src="/Logo.png" className="mx-3" id="logo" alt="Logo" />
-                    Aktienspiel
+                    <p className="m-0 fs-4">Aktienspiel</p>
                 </a>
                 <a className="navbar-brand mb-0 h1" href="/user/profile/">
                     <img src="/Profile.png" className="profile" width="40" height="40" alt="Profile" />
@@ -81,9 +81,9 @@ function Navbar ({ small }) {
     const navbar_big = (
         <nav className="navbar bg-dark navbar-expand-lg sticky-top" data-bs-theme="dark">
             <div className="container-fluid">
-                <a className="navbar-brand me-auto mb-0 h1" href="/">
+                <a className="navbar-brand me-auto mb-0 d-flex align-items-center" href="/">
                     <img src="/Logo.png" className="ms-5 me-3" id="logo" alt="Logo" />
-                    Aktienspiel
+                    <p className="m-0 fs-3">Aktienspiel</p>
                 </a>
                 <ul className="navbar-nav me-auto mb-2 mb-lg-0">
                     <li className="nav-item">

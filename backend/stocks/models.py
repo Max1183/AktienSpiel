@@ -24,7 +24,12 @@ class RegistrationRequest(models.Model):
     activated = models.BooleanField(default=False)
 
     def send_activation_email(self):
-        activation_link = f"{settings.FRONTEND_URL}/activate/{self.activation_token}"
+        frontend_url = (
+            settings.FRONTEND_URL
+            if settings.FRONTEND_URL != "http://localhost:3000"
+            else "https://409f5ae8-31da-4c60-aff4-ab2291a4ae79.e1-eu-north-azure.choreoapps.dev/"
+        )
+        activation_link = f"{frontend_url}/activate/{self.activation_token}"
 
         subject = "Bestätigen Sie Ihr Konto beim Aktienspiel"
         html_message = render_to_string(

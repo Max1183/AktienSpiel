@@ -12,7 +12,7 @@ def search_stocks(request):
     query = request.GET.get("q", "")
 
     if query:
-        results = Stock.objects.filter(name__icontains=query)
+        results = Stock.objects.filter(name__icontains=query, current_price__gt=0)
         data = [
             {"id": stock.pk, "name": stock.name, "current_price": stock.current_price}
             for stock in results

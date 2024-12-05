@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { getRequest } from '../../utils/helpers';
 import LoadingSite from '../../components/Loading/LoadingSite';
 import WatchlistItem from './WatchlistItem';
+import api from '../../api';
 import { useAlert } from '../../components/Alerts/AlertProvider';
 
 function Watchlist({ team }) {
@@ -24,8 +25,8 @@ function Watchlist({ team }) {
         api.delete(`/api/watchlist/delete/${id}/`).then((res) => {
             if (res.status === 204) addAlert('Watchlisteintrag erfolgreich entfernt', 'success');
             else addAlert('Fehler beim Löschen des Watchlisteintrags', 'danger');
-            getWatchlist();
-        }).catch((err) => addAlert(err, 'danger'));
+            setWatchlist(watchlist.filter((item) => item.id !== id));
+        }).catch((err) => addAlert(err.message, 'danger'));
     };
 
     return <div className="bg-primary-subtle p-3 shadow rounded p-3">

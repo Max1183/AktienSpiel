@@ -7,6 +7,7 @@ import LoadingSite from '../Loading/LoadingSite';
 import WatchlistMarker from './WatchlistMarker';
 import Tooltip from '../Tooltip';
 import { formatCurrency } from '../../utils/helpers';
+import api from '../../api';
 import { useAlert } from '../Alerts/AlertProvider';
 
 function StockDetail() {
@@ -81,7 +82,6 @@ function StockDetail() {
     if (!stock) {
         return <>
             <h1>Aktie nicht gefunden!</h1>
-            {err && <p>Nachricht: {err}</p>}
             <p>Zurück zur <a href="/">Startseite</a></p>
         </>
     }
