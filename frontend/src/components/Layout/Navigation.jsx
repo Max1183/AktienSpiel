@@ -29,11 +29,11 @@ function Navigation () {
                 </li>
                 <li className="nav-item">
                     <NavLink
-                        to="/user/"
+                        to="/contest"
                         className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
                         aria-current={({ isActive }) => (isActive ? "page" : undefined)}
                     >
-                        PROFIL
+                        WETTBEWERB
                     </NavLink>
                 </li>
             </ul>

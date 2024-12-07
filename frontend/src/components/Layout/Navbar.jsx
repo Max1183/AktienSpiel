@@ -52,11 +52,11 @@ function Navbar ({ small }) {
                             </li>*/}
                             <li className="nav-item">
                                 <NavLink
-                                    to="/user/profile"
+                                    to="/contest"
                                     className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}
                                     aria-current={({ isActive }) => (isActive ? "page" : undefined)}
                                 >
-                                    PROFIL
+                                    WETTBEWERB
                                 </NavLink>
                             </li>
                             <li className="nav-item">
@@ -107,11 +107,11 @@ function Navbar ({ small }) {
                     </li>
                     <li className="nav-item">
                         <NavLink
-                          to="/user/profile"
-                          className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}
-                          aria-current={({ isActive }) => (isActive ? "page" : undefined)}
+                            to="/contest"
+                            className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}
+                            aria-current={({ isActive }) => (isActive ? "page" : undefined)}
                         >
-                          PROFIL
+                            WETTBEWERB
                         </NavLink>
                     </li>
                 </ul>
