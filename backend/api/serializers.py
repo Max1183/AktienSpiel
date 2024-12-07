@@ -1,5 +1,6 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from stocks.models import (
     History,
@@ -16,6 +17,43 @@ from stocks.transactions import execute_transaction
 
 def calculate_fee(current_price, amount):
     return max(15, int(float(current_price * amount) * 0.001))
+
+
+class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+        token["is_staff"] = user.is_staff
+        return token
+
+
+class RegistrationRequestSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RegistrationRequest
+        fields = ["email"]
+
+    def create(self, validated_data):
+        email = validated_data["email"]
+
+        if User.objects.filter(email=email).exists():
+            raise serializers.ValidationError(
+                {
+                    "detail": [
+                        f"Ein Benutzer mit dieser E-Mail-Adresse {email} existiert bereits."
+                    ]
+                }
+            )
+        else:
+            if not RegistrationRequest.objects.filter(email=email).exists():
+                return super().create(validated_data)
+            else:
+                raise serializers.ValidationError(
+                    {
+                        "detail": [
+                            f"Eine Registrierungsanfrage für {email} existiert bereits."
+                        ]
+                    }
+                )
 
 
 class UserCreateSerializer(serializers.ModelSerializer):
