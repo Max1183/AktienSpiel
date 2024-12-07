@@ -3,10 +3,12 @@ import {BrowserRouter, Routes, Route, Navigate, Outlet} from 'react-router-dom'
 import ProtectedRoute from './components/ProtectedRoute'
 import { AlertProvider, useAlert } from './components/Alerts/AlertProvider'
 import AlertList from './components/Alerts/AlertList'
+import { isAdmin } from './utils/helpers';
 
 import Login from './pages/Login'
 import NotFound from './pages/NotFound'
 import ProfileActivation from './pages/ProfileActivation'
+import Admin from './pages/Admin'
 
 import Start from './pages/Start'
 
@@ -81,6 +83,11 @@ function ProtectedLayout() {
     </ProtectedRoute>
 }
 
+function AdminRoute({ children }) {
+    const isUserAdmin = isAdmin();
+    return isUserAdmin ? <ProtectedRoute>{children}</ProtectedRoute> : <Navigate to="/" />;
+}
+
 function App() {
     const { width } = useWindowSize();
     const small = width < 992;
@@ -111,6 +118,10 @@ function App() {
                         <Route index element={<Navigate to="/user/profile" />} />
                         <Route path="profile" element={<Profile />} />
                         <Route path="team" element={<Team />} />
+                    </Route>
+
+                    <Route path="/admin" element={<AdminRoute><ProtectedLayout /></AdminRoute>}>
+                        <Route index element={<Admin />} />
                     </Route>
 
                     <Route path="/login" element={<Login />} />

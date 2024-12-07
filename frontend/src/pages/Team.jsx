@@ -17,7 +17,7 @@ function Team() {
     }, []);
 
     if (isLoading) return <ProfileLayout>
-        <LoadingSite />;
+        <LoadingSite />
     </ProfileLayout>
 
     if (!team) return <ProfileLayout>

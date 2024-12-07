@@ -107,7 +107,7 @@ function StockDetail() {
                     navigate('/depot');
                 }
                 else alert('Fehler beim erstellen des Order-Auftrags', 'danger');
-            }).catch((err) => addAlert(err, 'danger'));
+            }).catch((err) => addAlert(err.message, 'danger'));
         }
     }
 

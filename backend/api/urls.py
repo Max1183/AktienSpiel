@@ -11,6 +11,8 @@ router.register(r"stockholdings", views.StockHoldingViewSet, basename="stockhold
 router.register(r"transactions", views.TransactionViewSet, basename="transaction")
 
 urlpatterns = [
+    path("token/", views.MyTokenObtainPairView.as_view(), name="get_token"),
+    path("register/", views.RegistrationRequestView.as_view(), name="register"),
     path("search/", stock_views.search_stocks, name="stock-search"),
     path("", include(router.urls)),
     path("create-user/", views.CreateUserView.as_view(), name="create-user"),

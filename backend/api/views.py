@@ -1,13 +1,23 @@
 from django.contrib.auth.models import User
 from django.db import transaction
 from rest_framework import generics, mixins, serializers, status, viewsets
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework_simplejwt.views import TokenObtainPairView
 
-from stocks.models import Stock, StockHolding, Team, Transaction, Watchlist
+from stocks.models import (
+    RegistrationRequest,
+    Stock,
+    StockHolding,
+    Team,
+    Transaction,
+    Watchlist,
+)
 
 from .serializers import (
+    MyTokenObtainPairSerializer,
+    RegistrationRequestSerializer,
     StockHoldingSerializer,
     StockSerializer,
     TeamSerializer,
@@ -20,6 +30,20 @@ from .serializers import (
     WatchlistSerializer,
     WatchlistUpdateSerializer,
 )
+
+
+class MyTokenObtainPairView(TokenObtainPairView):
+    serializer_class = MyTokenObtainPairSerializer
+
+
+class RegistrationRequestView(generics.CreateAPIView):
+    queryset = RegistrationRequest.objects.all()
+    serializer_class = RegistrationRequestSerializer
+    permission_classes = [IsAdminUser]
+
+    def perform_create(self, serializer):
+        registration_request = serializer.save()
+        registration_request.send_activation_email()
 
 
 class CreateUserView(generics.CreateAPIView):

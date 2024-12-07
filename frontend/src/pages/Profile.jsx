@@ -16,7 +16,7 @@ function Profile() {
     }, []);
 
     if (isLoading) return <ProfileLayout>
-        <LoadingSite />;
+        <LoadingSite />
     </ProfileLayout>
 
     if (!profile) return <ProfileLayout>

@@ -27,7 +27,7 @@ class RegistrationRequest(models.Model):
         frontend_url = (
             settings.FRONTEND_URL
             if settings.FRONTEND_URL != "http://localhost:3000"
-            else "https://409f5ae8-31da-4c60-aff4-ab2291a4ae79.e1-eu-north-azure.choreoapps.dev/"
+            else "https://409f5ae8-31da-4c60-aff4-ab2291a4ae79.e1-eu-north-azure.choreoapps.dev"
         )
         activation_link = f"{frontend_url}/activate/{self.activation_token}"
 

@@ -1,4 +1,6 @@
 import api from '../api';
+import { jwtDecode } from "jwt-decode";
+import { ACCESS_TOKEN } from "../constants";
 
 export const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -27,4 +29,18 @@ export const getRequest = async (url, setIsLoading) => {
     } finally {
         setIsLoading(false);
     }
+};
+
+export const isAdmin = () => {
+    const token = localStorage.getItem(ACCESS_TOKEN);
+    if (token) {
+        try {
+            const decodedToken = jwtDecode(token);
+            return decodedToken.is_staff;
+        } catch (error) {
+            console.error("Fehler beim Dekodieren des Tokens:", error);
+            return false;
+        }
+    }
+    return false;
 };
