@@ -17,9 +17,6 @@ function Navbar ({ small }) {
                 <a className="navbar-brand mb-0 h1" href="/user/profile/">
                     <img src="/Profile.png" className="profile" width="40" height="40" alt="Profile" />
                 </a>
-{/*                 <div className="navbar-brand mb-0"> */}
-{/*                     <ProfileDropdown /> */}
-{/*                 </div> */}
                 <div className="offcanvas offcanvas-start" tabIndex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel" data-bs-scroll="true">
                     <div className="offcanvas-header">
                         <h5 className="offcanvas-title" id="offcanvasNavbarLabel">Navigation</h5>
