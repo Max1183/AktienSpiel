@@ -1,5 +1,7 @@
+import React, { useRef, useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import SearchBar from '../SearchBar'
+import ProfileDropdown from './ProfileDropdown'
 
 function Navbar ({ small }) {
     const navbar_small = (
@@ -15,6 +17,9 @@ function Navbar ({ small }) {
                 <a className="navbar-brand mb-0 h1" href="/user/profile/">
                     <img src="/Profile.png" className="profile" width="40" height="40" alt="Profile" />
                 </a>
+{/*                 <div className="navbar-brand mb-0"> */}
+{/*                     <ProfileDropdown /> */}
+{/*                 </div> */}
                 <div className="offcanvas offcanvas-start" tabIndex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel" data-bs-scroll="true">
                     <div className="offcanvas-header">
                         <h5 className="offcanvas-title" id="offcanvasNavbarLabel">Navigation</h5>
@@ -41,15 +46,6 @@ function Navbar ({ small }) {
                                   DEPOT
                                 </NavLink>
                             </li>
-                            {/*<li className="nav-item">
-                                <NavLink
-                                    to="/contest"
-                                    className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}
-                                    aria-current={({ isActive }) => (isActive ? "page" : undefined)}
-                                >
-                                    WETTBEWERB
-                                </NavLink>
-                            </li>*/}
                             <li className="nav-item">
                                 <NavLink
                                     to="/contest"
@@ -57,6 +53,15 @@ function Navbar ({ small }) {
                                     aria-current={({ isActive }) => (isActive ? "page" : undefined)}
                                 >
                                     WETTBEWERB
+                                </NavLink>
+                            </li>
+                            <li className="nav-item">
+                                <NavLink
+                                    to="/user/profile"
+                                    className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}
+                                    aria-current={({ isActive }) => (isActive ? "page" : undefined)}
+                                >
+                                    PROFIL
                                 </NavLink>
                             </li>
                             <li className="nav-item">
@@ -85,7 +90,7 @@ function Navbar ({ small }) {
                     <img src="/Logo.png" className="ms-5 me-3" id="logo" alt="Logo" />
                     <p className="m-0 fs-3">Aktienspiel</p>
                 </a>
-                <ul className="navbar-nav me-auto mb-2 mb-lg-0">
+                <ul className="navbar-nav mb-2 mb-lg-0">
                     <li className="nav-item">
                         <NavLink
                           to="/"
@@ -115,10 +120,8 @@ function Navbar ({ small }) {
                         </NavLink>
                     </li>
                 </ul>
+                <ProfileDropdown />
                 <SearchBar />
-                <a className="navbar-brand mb-0 h1" href="/user/profile/">
-                    <img src="/Profile.png" className="profile" width="40" height="40" alt="Profile" />
-                </a>
             </div>
         </nav>
     )

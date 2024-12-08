@@ -11,7 +11,7 @@ function SearchBar({ oldSearchTerm }) {
     };
 
     return (
-        <form className="d-flex me-auto" role="search" onSubmit={handleSearch}>
+        <form className="d-flex" role="search" onSubmit={handleSearch}>
             <input
                 className="form-control me-2"
                 type="search"
