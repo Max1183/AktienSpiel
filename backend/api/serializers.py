@@ -27,6 +27,15 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         return token
 
 
+class TeamRankingSerializer(serializers.ModelSerializer):
+    total_balance = serializers.FloatField()
+    rank = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = Team
+        fields = ("id", "name", "total_balance", "rank")
+
+
 class RegistrationRequestSerializer(serializers.ModelSerializer):
     class Meta:
         model = RegistrationRequest

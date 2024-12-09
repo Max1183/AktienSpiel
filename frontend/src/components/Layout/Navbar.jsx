@@ -1,5 +1,7 @@
+import React, { useRef, useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import SearchBar from '../SearchBar'
+import ProfileDropdown from './ProfileDropdown'
 
 function Navbar ({ small }) {
     const navbar_small = (
@@ -41,7 +43,7 @@ function Navbar ({ small }) {
                                   DEPOT
                                 </NavLink>
                             </li>
-                            {/*<li className="nav-item">
+                            <li className="nav-item">
                                 <NavLink
                                     to="/contest"
                                     className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}
@@ -49,7 +51,7 @@ function Navbar ({ small }) {
                                 >
                                     WETTBEWERB
                                 </NavLink>
-                            </li>*/}
+                            </li>
                             <li className="nav-item">
                                 <NavLink
                                     to="/user/profile"
@@ -85,7 +87,7 @@ function Navbar ({ small }) {
                     <img src="/Logo.png" className="ms-5 me-3" id="logo" alt="Logo" />
                     <p className="m-0 fs-3">Aktienspiel</p>
                 </a>
-                <ul className="navbar-nav me-auto mb-2 mb-lg-0">
+                <ul className="navbar-nav mb-2 mb-lg-0">
                     <li className="nav-item">
                         <NavLink
                           to="/"
@@ -107,18 +109,16 @@ function Navbar ({ small }) {
                     </li>
                     <li className="nav-item">
                         <NavLink
-                          to="/user/profile"
-                          className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}
-                          aria-current={({ isActive }) => (isActive ? "page" : undefined)}
+                            to="/contest"
+                            className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}
+                            aria-current={({ isActive }) => (isActive ? "page" : undefined)}
                         >
-                          PROFIL
+                            WETTBEWERB
                         </NavLink>
                     </li>
                 </ul>
+                <ProfileDropdown />
                 <SearchBar />
-                <a className="navbar-brand mb-0 h1" href="/user/profile/">
-                    <img src="/Profile.png" className="profile" width="40" height="40" alt="Profile" />
-                </a>
             </div>
         </nav>
     )

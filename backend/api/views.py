@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User
 from django.db import transaction
-from rest_framework import generics, mixins, serializers, status, viewsets
+from rest_framework import generics, mixins, pagination, serializers, status, viewsets
+from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -20,6 +21,7 @@ from .serializers import (
     RegistrationRequestSerializer,
     StockHoldingSerializer,
     StockSerializer,
+    TeamRankingSerializer,
     TeamSerializer,
     TransactionCreateSerializer,
     TransactionListSerializer,
@@ -33,10 +35,53 @@ from .serializers import (
 
 
 class MyTokenObtainPairView(TokenObtainPairView):
+    """View zum Abrufen eines Tokens."""
+
     serializer_class = MyTokenObtainPairSerializer
 
 
+class TeamRankingViewSet(viewsets.ModelViewSet):
+    """Viewset für die Team-Ranking-Liste."""
+
+    queryset = Team.objects.all()
+    serializer_class = TeamRankingSerializer
+    permission_classes = [AllowAny]
+
+    @action(detail=False, methods=["get"])
+    def ranking(self, request):
+        page_size = 20
+        page_number = int(request.GET.get("page", 1))
+
+        queryset = Team.objects.all().exclude(name="default")
+        sorted_queryset = sorted(
+            queryset, key=lambda team: team.total_balance, reverse=True
+        )
+
+        paginator = pagination.PageNumberPagination()
+        paginator.page_size = page_size
+        page = paginator.paginate_queryset(sorted_queryset, request)
+
+        serializer = TeamRankingSerializer(
+            page, many=True, context={"request": request}
+        )
+
+        for i, item in enumerate(serializer.data):
+            item["rank"] = (page_number - 1) * page_size + i + 1
+
+        return Response(
+            {
+                "results": serializer.data,
+                "count": paginator.page.paginator.count,
+                "num_pages": paginator.page.paginator.num_pages,
+                "current_page": page_number,
+                "page_size": page_size,
+            }
+        )
+
+
 class RegistrationRequestView(generics.CreateAPIView):
+    """View zum Erstellen neuer Registrierungsanfragen."""
+
     queryset = RegistrationRequest.objects.all()
     serializer_class = RegistrationRequestSerializer
     permission_classes = [IsAdminUser]

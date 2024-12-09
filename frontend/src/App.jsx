@@ -110,9 +110,9 @@ function App() {
                         <Route path="stocks/:id" element={<StockDetail />} />
                     </Route>
 
-                    {/*<Route path="/contest" element={<ProtectedLayout />}>
+                    <Route path="/contest" element={<ProtectedLayout />}>
                         <Route index element={<Contest />} />
-                    </Route>*/}
+                    </Route>
 
                     <Route path="/user" element={<ProtectedLayout />}>
                         <Route index element={<Navigate to="/user/profile" />} />

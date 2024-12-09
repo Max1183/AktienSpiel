@@ -97,13 +97,18 @@ class Team(models.Model):
     def team_member_count(self):
         return self.members.count()
 
-    @admin.display(description="Gesamtdepotwert")
-    def portfolio_value(self):
+    def get_portfolio_value(self):
         total = Sum(F("stock__current_price") * F("amount"))
         stock_balance = self.holdings.aggregate(total_value=total)["total_value"] or 0
+        return self.balance + stock_balance
 
-        total_value = self.balance + stock_balance
-        return f"{total_value:.2f}€"
+    @property
+    def total_balance(self):
+        return self.get_portfolio_value()
+
+    @admin.display(description="Gesamtdepotwert")
+    def portfolio_value(self):
+        return f"{self.get_portfolio_value():.2f}€"
 
     def update_balance(self, amount_change):
         self.balance += amount_change

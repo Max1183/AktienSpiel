@@ -34,7 +34,7 @@ class Command(BaseCommand):
 
 
 class StockUpdater:
-    def __init__(self, num_workers=16, update_interval=300):
+    def __init__(self, num_workers=16, update_interval=600):
         self.num_workers = num_workers
         self.update_interval = update_interval
         self.is_running = True
