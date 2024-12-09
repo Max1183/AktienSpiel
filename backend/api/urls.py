@@ -33,4 +33,7 @@ urlpatterns = [
         name="watchlist-delete",
     ),
     path("validate-form/", views.ValidateFormView.as_view(), name="validate-form"),
+    path(
+        "ranking/", views.TeamRankingViewSet.as_view({"get": "ranking"}), name="ranking"
+    ),
 ]
