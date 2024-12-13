@@ -15,7 +15,7 @@ function StockDetail() {
     const { id } = useParams();
     const [stock, setStock] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [activeTimeSpan, setActiveTimeSpan] = useState('Year');
+    const [activeTimeSpan, setActiveTimeSpan] = useState('Day');
     const [chart, setChart] = useState(null);
 
     const [buy, setBuy] = useState(true);
