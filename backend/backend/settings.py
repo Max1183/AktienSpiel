@@ -70,21 +70,23 @@ ASGI_APPLICATION = "backend.asgi.application"
 
 # Database
 
-# if DEBUG:
-#     DATABASES = {
-#         "default": {
-#             "ENGINE": "django.db.backends.postgresql",
-#             "NAME": os.environ.get("DB_NAME"),
-#             "USER": os.environ.get("DB_USER"),
-#             "PASSWORD": os.environ.get("DB_PASSWORD"),
-#             "HOST": os.environ.get("DB_HOST", "localhost"),
-#             "PORT": os.environ.get("DB_PORT", "5432"),
-#         }
-#     }
-# else:
-DATABASES = {
-    "default": dj_database_url.config(default="postgres://user:pass@host:port/dbname")
-}
+if os.environ.get("USE_DEVELOPMENT_DB") == "True":
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": os.environ.get("DB_NAME"),
+            "USER": os.environ.get("DB_USER"),
+            "PASSWORD": os.environ.get("DB_PASSWORD"),
+            "HOST": os.environ.get("DB_HOST", "localhost"),
+            "PORT": os.environ.get("DB_PORT", "5432"),
+        }
+    }
+else:
+    DATABASES = {
+        "default": dj_database_url.config(
+            default="postgres://user:pass@host:port/dbname"
+        )
+    }
 
 # Password validation
 
