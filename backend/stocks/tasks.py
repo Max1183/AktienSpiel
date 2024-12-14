@@ -53,8 +53,8 @@ def stock_updater_loop():
     load_stocks()
 
     while True:
-        stock_updater()
-        time.sleep(1800)
+        time_taken = stock_updater()
+        time.sleep(3600 - time_taken)
 
 
 def stock_updater():
@@ -72,9 +72,12 @@ def stock_updater():
             for stock in stocks:
                 try:
                     if stock.ticker in data["Close"].columns:
+                        values = data["Close"][stock.ticker].values.tolist()
+                        values = [value for value in values if not numpy.isnan(value)]
+
                         if period == "1d":
-                            current_price = data["Close"][stock.ticker].iloc[-1]
-                            if isinstance(current_price, numpy.float64):
+                            current_price = values[-1]
+                            if not isinstance(current_price, float):
                                 errors.append(stock.ticker)
                                 continue
 
@@ -90,12 +93,11 @@ def stock_updater():
                                 interval=interval,
                             )
 
-                            values = data["Close"][stock.ticker].values.tolist()
-                            if len(values) == 0 or not isinstance(values, list):
+                            if not isinstance(values, list) or len(values) == 0:
                                 errors.append(stock.ticker)
                                 continue
 
-                            history.values = data["Close"][stock.ticker].values.tolist()
+                            history.values = values
                             history.save()
 
                     else:
@@ -104,7 +106,18 @@ def stock_updater():
                 except Exception:
                     errors.append(stock.ticker)
         else:
-            print("No data available.")
+            print(f"No data available for period `{period}`.")
+            break
 
-    print(f"Updated all stocks in {time.time() - start_time} seconds.")
-    print(f"Errors: {errors}")
+        print(
+            f"Updated alls stocks for period `{period}`. {len(errors)} Errors: {errors}"
+        )
+
+        if len(errors) > 50:
+            print("Too many errors. Stopping...")
+            break
+        errors = []
+
+    time_taken = time.time() - start_time
+    print(f"Updated all stocks in {time_taken} seconds.")
+    return time_taken
