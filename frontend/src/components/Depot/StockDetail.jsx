@@ -24,6 +24,8 @@ function StockDetail() {
     const navigate = useNavigate();
     const { addAlert } = useAlert();
 
+    const timeSpans = ["Day", "5 Days", "Month", "3 Months", "Year", "5 Years"];
+
     useEffect(() => {
         const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
         const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
@@ -147,17 +149,23 @@ function StockDetail() {
                 <canvas className="mb-3" id="stock-chart"></canvas>
 
                 <div className="btn-group d-flex btn-group-sm">
-                    {stock.history_entries.sort((a, b) => a.id - b.id).map(entry => (
-                        <button
-                            type="button"
-                            key={entry.id}
-                            onClick={() => setActiveTimeSpan(entry.name)}
-                            className={`btn btn-primary ${activeTimeSpan === entry.name ? 'active' : ''}`}
-                            disabled={entry.values.length === 0}
-                        >
-                            {entry.name}
-                        </button>
-                    ))}
+                    {stock.history_entries
+                        .sort((a, b) => {
+                            const indexA = timeSpans.indexOf(a.name);
+                            const indexB = timeSpans.indexOf(b.name);
+                            return indexA - indexB;
+                        }).map(entry => (
+                            <button
+                                type="button"
+                                key={entry.id}
+                                onClick={() => setActiveTimeSpan(entry.name)}
+                                className={`btn btn-primary ${activeTimeSpan === entry.name ? 'active' : ''}`}
+                                disabled={entry.values.length === 0}
+                            >
+                                {entry.name}
+                            </button>
+                        ))
+                    }
                 </div>
                 <p className="mt-3 fs-4">Geldkurs: {formatCurrency(stock.current_price)}</p>
             </div>
