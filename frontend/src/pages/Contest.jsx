@@ -45,7 +45,7 @@ function Contest() {
                     <tr className="table-secondary">
                         <th scope="col">Platz</th>
                         <th scope="col">Team-Name</th>
-                        <th scope="col">Gesamtdepotwert</th>
+                        <th scope="col">Gesamter Depotwert</th>
                         <th scope="col">Performance (%)</th>
                     </tr>
                 </thead>

@@ -3,6 +3,8 @@ import { Outlet, Link, useLocation, useNavigate, NavLink } from 'react-router-do
 import LoadingSite from '../components/Loading/LoadingSite';
 import { useAlert } from '../components/Alerts/AlertProvider';
 import { getRequest } from '../utils/helpers';
+import { Safe2, Safe2Fill, CartCheck, CartCheckFill, PieChart, PieChartFill, Star, StarFill, Search, ArrowClockwise } from 'react-bootstrap-icons';
+import DepotNavigation from '../components/Depot/DepotNavigation';
 
 function Depot() {
     const location = useLocation();
@@ -23,17 +25,13 @@ function Depot() {
         navigate(path);
     };
 
-    const getClassName = (isActive) => {
-        return `list-group-item list-group-item-action list-group-item-primary text-center p-2 ${isActive ? 'active' : ''}`;
-    };
-
     return <>
-        <div className="list-group list-group-horizontal mb-3">
-            <NavLink to="/depot" end className={({ isActive }) => getClassName(isActive)}>Depot</NavLink>
-            <NavLink to="/depot/transactions" className={({ isActive }) => getClassName(isActive)}>Transaktionen</NavLink>
-            {/*<NavLink to="/depot/analysis" className={({ isActive }) => getClassName(isActive)}>Auswertung</NavLink>*/}
-            <NavLink to="/depot/watchlist" className={({ isActive }) => getClassName(isActive)}>Watchlist</NavLink>
-            <NavLink to="/depot/search" className={({ isActive }) => getClassName(isActive)}>Suchen</NavLink>
+        <div className="btn-group w-100 mb-3">
+            <DepotNavigation to="/depot" name="Depot" icon={<Safe2 />} icon_active={<Safe2Fill />} />
+            <DepotNavigation to="/depot/transactions" name="Transaktionen" icon={<CartCheck />} icon_active={<CartCheckFill />} />
+            <DepotNavigation to="/depot/analysis" name="Auswertung" icon={<PieChart />} icon_active={<PieChartFill />} />
+            <DepotNavigation to="/depot/watchlist" name="Watchlist" icon={<Star />} icon_active={<StarFill />} />
+            <DepotNavigation to="/depot/search" name="Suchen" icon={<Search />} icon_active={<Search />} />
         </div>
         {!team ?
             <h2>Fehler beim Laden des Depots!</h2> :

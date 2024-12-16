@@ -46,7 +46,7 @@ function Protected(Component, path) {
     />
 }
 
-function useWindowSize() {
+export function useWindowSize() {
     const [windowSize, setWindowSize] = useState({
         width: undefined,
         height: undefined,
@@ -104,7 +104,7 @@ function App() {
                     <Route path="/depot" element={<ProtectedLayout />}>
                         <Route index element={<StockHoldings />} />
                         <Route path="transactions" element={<Transactions />} />
-                        {/*<Route path="analysis" element={<Analysis />} />*/}
+                        <Route path="analysis" element={<Analysis />} />
                         <Route path="watchlist" element={<Watchlist />} />
                         <Route path="search" element={<DepotSearch />} />
                         <Route path="stocks/:id" element={<StockDetail />} />
