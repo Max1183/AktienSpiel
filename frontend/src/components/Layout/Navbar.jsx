@@ -70,6 +70,15 @@ function Navbar ({ small }) {
                                     TEAM
                                 </NavLink>
                             </li>
+                            <li className="nav-item">
+                                <NavLink
+                                    to="/logout"
+                                    className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}
+                                    aria-current={({ isActive }) => (isActive ? "page" : undefined)}
+                                >
+                                    LOGOUT
+                                </NavLink>
+                            </li>
                         </ul>
                         <div className="mt-3">
                             <SearchBar />
