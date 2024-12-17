@@ -468,3 +468,48 @@ class TransactionCreateSerializer(serializers.ModelSerializer):
         transaction = Transaction.objects.create(**validated_data)
         execute_transaction(transaction)
         return transaction
+
+
+class AnalysisSerializer(serializers.Serializer):
+    """Serializer für die Analyse der Aktien."""
+
+    stock_name = serializers.CharField(source="stock.name")
+    stock_ticker = serializers.CharField(source="stock.ticker")
+    total_profit = serializers.DecimalField(max_digits=20, decimal_places=2)
+
+    def calculate_profit(self, transactions, current_price):
+        """Berechnet den Gesamtgewinn oder -verlust für eine Aktie basierend auf den Transaktionen."""
+        total_profit = 0
+        for transaction in transactions:
+            if transaction.transaction_type == "buy":
+                total_profit -= transaction.amount * transaction.price + transaction.fee
+            elif transaction.transaction_type == "sell":
+                total_profit += transaction.amount * transaction.price - transaction.fee
+
+        return total_profit
+
+    def to_representation(self, team):
+        """Erstellt die serialisierte Darstellung für ein Team."""
+        stock_profits = []
+        unique_stocks = set(
+            Transaction.objects.filter(team=team).values_list("stock", flat=True)
+        )
+
+        for stock_id in unique_stocks:
+            stock = Stock.objects.get(id=stock_id)
+            transactions = Transaction.objects.filter(team=team, stock=stock)
+            total_profit = self.calculate_profit(transactions, stock.current_price)
+
+            stock_holding = StockHolding.objects.get(team=team, stock=stock)
+            total_profit += stock_holding.amount * stock.current_price
+
+            stock_profits.append(
+                {
+                    "id": stock.pk,
+                    "name": stock.name,
+                    "ticker": stock.ticker,
+                    "total_profit": total_profit,
+                }
+            )
+
+        return stock_profits

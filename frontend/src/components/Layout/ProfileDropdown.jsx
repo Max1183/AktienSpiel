@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
+import { PersonCircle } from 'react-bootstrap-icons';
 
 function ProfileDropdown () {
     const [isOpen, setIsOpen] = useState(false);
@@ -31,7 +32,7 @@ function ProfileDropdown () {
                 aria-expanded={isOpen}
                 onClick={toggleDropdown}
             >
-                <img src="/Profile.png" className="profile" width="40" height="40" alt="Profile" />
+                <PersonCircle width="40" height="40" alt="Profile" />
             </a>
             <ul className={`dropdown-menu ${isOpen && 'show'}`}>
                 <li>

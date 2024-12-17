@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import SearchBar from '../SearchBar'
 import ProfileDropdown from './ProfileDropdown'
+import { PersonCircle } from 'react-bootstrap-icons';
 
 function Navbar ({ small }) {
     const navbar_small = (
@@ -15,7 +16,7 @@ function Navbar ({ small }) {
                     <p className="m-0 fs-4">Aktienspiel</p>
                 </a>
                 <a className="navbar-brand mb-0 h1" href="/user/profile/">
-                    <img src="/Profile.png" className="profile" width="40" height="40" alt="Profile" />
+                    <PersonCircle width="40" height="40" alt="Profile" />
                 </a>
                 <div className="offcanvas offcanvas-start" tabIndex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel" data-bs-scroll="true">
                     <div className="offcanvas-header">
