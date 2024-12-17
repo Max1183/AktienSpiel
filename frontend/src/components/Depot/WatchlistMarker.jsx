@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import api from '../../api';
 import { useAlert } from '../../components/Alerts/AlertProvider';
+import { Star, StarFill } from 'react-bootstrap-icons';
 
 function WatchlistMarker({ stock_id, watchlist }) {
     const [watchlist_id, setWatchlistId] = useState(watchlist);
@@ -30,7 +31,7 @@ function WatchlistMarker({ stock_id, watchlist }) {
     };
 
     return <button className="btn btn-sm" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Watchlist" onClick={handleToggleWatchlist}>
-        <img src={`/Icons/WatchlistIcon${watchlist_id ? 'Active' : ''}.png`} alt="Watchlist" style={{ width: '30px', height: '30px' }} />
+        {watchlist_id ? <StarFill width="30px" height="30px" /> : <Star width="30px" height="30px" />}
     </button>
 }
 

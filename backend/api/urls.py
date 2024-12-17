@@ -36,4 +36,5 @@ urlpatterns = [
     path(
         "ranking/", views.TeamRankingViewSet.as_view({"get": "ranking"}), name="ranking"
     ),
+    path("analysis/", views.AnalysisView.as_view(), name="analysis"),
 ]

@@ -3,7 +3,9 @@ import time
 
 import numpy
 import yfinance as yf
+from django.conf import settings
 from django.db import transaction
+from django.db.utils import OperationalError
 
 from stocks.models import History, Stock
 
@@ -48,13 +50,25 @@ def load_stocks():
 
 
 def stock_updater_loop():
-    print("Starting stock updater loop...")
-    time.sleep(5)
-    load_stocks()
+    update_stocks_interval = settings.UPDATE_STOCKS_INTERVAL
+    print(f"Starting stock updater with interval {update_stocks_interval} seconds...")
+
+    time.sleep(10)
+    try:
+        try:
+            load_stocks()
+        except OperationalError:
+            load_stocks()
+    except Exception as e:
+        print(f"Unexpected error while loading stocks: {e}")
 
     while True:
-        time_taken = stock_updater()
-        time.sleep(3600 - time_taken)
+        try:
+            time_taken = stock_updater()
+            time.sleep(update_stocks_interval - time_taken)
+        except Exception as e:
+            print(f"Error while updating stocks: {e}")
+            time.sleep(3600)
 
 
 def stock_updater():

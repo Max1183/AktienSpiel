@@ -8,11 +8,11 @@ function ProfileLayout({ children }) {
     };
 
     const getClassName = (isActive) => {
-        return `list-group-item list-group-item-action list-group-item-primary text-center p-2 ${isActive ? 'active' : ''}`;
+        return `btn btn-primary ${isActive && 'active'}`;
     };
 
     return <>
-        <div className="list-group list-group-horizontal mb-3">
+        <div className="btn-group w-100 mb-3">
             <NavLink to="/user/profile" className={({ isActive }) => getClassName(isActive)}>Profil</NavLink>
             <NavLink to="/user/team" className={({ isActive }) => getClassName(isActive)}>Team</NavLink>
         </div>

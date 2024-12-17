@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import api from '../api';
 import FormField from '../components/FormField';
 import LoadingSite from '../components/Loading/LoadingSite';
+import { getRequest } from '../utils/helpers';
 
 function ProfileActivation({ match }) {
     const [step, setStep] = useState(0);
@@ -31,22 +32,18 @@ function ProfileActivation({ match }) {
 
     useEffect(() => {
         localStorage.clear();
-        const fetchData = async () => {
-            try {
-                const response = await api.get(`/validate_activation_token/${token}/`);
-                if (response.data.valid) {
-                    setEmail(response.data.email);
+        getRequest(`/validate_activation_token/${token}/`, setLoading)
+            .then(data => {
+                if (data.valid) {
+                    setEmail(data.email);
                 } else {
                     setIsValid(false);
-                    setError(response.data.message);
+                    setError(data.message);
                 }
-            } catch (error) {
+            }).catch(error => {
+                setIsValid(false);
                 setError(error.message);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchData();
+            });
     }, [token]);
 
     const validateField = async (fieldName, value) => {
@@ -175,6 +172,7 @@ function ProfileActivation({ match }) {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setLoading(true);
 
         try {
             const createUserResponse = await api.post('/api/create-user/', {
@@ -196,6 +194,8 @@ function ProfileActivation({ match }) {
             } catch (exception) {
                 setError(err.message || 'Fehler beim Erstellen des Accounts.');
             }
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -287,18 +287,18 @@ function ProfileActivation({ match }) {
         {isValid && step > 0 && <>
             <h1>Profil aktivieren</h1>
             <p>Schritt {step} von 3</p>
-            {error && <div className="alert alert-danger">{error}</div>}
         </>}
-        {!isValid ? (
+        {error && <div className="alert alert-danger">{error}</div>}
+        {isValid ? (
+            <form className="row g-3">
+                {renderStep()}
+            </form>
+        ) : (
             <div className="text-center mt-5">
                 <h1>Hoppla, dein Token leider nicht gültig</h1>
                 <p className="fs-5">Vielleicht ist er abgelaufen oder du hast du ihn schon mal verwendet.</p>
                 <p>Bei Fragen, wende dich gerne an unseren Support: <a href="mailto:aktienspiel01@gmail.com">aktienspiel01@gmail.com</a></p>
             </div>
-        ) : (
-            <form className="row g-3">
-                {renderStep()}
-            </form>
         )}
     </div>
 }

@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { getRequest } from '../../utils/helpers';
+import { getRequest, formatCurrency } from '../../utils/helpers';
 import { useSearchParams } from 'react-router-dom';
 import SearchBar from '../SearchBar';
-import { formatCurrency } from '../../utils/helpers';
 import { useAlert } from '../Alerts/AlertProvider';
 import LoadingSite from '../Loading/LoadingSite';
 

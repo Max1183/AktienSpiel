@@ -2,6 +2,7 @@ import Pagination from '../components/Layout/Pagination'
 import React, { useState, useEffect } from 'react';
 import { getRequest, formatCurrency } from '../utils/helpers';
 import LoadingSite from '../components/Loading/LoadingSite';
+import { useAlert } from '../components/Alerts/AlertProvider';
 
 function Contest() {
     const [rankingData, setRankingData] = useState(null);
@@ -9,6 +10,7 @@ function Contest() {
     const [totalPages, setTotalPages] = useState(1);
     const [rankingCache, setRankingCache] = useState({});
     const [isLoading, setIsLoading] = useState(true);
+    const { addAlert } = useAlert();
 
     useEffect(() => {
         const fetchRankingData = async () => {
@@ -43,7 +45,7 @@ function Contest() {
                     <tr className="table-secondary">
                         <th scope="col">Platz</th>
                         <th scope="col">Team-Name</th>
-                        <th scope="col">Gesamtdepotwert</th>
+                        <th scope="col">Gesamter Depotwert</th>
                         <th scope="col">Performance (%)</th>
                     </tr>
                 </thead>

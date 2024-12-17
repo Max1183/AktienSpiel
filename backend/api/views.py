@@ -1,5 +1,6 @@
 from django.contrib.auth.models import User
 from django.db import transaction
+from django.db.models.aggregates import Count
 from rest_framework import generics, mixins, pagination, serializers, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
@@ -17,6 +18,7 @@ from stocks.models import (
 )
 
 from .serializers import (
+    AnalysisSerializer,
     MyTokenObtainPairSerializer,
     RegistrationRequestSerializer,
     StockHoldingSerializer,
@@ -43,7 +45,11 @@ class MyTokenObtainPairView(TokenObtainPairView):
 class TeamRankingViewSet(viewsets.ModelViewSet):
     """Viewset für die Team-Ranking-Liste."""
 
-    queryset = Team.objects.all()
+    queryset = (
+        Team.objects.annotate(num_members=Count("members"))
+        .filter(num_members__gt=0)
+        .exclude(name="default")
+    )
     serializer_class = TeamRankingSerializer
     permission_classes = [AllowAny]
 
@@ -52,7 +58,11 @@ class TeamRankingViewSet(viewsets.ModelViewSet):
         page_size = 20
         page_number = int(request.GET.get("page", 1))
 
-        queryset = Team.objects.all().exclude(name="default")
+        queryset = (
+            Team.objects.annotate(num_members=Count("members"))
+            .filter(num_members__gt=0)
+            .exclude(name="default")
+        )
         sorted_queryset = sorted(
             queryset, key=lambda team: team.total_balance, reverse=True
         )
@@ -300,3 +310,19 @@ class ValidateFormView(APIView):
             return Response(
                 {"valid": False, "message": message}, status=status.HTTP_200_OK
             )
+
+
+class AnalysisView(APIView):
+    """View zum Berechnen des Gewinns eines Teams."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        team = request.user.profile.team
+        serializer = AnalysisSerializer()
+        sorted_data = sorted(
+            serializer.to_representation(team),
+            key=lambda x: x["total_profit"],
+            reverse=True,
+        )
+        return Response(sorted_data)
