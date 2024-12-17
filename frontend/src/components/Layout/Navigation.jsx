@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom';
+import { Search } from 'react-bootstrap-icons';
 
 function Navigation () {
     const getNavLinkClass = (isActive) => {
@@ -42,7 +43,7 @@ function Navigation () {
               className="navbar-brand"
               aria-current={({ isActive }) => (isActive ? "page" : undefined)}
             >
-              <img src="/SearchIcon.png" alt="Search" width="29" height="22" className="d-inline-block align-text-top" />
+                <Search width="25" height="25" alt="Search" />
             </NavLink>
         </div>
     </nav>
