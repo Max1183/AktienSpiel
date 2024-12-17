@@ -33,6 +33,7 @@ function Profile() {
                 Nachname: {profile.last_name}<br />
                 E-Mail: {profile.user.email}<br />
             </p>
+            <a href="/logout" className="btn btn-primary">Logout</a>
         </div>
     </ProfileLayout>
 }
