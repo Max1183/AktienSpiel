@@ -500,8 +500,11 @@ class AnalysisSerializer(serializers.Serializer):
             transactions = Transaction.objects.filter(team=team, stock=stock)
             total_profit = self.calculate_profit(transactions, stock.current_price)
 
-            stock_holding = StockHolding.objects.get(team=team, stock=stock)
-            total_profit += stock_holding.amount * stock.current_price
+            try:
+                stock_holding = StockHolding.objects.get(team=team, stock=stock)
+                total_profit += stock_holding.amount * stock.current_price
+            except StockHolding.DoesNotExist:
+                pass
 
             stock_profits.append(
                 {

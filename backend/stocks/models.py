@@ -158,11 +158,7 @@ class StockHolding(models.Model):
 
     def adjust_amount(self, quantity):
         self.amount += quantity
-
-        if self.amount == 0:
-            self.delete()
-        else:
-            self.save()
+        self.save()
 
 
 class Transaction(models.Model):
