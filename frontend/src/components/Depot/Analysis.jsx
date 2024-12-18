@@ -26,20 +26,24 @@ function Analysis({ team }) {
         <h2 className="mb-0">Auswertung</h2>
         <small>Hier siehst du, wie sich der Wert deiner Aktien seit Kauf verändert hat!</small>
 
-        <div className="list-group mt-3">
-            {analysis.map((stockHolding) => (
-                <a
-                    key={stockHolding.id}
-                    href={`/depot/stocks/${stockHolding.id}`}
-                    className={getListItemClassName(stockHolding.total_profit)}
-                >
-                    <div className="d-flex w-100 justify-content-between align-items-center">
-                        <p className="fs-4 mb-0">{stockHolding.name}</p>
-                        <p className="fs-5 mb-0">{formatCurrency(stockHolding.total_profit)}</p>
-                    </div>
-                </a>
-            ))}
-        </div>
+        {analysis.length === 0 ? (
+            <p className="text-center">Keine Aktien gefunden.</p>
+        ) : (
+            <div className="list-group mt-3">
+                {analysis.map((stockHolding) => (
+                    <a
+                        key={stockHolding.id}
+                        href={`/depot/stocks/${stockHolding.id}`}
+                        className={getListItemClassName(stockHolding.total_profit)}
+                    >
+                        <div className="d-flex w-100 justify-content-between align-items-center">
+                            <p className="fs-4 mb-0">{stockHolding.name}</p>
+                            <p className="fs-5 mb-0">{formatCurrency(stockHolding.total_profit)}</p>
+                        </div>
+                    </a>
+                ))}
+            </div>
+        )}
     </div>
 }
 
