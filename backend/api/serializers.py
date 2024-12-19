@@ -135,9 +135,9 @@ class UserCreateSerializer(serializers.ModelSerializer):
                 {"detail": ["Dieser Nutzername ist bereits vergeben."]}
             )
 
-        if len(data["password"]) < 8 or len(data["password"]) > 20:
+        if len(data["password"]) < 8 or len(data["password"]) > 30:
             raise serializers.ValidationError(
-                {"detail": ["Das Passwort muss zwischen 8 und 20 Zeichen lang sein."]}
+                {"detail": ["Das Passwort muss zwischen 8 und 30 Zeichen lang sein."]}
             )
 
         if not any(char.isdigit() for char in data["password"]):
@@ -147,11 +147,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
 
         if not any(char.isalpha() for char in data["password"]):
             raise serializers.ValidationError(
-                {
-                    "detail": [
-                        "Das Passwort muss mindestens einen Großbuchstaben enthalten."
-                    ]
-                }
+                {"detail": ["Das Passwort muss mindestens einen Buchstaben enthalten."]}
             )
 
         if data["join_team"]:
@@ -503,8 +499,9 @@ class AnalysisSerializer(serializers.Serializer):
             try:
                 stock_holding = StockHolding.objects.get(team=team, stock=stock)
                 total_profit += stock_holding.amount * stock.current_price
+                current_holding = stock_holding.amount * stock.current_price
             except StockHolding.DoesNotExist:
-                pass
+                current_holding = 0
 
             stock_profits.append(
                 {
@@ -512,6 +509,7 @@ class AnalysisSerializer(serializers.Serializer):
                     "name": stock.name,
                     "ticker": stock.ticker,
                     "total_profit": total_profit,
+                    "current_holding": current_holding,
                 }
             )
 

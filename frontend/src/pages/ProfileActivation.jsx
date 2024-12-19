@@ -27,6 +27,7 @@ function ProfileActivation({ match }) {
         team_code: ''
     });
     const [validationErrors, setValidationErrors] = useState({});
+    const [submissionErrors, setSubmissionErrors] = useState({});
 
     const navigate = useNavigate();
 
@@ -100,8 +101,8 @@ function ProfileActivation({ match }) {
             case 'password':
             case 'password_confirmation':
                 const other_value = fieldName === 'password' ? formData.password_confirmation : formData.password;
-                if (value.length < 8 || value.length > 20) {
-                    error = "Passwort muss zwischen 8 und 20 Zeichen lang sein.";
+                if (value.length < 8 || value.length > 30) {
+                    error = "Passwort muss zwischen 8 und 30 Zeichen lang sein.";
                 } else if (value !== other_value) {
                     error = "Passwort und Passwortbestätigung stimmen nicht überein.";
                 }
@@ -168,6 +169,7 @@ function ProfileActivation({ match }) {
         e.preventDefault();
         setStep(step - 1);
         setError(null);
+        setSubmissionErrors({});
     };
 
     const handleSubmit = async (e) => {
@@ -189,13 +191,16 @@ function ProfileActivation({ match }) {
 
             navigate('/login');
         } catch (err) {
-            try {
-                setError(err.response.data.detail)
-            } catch (exception) {
+            console.log(err);
+            if (err.response && err.response.status === 400 && err.response.data) {
+                setSubmissionErrors(err.response.data);
+                setError("Bitte verbessere die unten aufgeführten Fehler und versuche es erneut.");
+            } else {
                 setError(err.message || 'Fehler beim Erstellen des Accounts.');
             }
         } finally {
             setLoading(false);
+            console.log(error);
         }
     };
 
@@ -266,6 +271,11 @@ function ProfileActivation({ match }) {
                                 <strong>E-Mail:</strong> {email}<br />
                                 <strong>Team:</strong> {joinTeam ? `${joinTeamName ? `Team "${joinTeamName}" b` : 'B'}eitreten mit Code "${formData.team_code}"` : `"${formData.team_name}" erstellen`}<br />
                             </p>
+                        </div>
+                        <div className="col-12">
+                            {submissionErrors && Object.values(submissionErrors).map((error) => (
+                                <p className="text-danger">{error}</p>
+                            ))}
                         </div>
                         <div className="col-12 d-flex justify-content-between">
                             <button className="btn btn-primary" onClick={handlePrevious}>Zurück</button>
