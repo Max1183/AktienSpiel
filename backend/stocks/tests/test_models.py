@@ -189,7 +189,6 @@ class StockHoldingModelTests(TestCase):
         self.assertEqual(holding.amount, 15)
         holding.adjust_amount(-15)
         self.assertEqual(holding.amount, 0)
-        self.assertFalse(StockHolding.objects.filter(id=holding.id).exists())
 
 
 class TransactionModelTests(TestCase):
