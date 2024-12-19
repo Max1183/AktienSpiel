@@ -40,26 +40,28 @@ function Contest() {
     return <>
         <div className="bg-primary-subtle p-3 shadow rounded p-3">
             <h1>Rangliste:</h1>
-            <table className="table table-bordered table-hover">
-                <thead>
-                    <tr className="table-secondary">
-                        <th scope="col">Platz</th>
-                        <th scope="col">Team-Name</th>
-                        <th scope="col">Gesamter Depotwert</th>
-                        <th scope="col">Performance (%)</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {rankingData && rankingData.map((team) => (
-                        <tr key={team.id}>
-                            <th scope="row">{team.rank}</th>
-                            <td>{team.name}</td>
-                            <td>{formatCurrency(team.total_balance)}</td>
-                            <td>{(team.total_balance / 100000 * 100 - 100).toFixed(2) + "%"}</td>
+            <div className="table-responsive">
+                <table className="table table-bordered table-hover">
+                    <thead>
+                        <tr className="table-secondary">
+                            <th scope="col">Platz</th>
+                            <th scope="col">Team-Name</th>
+                            <th scope="col">Gesamter Depotwert</th>
+                            <th scope="col">Performance (%)</th>
                         </tr>
-                    ))}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        {rankingData && rankingData.map((team) => (
+                            <tr key={team.id}>
+                                <th scope="row">{team.rank}</th>
+                                <td>{team.name}</td>
+                                <td>{formatCurrency(team.total_balance)}</td>
+                                <td>{(team.total_balance / 100000 * 100 - 100).toFixed(2) + "%"}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
             {isLoading ?
                 <LoadingSite /> :
                 <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />

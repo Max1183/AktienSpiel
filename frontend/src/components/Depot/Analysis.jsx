@@ -37,8 +37,17 @@ function Analysis({ team }) {
                         className={getListItemClassName(stockHolding.total_profit)}
                     >
                         <div className="d-flex w-100 justify-content-between align-items-center">
-                            <p className="fs-4 mb-0">{stockHolding.name}</p>
-                            <p className="fs-5 mb-0">{formatCurrency(stockHolding.total_profit)}</p>
+                            <p className="fs-5 mb-0">{stockHolding.name}</p>
+                            <div className="d-flex flex-column align-items-end">
+                                <p className="mb-0 fs-6">
+                                    {formatCurrency(stockHolding.total_profit)}
+                                </p>
+                                {stockHolding.current_holding != 0 && (
+                                    <p className="fs-6 mb-0">
+                                        {formatCurrency(stockHolding.current_holding)}
+                                    </p>
+                                )}
+                            </div>
                         </div>
                     </a>
                 ))}

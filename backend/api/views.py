@@ -49,6 +49,7 @@ class TeamRankingViewSet(viewsets.ModelViewSet):
         Team.objects.annotate(num_members=Count("members"))
         .filter(num_members__gt=0)
         .exclude(name="default")
+        .exclude(name="Admin")
     )
     serializer_class = TeamRankingSerializer
     permission_classes = [AllowAny]
@@ -58,11 +59,7 @@ class TeamRankingViewSet(viewsets.ModelViewSet):
         page_size = 20
         page_number = int(request.GET.get("page", 1))
 
-        queryset = (
-            Team.objects.annotate(num_members=Count("members"))
-            .filter(num_members__gt=0)
-            .exclude(name="default")
-        )
+        queryset = self.get_queryset()
         sorted_queryset = sorted(
             queryset, key=lambda team: team.total_balance, reverse=True
         )
@@ -216,7 +213,7 @@ class StockHoldingViewSet(viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         return StockHolding.objects.filter(
-            team=self.request.user.profile.team
+            team=self.request.user.profile.team, amount__gt=0
         ).select_related("team", "stock")
 
 
@@ -240,7 +237,9 @@ class TransactionViewSet(
         return TransactionListSerializer
 
     def get_queryset(self):
-        return Transaction.objects.filter(team=self.request.user.profile.team)
+        return Transaction.objects.filter(team=self.request.user.profile.team).order_by(
+            "-date"
+        )
 
     def perform_update(self, serializer):
         instance = self.get_object()
@@ -268,6 +267,8 @@ class ValidateFormView(APIView):
             elif field == "password":
                 if len(value) < 8:
                     message = "Das Passwort muss mindestens 8 Zeichen lang sein."
+                elif len(value) > 30:
+                    message = "Das Passwort kann maximal 30 Zeichen lang sein."
                 elif not any(char.isdigit() for char in value):
                     message = "Das Passwort muss mindestens eine Zahl enthalten."
                 elif not any(char.isalpha() for char in value):
@@ -300,7 +301,7 @@ class ValidateFormView(APIView):
 
         except Exception:
             return Response(
-                {"valid": False, "message": "Fehler beim Validieren des Formulars."},
+                {"valid": False, "message": "Fehler beim Validieren des Feldes."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
