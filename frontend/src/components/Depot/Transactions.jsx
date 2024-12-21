@@ -1,34 +1,23 @@
-import React, { useState, useEffect } from 'react';
-import api from '../../api';
-import LoadingSite from '../Loading/LoadingSite';
+import React from 'react';
 import TransactionItem from './TransactionItem';
-import { useAlert } from '../Alerts/AlertProvider';
-import { getRequest } from '../../utils/helpers';
+import { useOutletContext } from 'react-router-dom';
+import DepotArea from './DepotArea';
 
 function Transactions({ team }) {
-    const [transactions, setTransactions] = useState(null);
-    const [isLoading, setIsLoading] = useState(true);
-    const { addAlert } = useAlert();
+    const { transactions, loadTransactions } = useOutletContext();
 
-    useEffect(() => {
-        getRequest('/api/transactions/', setIsLoading)
-            .then(data => setTransactions(data))
-            .catch(error => addAlert(error.message, 'danger'));
-    }, []);
-
-    if (isLoading) return <LoadingSite />;
-
-    if (!transactions) return <h2>Fehler beim Laden der Aufträge</h2>;
-
-    return <div className="bg-primary-subtle p-3 shadow rounded p-3">
-        <h2 className="mb-0">Meine Transaktionen</h2>
-        <small>Durch Klicken auf die Transaktionen gelangst du zu den Aktien.</small>
-        <div className="list-group rounded mt-3">
-            {transactions.map((transaction) => (
-                <TransactionItem transaction={transaction} key={transaction.id} />
-            ))}
-        </div>
-    </div>
+    return <>
+        <DepotArea title="Meine Transaktionen" value={transactions} handleReload={loadTransactions} size="12">
+            {transactions && <>
+                <p>Durch Klicken auf die Transaktionen gelangst du zu den Aktien.</p>
+                <div className="list-group rounded mt-3">
+                    {transactions.map((transaction) => (
+                        <TransactionItem transaction={transaction} key={transaction.id} />
+                    ))}
+                </div>
+            </>}
+        </DepotArea>
+    </>
 }
 
 export default Transactions;
