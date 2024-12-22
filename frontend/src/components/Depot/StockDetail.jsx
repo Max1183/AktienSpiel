@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useOutletContext } from 'react-router-dom';
-import { getRequest } from '../../utils/helpers';
 import Chart from 'chart.js/auto';
 import * as bootstrap from 'bootstrap';
 import LoadingSite from '../Loading/LoadingSite';
@@ -15,6 +14,7 @@ function StockDetail() {
     const { id } = useParams();
     const { team, loadTeam } = useOutletContext();
     const { stocks, loadStock } = useOutletContext();
+    const [isLoading, setIsLoading] = useState(false);
 
     const [activeTimeSpan, setActiveTimeSpan] = useState('Day');
     const [chart, setChart] = useState(null);
@@ -83,18 +83,20 @@ function StockDetail() {
     const handleOrder = (event) => {
         event.preventDefault();
         if (window.confirm(`Sind Sie sicher, dass Sie ${amount} Aktien ${buy ? 'kaufen' : 'verkaufen'} wollen?`)) {
+            setIsLoading(true);
             api.post('/api/transactions/', {
                 stock: id,
                 transaction_type: buy ? 'buy' : 'sell',
                 amount: amount
             }).then(res => {
                 if (res.status === 201) {
-                    addAlert(`${buy ? 'Kauf' : 'Verkauf'} von ${amount} Aktien von ${stock.name} durchgeführt!`, 'success');
+                    addAlert(`${buy ? 'Kauf' : 'Verkauf'} von ${amount} Aktien von ${stocks[id].name} durchgeführt!`, 'success');
                     navigate('/depot');
                 }
                 else alert('Fehler beim erstellen des Order-Auftrags', 'danger');
             }).catch((err) => addAlert(err.message, 'danger'));
         }
+        setIsLoading(false);
     }
 
     const canBuy = () => {
@@ -106,7 +108,7 @@ function StockDetail() {
     }
 
     const getFee = () => {
-        return amount ? Math.max(15, parseInt(stock.current_price * amount * 0.001, 10)) : 0;
+        return amount ? Math.max(15, parseInt(stocks[id].current_price * amount * 0.001, 10)) : 0;
     }
 
     const getTotal = () => {
@@ -118,10 +120,10 @@ function StockDetail() {
     }
 
     const isDisabled = () => {
-        return amount < 1 || amount > getMaxAmount() || (buy && getTotal() > team.balance) || (!buy && amount > stock.amount);
+        return amount < 1 || amount > getMaxAmount() || (buy && getTotal() > team.balance) || (!buy && amount > stocks[id].amount);
     }
 
-    return <>
+    return !isLoading ? <>
         <DepotArea title={stocks[id] ? stocks[id].name : "Aktie"} value={stocks[id]} handleReload={(loading) => {loadStock(loading, id)}} size="6">
             {stocks[id] && <>
                 <p>Ticker: {stocks[id].ticker}</p>
@@ -146,7 +148,10 @@ function StockDetail() {
                         ))
                     }
                 </div>
-                <p className="mt-3 fs-4">Geldkurs: {formatCurrency(stocks[id].current_price)}</p>
+                <div className='mt-3 d-flex justify-content-between'>
+                    <p className="fs-4 mb-0 mt-auto">Geldkurs: {formatCurrency(stocks[id].current_price)}</p>
+                    <WatchlistMarker stock_id={id} watchlist={stocks[id].watchlist_id}/>
+                </div>
             </>}
         </DepotArea>
         <DepotArea title="Order-Formular" value={team} handleReload={loadTeam} size="6" reloadButton={false}>
@@ -207,7 +212,7 @@ function StockDetail() {
                 </form>
             </> : <LoadingSite />}
         </DepotArea>
-    </>
+    </> : <LoadingSite />
 }
 
 export default StockDetail;

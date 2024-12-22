@@ -28,7 +28,7 @@ function Watchlist() {
                 </div>
             </> : <>
                 <p>Du hast noch keine Aktien in der Watchlist</p>
-                <p>Füge Aktien zur Watchlist hinzu, indem du auf das Sternsymbol der Aktie klickst.</p>
+                <p>Füge Aktien hinzu, indem du auf das Sternsymbol bei der Aktie klickst.</p>
                 <p>Klicke <a href="/depot/search/">hier</a>, um nach Aktien zu suchen.</p>
             </>}
         </DepotArea>

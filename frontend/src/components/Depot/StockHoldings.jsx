@@ -1,12 +1,51 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import { useOutletContext } from 'react-router-dom';
 import InfoField from '../InfoField';
 import { formatCurrency } from '../../utils/helpers';
 import DepotArea from './DepotArea';
+import Chart from 'chart.js/auto';
 
 function StockHoldings() {
     const { stockHoldings, loadStockHoldings } = useOutletContext();
     const { team, loadTeam } = useOutletContext();
+
+    const [chart, setChart] = useState(null);
+
+    useEffect(() => {
+        if (team && team.portfolio_history.length >= 3) {
+            const chartData = team.portfolio_history;
+
+            if (chartData) {
+                const ctx = document.getElementById('portfolio-chart').getContext('2d');
+
+                if (chart) {
+                    chart.destroy();
+                }
+
+                const newChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: chartData.map((_, index) => index + 1),
+                        datasets: [{
+                            label: 'Kursverlauf',
+                            data: chartData,
+                            borderColor: 'rgb(75, 192, 192)',
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                beginAtZero: false
+                            }
+                        }
+                    }
+                });
+
+                setChart(newChart);
+            }
+        }
+    }, [team]);
 
     return <>
         <DepotArea title="Portfolio Übersicht" value={team} handleReload={loadTeam} size="6">
@@ -22,10 +61,12 @@ function StockHoldings() {
         <div className="col-lg-6 p-2">
             <div className="bg-primary-subtle p-3 shadow rounded p-3 h-100">
                 <h2>Depotverlauf</h2>
-                <p>Hier kannst du den Verlauf deines Depots sehen</p>
+                {(team && team.portfolio_history.length >= 3) ? (
+                    <canvas className="mb-3" id="portfolio-chart"></canvas>
+                ) : <p>Hier kannst du den Verlauf deines Depots sehen</p>}
             </div>
         </div>
-        <DepotArea title="Mein Depot" value={stockHoldings} handleReload={loadStockHoldings} size="12">
+        <DepotArea title="Mein Depot" value={stockHoldings} handleReload={loadStockHoldings}>
             {(stockHoldings && stockHoldings.length > 0) ? <div className="list-group rounded">
                 {stockHoldings.map((stockHolding) => (
                     <a key={stockHolding.id} href={`/depot/stocks/${stockHolding.stock.id}`} className="list-group-item list-group-item-action list-group-item-light">

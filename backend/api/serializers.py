@@ -259,6 +259,7 @@ class TeamSerializer(serializers.ModelSerializer):
             "trades",
             "code",
             "members",
+            "portfolio_history",
         ]
         read_only_fields = fields
 
