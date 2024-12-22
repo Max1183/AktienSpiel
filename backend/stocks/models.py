@@ -89,6 +89,7 @@ class Team(models.Model):
     balance = models.DecimalField(max_digits=20, decimal_places=2, default=100000)
     stocks = models.ManyToManyField(Stock, through="StockHolding")
     code = models.CharField(max_length=8, unique=True, blank=True)
+    portfolio_history = models.JSONField(default=list, blank=True)
 
     def __str__(self):
         return self.name

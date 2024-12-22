@@ -7,7 +7,7 @@ from django.conf import settings
 from django.db import transaction
 from django.db.utils import OperationalError
 
-from stocks.models import History, Stock
+from stocks.models import History, Stock, Team
 
 DATA_DIR = "Data/"
 HISTORY_INTERVALS = {
@@ -18,6 +18,19 @@ HISTORY_INTERVALS = {
     "Year": ["1y", "1wk"],
     "5 Years": ["5y", "1mo"],
 }
+
+
+def load_portfolio_history():
+    try:
+        for team in Team.objects.all():
+            with transaction.atomic():
+                portfolio_value = team.get_portfolio_value()
+                team.portfolio_history.append(portfolio_value)
+                team.save()
+        print("Successfully loaded portfolio history.")
+
+    except Exception as e:
+        print(f"Error while loading portfolio history: {e}")
 
 
 def load_stocks():
@@ -63,12 +76,14 @@ def stock_updater_loop():
         print(f"Unexpected error while loading stocks: {e}")
 
     while True:
+        time_taken = 0
         try:
             time_taken = stock_updater()
-            time.sleep(update_stocks_interval - time_taken)
         except Exception as e:
             print(f"Error while updating stocks: {e}")
-            time.sleep(3600)
+
+        load_portfolio_history()
+        time.sleep(update_stocks_interval - time_taken)
 
 
 def stock_updater():

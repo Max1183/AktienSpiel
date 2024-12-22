@@ -54,7 +54,14 @@ class StockAdmin(admin.ModelAdmin):
 @admin.register(Team)
 class TeamAdmin(admin.ModelAdmin):
     inlines = [UserProfileInLine, StockHoldingInline, WatchlistInline]
-    fields = ["name", "team_member_count", "balance", "portfolio_value", "code"]
+    fields = [
+        "name",
+        "team_member_count",
+        "balance",
+        "portfolio_value",
+        "code",
+        "portfolio_history",
+    ]
     list_display = ["name", "team_member_count", "portfolio_value"]
     search_fields = ["name"]
     readonly_fields = ["team_member_count", "portfolio_value", "code"]
