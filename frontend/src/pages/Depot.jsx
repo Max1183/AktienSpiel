@@ -12,6 +12,8 @@ function Depot() {
     const [stockHoldings, setStockHoldings] = useState(null);
     const [transactions, setTransactions] = useState(null);
     const [analysis, setAnalysis] = useState(null);
+    const [watchlist, setWatchlist] = useState(null);
+    const [stocks, setStocks] = useState({});
 
     const loadTeam = (setIsLoading) => {
         getRequest('/api/team/', setIsLoading)
@@ -37,6 +39,18 @@ function Depot() {
             .catch(error => addAlert(error.message, 'danger'));
     }
 
+    const loadWatchlist = (setIsLoading) => {
+        getRequest('/api/watchlist/', setIsLoading)
+            .then(data => setWatchlist(data))
+            .catch(error => addAlert(error.message, 'danger'));
+    }
+
+    const loadStock = (setIsLoading, id) => {
+        getRequest(`/api/stocks/${id}/`, setIsLoading)
+            .then(data => setStocks({...stocks, [id]: data}))
+            .catch(error => addAlert(error.message, 'danger'));
+    }
+
     return <>
         <div className="btn-group w-100 mb-3">
             <DepotNavigation to="/depot" name="Depot" icon={<Safe2 />} icon_active={<Safe2Fill />} />
@@ -55,6 +69,11 @@ function Depot() {
                 loadTransactions: loadTransactions,
                 analysis: analysis,
                 loadAnalysis, loadAnalysis,
+                watchlist: watchlist,
+                setWatchlist: setWatchlist,
+                loadWatchlist: loadWatchlist,
+                stocks: stocks,
+                loadStock: loadStock,
             }} />
         </div>
     </>;

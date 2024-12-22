@@ -9,12 +9,13 @@ import Tooltip from '../Tooltip';
 import { formatCurrency } from '../../utils/helpers';
 import api from '../../api';
 import { useAlert } from '../Alerts/AlertProvider';
+import DepotArea from './DepotArea';
 
 function StockDetail() {
-    const { team } = useOutletContext();
     const { id } = useParams();
-    const [stock, setStock] = useState(null);
-    const [isLoading, setIsLoading] = useState(true);
+    const { team, loadTeam } = useOutletContext();
+    const { stocks, loadStock } = useOutletContext();
+
     const [activeTimeSpan, setActiveTimeSpan] = useState('Day');
     const [chart, setChart] = useState(null);
 
@@ -33,17 +34,11 @@ function StockDetail() {
         return () => {
             tooltipList.forEach(tooltip => tooltip.dispose());
         };
-    }, [stock]);
+    }, []);
 
     useEffect(() => {
-        getRequest(`/api/stocks/${id}/`, setIsLoading)
-            .then(data => setStock(data))
-            .catch(error => addAlert(error.message, 'danger'));
-    }, [id]);
-
-    useEffect(() => {
-        if (stock && stock.history_entries) {
-            const chartData = stock.history_entries.find(entry => entry.name === activeTimeSpan);
+        if (stocks[id] && stocks[id].history_entries) {
+            const chartData = stocks[id].history_entries.find(entry => entry.name === activeTimeSpan);
 
             if (chartData) {
                 const ctx = document.getElementById('stock-chart').getContext('2d');
@@ -75,18 +70,7 @@ function StockDetail() {
                 setChart(newChart);
             }
         }
-    }, [stock, activeTimeSpan]);
-
-    if (isLoading) {
-        return <LoadingSite />;
-    }
-
-    if (!stock) {
-        return <>
-            <h1>Aktie nicht gefunden!</h1>
-            <p>Zurück zur <a href="/">Startseite</a></p>
-        </>
-    }
+    }, [stocks, activeTimeSpan]);
 
     const handleBuy = () => {
         setBuy(true);
@@ -114,11 +98,11 @@ function StockDetail() {
     }
 
     const canBuy = () => {
-        return parseInt(team.balance) >= stock.current_price + 15;
+        return parseInt(team.balance) >= stocks[id].current_price + 15;
     }
 
     const canSell = () => {
-        return stock.amount > 0;
+        return stocks[id].amount > 0;
     }
 
     const getFee = () => {
@@ -126,30 +110,25 @@ function StockDetail() {
     }
 
     const getTotal = () => {
-        return amount * stock.current_price + getFee() * (buy ? 1 : -1);
+        return amount * stocks[id].current_price + getFee() * (buy ? 1 : -1);
     }
 
     const getMaxAmount = () => {
-        return buy ? Math.floor(team.balance / stock.current_price) : stock.amount
+        return buy ? Math.floor(team.balance / stocks[id].current_price) : stocks[id].amount
     }
 
     const isDisabled = () => {
         return amount < 1 || amount > getMaxAmount() || (buy && getTotal() > team.balance) || (!buy && amount > stock.amount);
     }
 
-    return <div className="row">
-        <div className="col-lg-6 p-2">
-            <div className="bg-primary-subtle p-3 shadow rounded p-3 h-100">
-                <div className="d-flex justify-content-between">
-                    <h2>{stock.name}</h2>
-                    <WatchlistMarker stock_id={stock.id} watchlist={stock.watchlist_id} />
-                </div>
-                <p>Ticker: {stock.ticker}</p>
-
+    return <>
+        <DepotArea title={stocks[id] ? stocks[id].name : "Aktie"} value={stocks[id]} handleReload={(loading) => {loadStock(loading, id)}} size="6">
+            {stocks[id] && <>
+                <p>Ticker: {stocks[id].ticker}</p>
                 <canvas className="mb-3" id="stock-chart"></canvas>
 
                 <div className="btn-group d-flex btn-group-sm">
-                    {stock.history_entries
+                    {stocks[id].history_entries
                         .sort((a, b) => {
                             const indexA = timeSpans.indexOf(a.name);
                             const indexB = timeSpans.indexOf(b.name);
@@ -167,13 +146,11 @@ function StockDetail() {
                         ))
                     }
                 </div>
-                <p className="mt-3 fs-4">Geldkurs: {formatCurrency(stock.current_price)}</p>
-            </div>
-        </div>
-        <div className="col-lg-6 p-2">
-            <div className="bg-primary-subtle p-3 shadow rounded p-3 h-100 d-flex flex-column">
-                <h2>Order-Formular</h2>
-
+                <p className="mt-3 fs-4">Geldkurs: {formatCurrency(stocks[id].current_price)}</p>
+            </>}
+        </DepotArea>
+        <DepotArea title="Order-Formular" value={team} handleReload={loadTeam} size="6" reloadButton={false}>
+            {(team && stocks[id]) ? <>
                 <div className="row bg-info p-2 border rounded mt-1 mb-3 fs-5">
                     {buy ? (
                         <>
@@ -183,7 +160,7 @@ function StockDetail() {
                     ) : (
                         <>
                             <span className='col-8'>Aktien:</span>
-                            <span className='col-4 text-end'>{stock.amount}</span>
+                            <span className='col-4 text-end'>{stocks[id].amount}</span>
                         </>
                     )}
                 </div>
@@ -224,13 +201,13 @@ function StockDetail() {
                         <p className="m-1 ms-0">Gesamt ca.: {formatCurrency(getTotal())}</p>
                         <Tooltip text="Eine ungefähre Berechnung des Gesamtpreises aufgrund des aktuellen Kurses und der Orderart" />
                     </div>
-                    <div className="mt-auto mt-3">
+                    <div className="mt-2">
                         <button type="submit" className={`btn btn-primary mt-3 ${isDisabled() && 'disabled'}`}>Order-Auftrag erstellen</button>
                     </div>
                 </form>
-            </div>
-        </div>
-    </div>
+            </> : <LoadingSite />}
+        </DepotArea>
+    </>
 }
 
 export default StockDetail;
