@@ -68,7 +68,7 @@ function Depot() {
                 transactions: transactions,
                 loadTransactions: loadTransactions,
                 analysis: analysis,
-                loadAnalysis, loadAnalysis,
+                loadAnalysis: loadAnalysis,
                 watchlist: watchlist,
                 setWatchlist: setWatchlist,
                 loadWatchlist: loadWatchlist,

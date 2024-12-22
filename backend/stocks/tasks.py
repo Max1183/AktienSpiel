@@ -25,7 +25,7 @@ def load_portfolio_history():
         for team in Team.objects.all():
             with transaction.atomic():
                 portfolio_value = team.get_portfolio_value()
-                team.portfolio_history.append(portfolio_value)
+                team.portfolio_history.append(float(portfolio_value))
                 team.save()
         print("Successfully loaded portfolio history.")
 
