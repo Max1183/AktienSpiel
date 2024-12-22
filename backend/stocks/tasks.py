@@ -76,18 +76,20 @@ def stock_updater_loop():
         print(f"Unexpected error while loading stocks: {e}")
 
     while True:
-        time_taken = 0
+        start_time = time.time()
+
         try:
-            time_taken = stock_updater()
+            stock_updater()
         except Exception as e:
             print(f"Error while updating stocks: {e}")
 
         load_portfolio_history()
+        time_taken = time.time() - start_time
+        print(f"Updated all stocks in {time_taken} seconds.")
         time.sleep(update_stocks_interval - time_taken)
 
 
 def stock_updater():
-    start_time = time.time()
     print("Starting stock updater...")
     stocks = Stock.objects.all()
 
@@ -146,7 +148,3 @@ def stock_updater():
             print("Too many errors. Stopping...")
             break
         errors = []
-
-    time_taken = time.time() - start_time
-    print(f"Updated all stocks in {time_taken} seconds.")
-    return time_taken
