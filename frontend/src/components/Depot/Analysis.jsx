@@ -5,7 +5,7 @@ import DepotArea from './DepotArea';
 
 
 function Analysis() {
-    const { analysis, loadAnalysis } = useOutletContext();
+    const { getData } = useOutletContext();
 
     const getListItemClassName = (total_profit) => {
         const color = total_profit > 0 ? 'success' : (total_profit < 0 ? (total_profit < -200 ? 'danger' : 'warning') : 'secondary');
@@ -13,11 +13,11 @@ function Analysis() {
     };
 
     return <>
-        <DepotArea title="Auswertung" value={analysis} handleReload={loadAnalysis} size="12">
-            {(analysis && analysis.length > 0) ? <>
+        <DepotArea title="Auswertung" key1="analysis" size="12">
+            {(getData("analysis") && getData("analysis").length > 0) ? <>
                 <p>Hier siehst du, wie viel Gewinn bzw. Verlust deine Aktien gemacht haben und wie viel du davon jeweils besitzt.</p>
                 <div className="list-group mt-3">
-                    {analysis.map((stockHolding) => (
+                    {getData("analysis").map((stockHolding) => (
                         <a
                             key={stockHolding.id}
                             href={`/depot/stocks/${stockHolding.id}`}

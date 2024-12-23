@@ -19,7 +19,7 @@ export const formatCurrency = (amount) => {
 };
 
 export const getRequest = async (url, setIsLoading) => {
-    setIsLoading(true);
+    if (setIsLoading) setIsLoading(true);
 
     try {
         const response = await api.get(url);
@@ -27,7 +27,7 @@ export const getRequest = async (url, setIsLoading) => {
     } catch (e) {
         throw new Error(e.message);
     } finally {
-        setIsLoading(false);
+        if (setIsLoading) setIsLoading(false);
     }
 };
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, useOutletContext } from 'react-router-dom';
 import Chart from 'chart.js/auto';
 import * as bootstrap from 'bootstrap';
@@ -12,39 +12,38 @@ import DepotArea from './DepotArea';
 
 function StockDetail() {
     const { id } = useParams();
-    const { team, loadTeam } = useOutletContext();
-    const { stocks, loadStock } = useOutletContext();
+    const { getData, loadValue } = useOutletContext();
     const [isLoading, setIsLoading] = useState(false);
-
     const [activeTimeSpan, setActiveTimeSpan] = useState('Day');
-    const [chart, setChart] = useState(null);
-
     const [buy, setBuy] = useState(true);
     const [amount, setAmount] = useState(0);
-
     const navigate = useNavigate();
     const { addAlert } = useAlert();
-
     const timeSpans = ["Day", "5 Days", "Month", "3 Months", "Year", "5 Years"];
+    const chartRef = useRef(null);
 
     useEffect(() => {
-        const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
-        const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
+        const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+        const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
 
         return () => {
             tooltipList.forEach(tooltip => tooltip.dispose());
+             if (chartRef.current) {
+                    chartRef.current.destroy();
+                }
         };
     }, []);
 
     useEffect(() => {
-        if (stocks[id] && stocks[id].history_entries) {
-            const chartData = stocks[id].history_entries.find(entry => entry.name === activeTimeSpan);
+        const stock = getData('stocks') && getData('stocks')[id]
+        if (document.getElementById('stock-chart') && stock && stock.history_entries) {
+            const chartData = stock.history_entries.find(entry => entry.name === activeTimeSpan);
 
             if (chartData) {
                 const ctx = document.getElementById('stock-chart').getContext('2d');
 
-                if (chart) {
-                    chart.destroy();
+                if (chartRef.current) {
+                    chartRef.current.destroy();
                 }
 
                 const newChart = new Chart(ctx, {
@@ -66,11 +65,10 @@ function StockDetail() {
                         }
                     }
                 });
-
-                setChart(newChart);
+                 chartRef.current = newChart;
             }
         }
-    }, [stocks, activeTimeSpan]);
+     }, [getData, id, activeTimeSpan]);
 
     const handleBuy = () => {
         setBuy(true);
@@ -80,57 +78,76 @@ function StockDetail() {
         setBuy(false);
     };
 
-    const handleOrder = (event) => {
+    const handleOrder = async (event) => {
         event.preventDefault();
         if (window.confirm(`Sind Sie sicher, dass Sie ${amount} Aktien ${buy ? 'kaufen' : 'verkaufen'} wollen?`)) {
             setIsLoading(true);
-            api.post('/api/transactions/', {
-                stock: id,
-                transaction_type: buy ? 'buy' : 'sell',
-                amount: amount
-            }).then(res => {
-                if (res.status === 201) {
-                    addAlert(`${buy ? 'Kauf' : 'Verkauf'} von ${amount} Aktien von ${stocks[id].name} durchgeführt!`, 'success');
-                    navigate('/depot');
+            try {
+                   const res = await api.post('/api/transactions/', {
+                        stock: id,
+                        transaction_type: buy ? 'buy' : 'sell',
+                        amount: amount
+                    });
+                    if (res.status === 201) {
+                         addAlert(`${buy ? 'Kauf' : 'Verkauf'} von ${amount} Aktien von ${getData('stocks')[id].name} durchgeführt!`, 'success');
+                         navigate('/depot');
+                   }
+                   else addAlert('Fehler beim erstellen des Order-Auftrags', 'danger');
+                } catch (err) {
+                   addAlert(err.message, 'danger')
                 }
-                else alert('Fehler beim erstellen des Order-Auftrags', 'danger');
-            }).catch((err) => addAlert(err.message, 'danger'));
+                setIsLoading(false);
         }
         setIsLoading(false);
     }
 
+    const getTitle = () => {
+        return getData('stocks') && getData('stocks')[id] ? getData('stocks')[id].name : "Aktie";
+    }
+
     const canBuy = () => {
-        return parseInt(team.balance) >= stocks[id].current_price + 15;
+        const team = getData('team');
+        const stock = getData('stocks') && getData('stocks')[id]
+        return team && stock && parseInt(team.balance) >= stock.current_price + 15;
     }
 
     const canSell = () => {
-        return stocks[id].amount > 0;
+        const stock = getData('stocks') && getData('stocks')[id]
+        return stock && stock.amount > 0;
     }
 
     const getFee = () => {
-        return amount ? Math.max(15, parseInt(stocks[id].current_price * amount * 0.001, 10)) : 0;
+        const stock = getData('stocks') && getData('stocks')[id]
+        return stock && amount ? Math.max(15, parseInt(stock.current_price * amount * 0.001, 10)) : 0;
     }
+
 
     const getTotal = () => {
-        return amount * stocks[id].current_price + getFee() * (buy ? 1 : -1);
+        const stock = getData('stocks') && getData('stocks')[id]
+        return stock && amount ? amount * stock.current_price + getFee() * (buy ? 1 : -1) : 0;
     }
 
+
     const getMaxAmount = () => {
-        return buy ? Math.floor(team.balance / stocks[id].current_price) : stocks[id].amount
+        const team = getData('team');
+        const stock = getData('stocks') && getData('stocks')[id]
+        return buy && team && stock ? Math.floor(team.balance / stock.current_price) : stock ? stock.amount : 0
     }
 
     const isDisabled = () => {
-        return amount < 1 || amount > getMaxAmount() || (buy && getTotal() > team.balance) || (!buy && amount > stocks[id].amount);
+        const stock = getData('stocks') && getData('stocks')[id];
+        const team = getData('team');
+        return !stock || !team || amount < 1 || amount > getMaxAmount() || (buy && getTotal() > team.balance) || (!buy && amount > stock.amount);
     }
 
     return !isLoading ? <>
-        <DepotArea title={stocks[id] ? stocks[id].name : "Aktie"} value={stocks[id]} handleReload={(loading) => {loadStock(loading, id)}} size="6">
-            {stocks[id] && <>
-                <p>Ticker: {stocks[id].ticker}</p>
+        <DepotArea title={getTitle()} key1="stocks" handleReload={() => loadValue('stocks', id)} size="6" reloadButton={true}>
+            {getData('stocks') && getData('stocks')[id] && <>
+                <p>Ticker: {getData('stocks')[id].ticker}</p>
                 <canvas className="mb-3" id="stock-chart"></canvas>
 
                 <div className="btn-group d-flex btn-group-sm">
-                    {stocks[id].history_entries
+                    {getData('stocks')[id].history_entries
                         .sort((a, b) => {
                             const indexA = timeSpans.indexOf(a.name);
                             const indexB = timeSpans.indexOf(b.name);
@@ -149,23 +166,23 @@ function StockDetail() {
                     }
                 </div>
                 <div className='mt-3 d-flex justify-content-between'>
-                    <p className="fs-4 mb-0 mt-auto">Geldkurs: {formatCurrency(stocks[id].current_price)}</p>
-                    <WatchlistMarker stock_id={id} watchlist={stocks[id].watchlist_id}/>
+                    <p className="fs-4 mb-0 mt-auto">Geldkurs: {formatCurrency(getData('stocks')[id].current_price)}</p>
+                    <WatchlistMarker stock_id={id} watchlist={getData('stocks')[id].watchlist_id}/>
                 </div>
             </>}
         </DepotArea>
-        <DepotArea title="Order-Formular" value={team} handleReload={loadTeam} size="6" reloadButton={false}>
-            {(team && stocks[id]) ? <>
-                <div className="row bg-info p-2 border rounded mt-1 mb-3 fs-5">
+        <DepotArea title="Order-Formular" key1="team" size="6" reloadButton={false}>
+            {(getData('team') &&  getData('stocks') &&  getData('stocks')[id]) ? <>
+               <div className="row bg-info p-2 border rounded mt-1 mb-3 fs-5">
                     {buy ? (
                         <>
                             <span className='col-8'>Verfügbares Kapital:</span>
-                            <span className='col-4 text-end'>{formatCurrency(team.balance)}</span>
+                            <span className='col-4 text-end'>{formatCurrency(getData('team').balance)}</span>
                         </>
                     ) : (
                         <>
                             <span className='col-8'>Aktien:</span>
-                            <span className='col-4 text-end'>{stocks[id].amount}</span>
+                            <span className='col-4 text-end'>{getData('stocks')[id].amount}</span>
                         </>
                     )}
                 </div>
