@@ -30,10 +30,22 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
 class TeamRankingSerializer(serializers.ModelSerializer):
     total_balance = serializers.FloatField()
     rank = serializers.IntegerField(read_only=True)
+    members = serializers.SerializerMethodField()
+    stocks = serializers.SerializerMethodField()
 
     class Meta:
         model = Team
-        fields = ("id", "name", "total_balance", "rank")
+        fields = ("id", "name", "total_balance", "rank", "members", "stocks")
+
+    def get_members(self, obj):
+        members = obj.members.all()
+        return [
+            {"id": member.id, "username": member.user.username} for member in members
+        ]
+
+    def get_stocks(self, obj):
+        stocks = obj.holdings.filter(amount__gt=0)
+        return [{"id": stock.stock.id, "name": stock.stock.name} for stock in stocks]
 
 
 class RegistrationRequestSerializer(serializers.ModelSerializer):

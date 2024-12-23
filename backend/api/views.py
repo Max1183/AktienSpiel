@@ -75,6 +75,8 @@ class TeamRankingViewSet(viewsets.ModelViewSet):
         for i, item in enumerate(serializer.data):
             item["rank"] = (page_number - 1) * page_size + i + 1
 
+        print(serializer.data)
+
         return Response(
             {
                 "results": serializer.data,
