@@ -8,48 +8,50 @@ import DepotNavigation from '../components/Depot/DepotNavigation';
 function Depot() {
     const { addAlert } = useAlert();
 
-    const [team, setTeam] = useState(null);
-    const [stockHoldings, setStockHoldings] = useState(null);
-    const [transactions, setTransactions] = useState(null);
-    const [analysis, setAnalysis] = useState(null);
-    const [watchlist, setWatchlist] = useState(null);
-    const [stocks, setStocks] = useState({});
+    const [data, setData] = useState({});
 
-    const loadTeam = (setIsLoading) => {
-        getRequest('/api/team/', setIsLoading)
-            .then(data => setTeam(data))
-            .catch(error => addAlert(error.message, 'danger'));
+    const loadValue = (key, id=null) => {
+        changeLoading(key, true);
+        getRequest(`/api/${key}/${id ? id + '/' : ''}`)
+            .then(data => {changeData(key, data, id)})
+            .catch(error => addAlert(error.message, 'danger'))
+            .finally(() => changeLoading(key, false));
     }
 
-    const loadStockHoldings = (setIsLoading) => {
-        getRequest('/api/stockholdings/', setIsLoading)
-            .then(data => setStockHoldings(data))
-            .catch(error => addAlert(error.message, 'danger'));
+    const getLoading = (key) => {
+        if (!data[key]) return false;
+        return data[key].isLoading;
     }
 
-    const loadTransactions = (setIsLoading) => {
-        getRequest('/api/transactions/', setIsLoading)
-            .then(data => setTransactions(data))
-            .catch(error => addAlert(error.message, 'danger'));
+    const getData = (key) => {
+        if (!data[key]) return null;
+        return data[key].data;
     }
 
-    const loadAnalysis = (setIsLoading) => {
-        getRequest('/api/analysis/', setIsLoading)
-            .then(data => setAnalysis(data))
-            .catch(error => addAlert(error.message, 'danger'));
+    const changeLoading = (key, newIsLoading) => {
+        setData(prevData => ({
+            ...prevData,
+            [key]: {
+                ...prevData[key],
+                isLoading: newIsLoading
+            }
+        }));
     }
 
-    const loadWatchlist = (setIsLoading) => {
-        getRequest('/api/watchlist/', setIsLoading)
-            .then(data => setWatchlist(data))
-            .catch(error => addAlert(error.message, 'danger'));
-    }
-
-    const loadStock = (setIsLoading, id) => {
-        getRequest(`/api/stocks/${id}/`, setIsLoading)
-            .then(data => setStocks({...stocks, [id]: data}))
-            .catch(error => addAlert(error.message, 'danger'));
-    }
+    const changeData = (key, newData, id = null) => {
+        setData(prevData => {
+            const updatedData = {
+                ...prevData,
+                [key]: {
+                    isLoading: false,
+                    data: id
+                        ? { ...((prevData[key] && prevData[key].data) || {}), [id]: newData }
+                        : newData
+                }
+            };
+            return updatedData;
+        });
+    };
 
     return <>
         <div className="btn-group w-100 mb-3">
@@ -61,19 +63,9 @@ function Depot() {
         </div>
         <div className="row">
             <Outlet context={{
-                team: team,
-                loadTeam: loadTeam,
-                stockHoldings: stockHoldings,
-                loadStockHoldings: loadStockHoldings,
-                transactions: transactions,
-                loadTransactions: loadTransactions,
-                analysis: analysis,
-                loadAnalysis: loadAnalysis,
-                watchlist: watchlist,
-                setWatchlist: setWatchlist,
-                loadWatchlist: loadWatchlist,
-                stocks: stocks,
-                loadStock: loadStock,
+                loadValue: loadValue,
+                getLoading: getLoading,
+                getData: getData,
             }} />
         </div>
     </>;

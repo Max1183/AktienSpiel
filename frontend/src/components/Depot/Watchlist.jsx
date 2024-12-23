@@ -3,9 +3,10 @@ import WatchlistItem from './WatchlistItem';
 import { useAlert } from '../Alerts/AlertProvider';
 import { useOutletContext } from 'react-router-dom';
 import DepotArea from './DepotArea';
+import api from '../../api';
 
 function Watchlist() {
-    const { watchlist, setWatchlist, loadWatchlist } = useOutletContext();
+    const { getData, loadValue } = useOutletContext();
     const { addAlert } = useAlert();
 
     const deleteWatchlist = (e, id) => {
@@ -13,16 +14,16 @@ function Watchlist() {
         api.delete(`/api/watchlist/delete/${id}/`).then((res) => {
             if (res.status === 204) addAlert('Watchlisteintrag erfolgreich entfernt', 'success');
             else addAlert('Fehler beim Löschen des Watchlisteintrags', 'danger');
-            setWatchlist(watchlist.filter((item) => item.id !== id));
+            loadValue('watchlist')
         }).catch((err) => addAlert(err.message, 'danger'));
     };
 
     return <>
-        <DepotArea title="Watchlist" value={watchlist} handleReload={loadWatchlist}>
-            {(watchlist && watchlist.length > 0) ? <>
+        <DepotArea title="Watchlist" key1="watchlist">
+            {(getData("watchlist") && getData("watchlist").length > 0) ? <>
                 <p>Hier siehst du alle Aktien in deiner Watchlist.</p>
                 <div className="list-group rounded mt-3">
-                    {watchlist.map((list) => (
+                    {getData("watchlist").map((list) => (
                         <WatchlistItem watchlist={list} onDelete={deleteWatchlist} key={list.id} />
                     ))}
                 </div>
