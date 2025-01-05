@@ -1,5 +1,5 @@
 [flake8]
-ignore = C101, A005, E402, Q000, C400
+ignore = C101, A005, E402, Q000, C400, W503
 exclude =
     .git,
     .mypy_cache,

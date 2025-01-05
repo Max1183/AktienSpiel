@@ -15,10 +15,6 @@ from stocks.models import (
 from stocks.transactions import execute_transaction
 
 
-def calculate_fee(current_price, amount):
-    return max(15, int(float(current_price * amount) * 0.001))
-
-
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
     def get_token(cls, user):
@@ -438,9 +434,7 @@ class TransactionCreateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({"detail": ["Ungültige Anzahl."]})
 
         if transaction_type == "buy":
-            price = amount * stock.current_price + calculate_fee(
-                stock.current_price, amount
-            )
+            price = amount * stock.current_price + stock.calculate_fee(amount)
             if team.balance < price:
                 raise serializers.ValidationError(
                     {"detail": ["Nicht genügend Guthaben."]}
@@ -471,7 +465,7 @@ class TransactionCreateSerializer(serializers.ModelSerializer):
         team = self.context["request"].user.profile.team
         validated_data["team"] = team
         validated_data["price"] = validated_data["stock"].current_price
-        fee = calculate_fee(validated_data["price"], validated_data["amount"])
+        fee = validated_data["stock"].calculate_fee(validated_data["amount"])
         validated_data["fee"] = fee
 
         transaction = Transaction.objects.create(**validated_data)

@@ -243,7 +243,7 @@ class TransactionModelTests(TestCase):
             price=decimal.Decimal("100.50"),
             fee=decimal.Decimal("15.00"),
         )
-        self.assertEqual(transaction.total_price(), "1020.00€")
+        self.assertEqual(transaction.get_total_price(), 1020.00)
 
     def test_total_price_sell(self):
         transaction = Transaction.objects.create(
@@ -254,4 +254,4 @@ class TransactionModelTests(TestCase):
             price=decimal.Decimal("100.50"),
             fee=decimal.Decimal("15.00"),
         )
-        self.assertEqual(transaction.total_price(), "990.00€")
+        self.assertEqual(transaction.get_total_price(), 990.00)

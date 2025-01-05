@@ -14,14 +14,15 @@ from .models import (
 
 class HistoryInline(admin.TabularInline):
     model = History
-    extra = 0
     readonly_fields = ["name", "period", "interval", "values"]
+
+    def has_add_permission(self, request, obj=None):
+        return False
 
 
 class StockHoldingInline(admin.TabularInline):
     model = StockHolding
     extra = 0
-    readonly_fields = ["stock", "amount"]
 
 
 class WatchlistInline(admin.TabularInline):
@@ -29,49 +30,45 @@ class WatchlistInline(admin.TabularInline):
     extra = 0
 
 
-class UserProfileInLine(admin.StackedInline):
+class UserProfileInline(admin.TabularInline):
     model = UserProfile
-    max_num = 0
     can_delete = False
-    readonly_fields = ["user"]
+    verbose_name_plural = "Profile"
+    readonly_fields = ["user", "first_name", "last_name", "team"]
+
+    def has_add_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(RegistrationRequest)
 class RegistrationRequestAdmin(admin.ModelAdmin):
-    list_display = ("email", "created_at", "activated")
+    list_display = ("email", "created_at", "activated", "user")
     readonly_fields = ["email", "created_at", "activated"]
+    search_fields = ["email", "user"]
 
 
 @admin.register(Stock)
 class StockAdmin(admin.ModelAdmin):
     inlines = [HistoryInline]
-    fields = ["name", "ticker", "current_price"]
     list_display = ["name", "ticker", "current_price"]
     search_fields = ["name", "ticker"]
     readonly_fields = ["current_price"]
+    fields = ["name", "ticker", "current_price"]
 
 
 @admin.register(Team)
 class TeamAdmin(admin.ModelAdmin):
-    inlines = [UserProfileInLine, StockHoldingInline, WatchlistInline]
-    fields = [
-        "name",
-        "team_member_count",
-        "balance",
-        "portfolio_value",
-        "code",
-        "portfolio_history",
-    ]
-    list_display = ["name", "team_member_count", "portfolio_value"]
+    inlines = [UserProfileInline, StockHoldingInline, WatchlistInline]
+    list_display = ["name", "team_member_count", "portfolio_value", "rank"]
     search_fields = ["name"]
     readonly_fields = ["team_member_count", "portfolio_value", "code"]
+    fields = ["name", "balance", "portfolio_value", "code", "portfolio_history"]
 
 
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
-    fields = ["user", "team", "first_name", "last_name"]
     list_display = ["user", "team"]
-    search_fields = ["user"]
+    search_fields = ["user__username", "user__email"]
 
 
 @admin.register(Transaction)
@@ -82,19 +79,27 @@ class TransactionAdmin(admin.ModelAdmin):
         "status",
         "transaction_type",
         "amount",
-        "total_price",
+        "formatted_total_price",
     ]
     list_filter = ["status", "transaction_type", "team", "stock"]
     ordering = ("-date",)
-    search_fields = ["stock", "transaction_type"]
+    search_fields = ["stock__name", "stock__ticker", "team__name"]
     readonly_fields = [
+        "team",
+        "stock",
+        "transaction_type",
+        "amount",
+        "price",
+        "fee",
+        "date",
+    ]
+    fields = [
         "team",
         "stock",
         "status",
         "transaction_type",
         "amount",
         "price",
-        "total_price",
         "fee",
         "date",
     ]
