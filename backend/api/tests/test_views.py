@@ -1,12 +1,11 @@
 from decimal import Decimal
 
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 
-from api.serializers import TeamSerializer  # , calculate_fee
 from stocks.models import (
     RegistrationRequest,
     Stock,
@@ -15,6 +14,82 @@ from stocks.models import (
     Transaction,
     Watchlist,
 )
+
+from ..serializers import TeamSerializer
+
+User = get_user_model()
+
+
+class MyTokenObtainPairViewTests(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="testuser", password="testpassword", is_staff=True
+        )
+        self.url = reverse("get_token")
+
+    def test_token_obtain_with_valid_credentials(self):
+        data = {"username": "testuser", "password": "testpassword"}
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("access", response.data)
+        self.assertIn("refresh", response.data)
+        decoded_token = AccessToken(response.data["access"])
+        self.assertTrue(decoded_token["is_staff"])
+
+    def test_token_obtain_with_invalid_credentials(self):
+        data = {"username": "testuser", "password": "wrongpassword"}
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertIn("detail", response.data)
+
+
+class RegistrationRequestViewTests(APITestCase):
+    def setUp(self):
+        self.admin_user = User.objects.create_superuser(
+            username="admin", password="adminpassword", email="admin@test.com"
+        )
+        self.url = reverse("register")
+        self.client.force_authenticate(
+            user=self.admin_user
+        )  # Authenticate the admin user
+
+    def test_create_registration_request_success(self):
+        data = {"email": "test@example.com"}
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertTrue(
+            RegistrationRequest.objects.filter(email="test@example.com").exists()
+        )
+        self.assertEqual(response.data["email"], "test@example.com")
+
+    def test_create_registration_request_user_exists(self):
+        # Create the user with the given email
+        User.objects.create_user(
+            username="existuser", password="password", email="test@example.com"
+        )
+        data = {"email": "test@example.com"}
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn(
+            "Ein Benutzer mit dieser E-Mail-Adresse test@example.com existiert bereits.",
+            response.data[0],
+        )
+
+    def test_create_registration_request_already_requested(self):
+        RegistrationRequest.objects.create(email="test@example.com")
+        data = {"email": "test@example.com"}
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn(
+            "Eine Registrierungsanfrage für test@example.com existiert bereits.",
+            response.data[0],
+        )
+
+    def test_create_registration_request_unauthenticated(self):
+        self.client.force_authenticate(user=None)
+        data = {"email": "test@example.com"}
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
 
 class TestCreateUserView(APITestCase):

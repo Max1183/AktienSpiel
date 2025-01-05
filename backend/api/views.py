@@ -42,6 +42,18 @@ class MyTokenObtainPairView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
 
 
+class RegistrationRequestView(generics.CreateAPIView):
+    """View zum Erstellen neuer Registrierungsanfragen."""
+
+    queryset = RegistrationRequest.objects.all()
+    serializer_class = RegistrationRequestSerializer
+    permission_classes = [IsAdminUser]
+
+    def perform_create(self, serializer):
+        registration_request = serializer.save()
+        registration_request.send_activation_email()
+
+
 class TeamRankingViewSet(viewsets.ModelViewSet):
     """Viewset für die Team-Ranking-Liste."""
 
@@ -86,18 +98,6 @@ class TeamRankingViewSet(viewsets.ModelViewSet):
                 "page_size": page_size,
             }
         )
-
-
-class RegistrationRequestView(generics.CreateAPIView):
-    """View zum Erstellen neuer Registrierungsanfragen."""
-
-    queryset = RegistrationRequest.objects.all()
-    serializer_class = RegistrationRequestSerializer
-    permission_classes = [IsAdminUser]
-
-    def perform_create(self, serializer):
-        registration_request = serializer.save()
-        registration_request.send_activation_email()
 
 
 class CreateUserView(generics.CreateAPIView):

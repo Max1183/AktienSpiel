@@ -16,11 +16,36 @@ from stocks.transactions import execute_transaction
 
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
+    """Serializer für das Abrufen eines Tokens."""
+
     @classmethod
     def get_token(cls, user):
         token = super().get_token(user)
         token["is_staff"] = user.is_staff
         return token
+
+
+class RegistrationRequestSerializer(serializers.ModelSerializer):
+    """Serializer für die Registrierungsanfrage."""
+
+    class Meta:
+        model = RegistrationRequest
+        fields = ["email"]
+
+    def create(self, validated_data):
+        email = validated_data["email"]
+
+        if User.objects.filter(email=email).exists():
+            raise serializers.ValidationError(
+                f"Ein Benutzer mit dieser E-Mail-Adresse {email} existiert bereits."
+            )
+
+        if RegistrationRequest.objects.filter(email=email).exists():
+            raise serializers.ValidationError(
+                f"Eine Registrierungsanfrage für {email} existiert bereits."
+            )
+
+        return super().create(validated_data)
 
 
 class TeamRankingSerializer(serializers.ModelSerializer):
@@ -42,35 +67,6 @@ class TeamRankingSerializer(serializers.ModelSerializer):
     def get_stocks(self, obj):
         stocks = obj.holdings.filter(amount__gt=0)
         return [{"id": stock.stock.id, "name": stock.stock.name} for stock in stocks]
-
-
-class RegistrationRequestSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = RegistrationRequest
-        fields = ["email"]
-
-    def create(self, validated_data):
-        email = validated_data["email"]
-
-        if User.objects.filter(email=email).exists():
-            raise serializers.ValidationError(
-                {
-                    "detail": [
-                        f"Ein Benutzer mit dieser E-Mail-Adresse {email} existiert bereits."
-                    ]
-                }
-            )
-        else:
-            if not RegistrationRequest.objects.filter(email=email).exists():
-                return super().create(validated_data)
-            else:
-                raise serializers.ValidationError(
-                    {
-                        "detail": [
-                            f"Eine Registrierungsanfrage für {email} existiert bereits."
-                        ]
-                    }
-                )
 
 
 class UserCreateSerializer(serializers.ModelSerializer):

@@ -17,7 +17,7 @@ function Admin() {
             else alert(res.detail, 'danger');
         }).catch((err) => {
             try {
-                addAlert(err.response.data.detail, 'danger');
+                addAlert(err.response.data[0], 'danger');
             } catch (error) {
                 addAlert(error.message, 'danger');
             }

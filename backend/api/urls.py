@@ -13,8 +13,6 @@ router.register(r"transactions", views.TransactionViewSet, basename="transaction
 urlpatterns = [
     path("token/", views.MyTokenObtainPairView.as_view(), name="get_token"),
     path("register/", views.RegistrationRequestView.as_view(), name="register"),
-    path("search/", stock_views.search_stocks, name="stock-search"),
-    path("", include(router.urls)),
     path("create-user/", views.CreateUserView.as_view(), name="create-user"),
     path("team/", views.TeamViewSet.as_view(), name="team-detail"),
     path("profile/", views.UserProfileViewSet.as_view(), name="user-profile"),
@@ -37,4 +35,6 @@ urlpatterns = [
         "ranking/", views.TeamRankingViewSet.as_view({"get": "ranking"}), name="ranking"
     ),
     path("analysis/", views.AnalysisView.as_view(), name="analysis"),
+    path("search/", stock_views.search_stocks, name="stock-search"),
+    path("", include(router.urls)),
 ]
