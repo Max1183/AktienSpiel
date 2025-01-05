@@ -2,7 +2,6 @@ from django.contrib.auth.models import User
 from django.db import transaction
 from django.db.models.aggregates import Count
 from rest_framework import generics, mixins, pagination, serializers, status, viewsets
-from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -62,7 +61,17 @@ class StockDetailView(generics.RetrieveAPIView):
     permission_classes = [IsAuthenticated]
 
 
-class TeamRankingViewSet(viewsets.ModelViewSet):
+class TeamDetailView(generics.RetrieveAPIView):
+    """Viewset für Teams."""
+
+    serializer_class = TeamSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        return self.request.user.profile.team
+
+
+class TeamRankingListView(generics.ListAPIView):
     """Viewset für die Team-Ranking-Liste."""
 
     queryset = (
@@ -71,12 +80,12 @@ class TeamRankingViewSet(viewsets.ModelViewSet):
         .exclude(name="default")
         .exclude(name="Admin")
     )
+    queryset = Team.objects.all()
     serializer_class = TeamRankingSerializer
     permission_classes = [AllowAny]
 
-    @action(detail=False, methods=["get"])
-    def ranking(self, request):
-        page_size = 20
+    def get(self, request, *args, **kwargs):
+        page_size = 10
         page_number = int(request.GET.get("page", 1))
 
         queryset = self.get_queryset()
@@ -94,8 +103,6 @@ class TeamRankingViewSet(viewsets.ModelViewSet):
 
         for i, item in enumerate(serializer.data):
             item["rank"] = (page_number - 1) * page_size + i + 1
-
-        print(serializer.data)
 
         return Response(
             {
@@ -130,16 +137,6 @@ class UserProfileViewSet(generics.RetrieveAPIView):
 
     def get_object(self):
         return self.request.user.profile
-
-
-class TeamViewSet(generics.RetrieveAPIView):
-    """Viewset für Teams."""
-
-    serializer_class = TeamSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_object(self):
-        return self.request.user.profile.team
 
 
 class WatchlistList(viewsets.ReadOnlyModelViewSet):

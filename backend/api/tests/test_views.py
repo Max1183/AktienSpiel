@@ -16,8 +16,6 @@ from stocks.models import (
     Watchlist,
 )
 
-from ..serializers import TeamSerializer
-
 User = get_user_model()
 
 
@@ -164,6 +162,112 @@ class StockDetailViewTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
 
+class TeamDetailViewTests(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="testuser", password="testpassword"
+        )
+        self.team = Team.objects.create(name="Test Team", balance=100000)
+        self.user.profile.team = self.team
+        self.user.profile.save()
+        self.client.force_authenticate(user=self.user)
+        self.stock = Stock.objects.create(
+            name="Test Stock", ticker="TST", current_price=100.00
+        )
+        self.stock_holding = StockHolding.objects.create(
+            team=self.team, stock=self.stock, amount=10
+        )
+        Transaction.objects.create(
+            team=self.team,
+            stock=self.stock,
+            transaction_type="buy",
+            amount=5,
+            price=100,
+        )
+
+    def test_retrieve_team_detail_success(self):
+        url = reverse("team-detail")
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["name"], "Test Team")
+        self.assertEqual(response.data["balance"], "100000.00")
+        self.assertEqual(response.data["trades"], 1)
+        self.assertIsNotNone(response.data["code"])
+        self.assertEqual(len(response.data["members"]), 1)
+        self.assertIsNotNone(response.data["portfolio_value"])
+        self.assertIsNotNone(response.data["rank"])
+
+    def test_retrieve_team_detail_unauthenticated(self):
+        self.client.force_authenticate(user=None)
+        url = reverse("team-detail")
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+class TeamRankingListViewTests(APITestCase):
+    def setUp(self):
+        self.user1 = User.objects.create_user(
+            username="testuser1", password="testpassword"
+        )
+        self.user2 = User.objects.create_user(
+            username="testuser2", password="testpassword"
+        )
+
+        self.team1 = Team.objects.create(name="Team 1", balance=100000)
+        self.team2 = Team.objects.create(name="Team 2", balance=150000)
+        self.team3 = Team.objects.create(name="Team 3", balance=100000)
+        self.team4 = Team.objects.create(name="Admin", balance=100000)
+
+        self.user1.profile.team = self.team1
+        self.user1.profile.save()
+
+        self.user2.profile.team = self.team2
+        self.user2.profile.save()
+
+        self.stock = Stock.objects.create(
+            name="Test Stock", ticker="TST", current_price=100.00
+        )
+        self.stock_holding = StockHolding.objects.create(
+            team=self.team1, stock=self.stock, amount=10
+        )
+
+    def test_retrieve_team_ranking_list_success(self):
+        url = reverse("ranking")
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data["results"]), 5)
+        self.assertEqual(response.data["count"], 5)
+        self.assertEqual(response.data["num_pages"], 1)
+        self.assertEqual(response.data["current_page"], 1)
+        self.assertEqual(response.data["page_size"], 10)
+        self.assertEqual(response.data["results"][0]["name"], "Team 2")
+        self.assertEqual(response.data["results"][0]["rank"], 1)
+        self.assertEqual(response.data["results"][1]["name"], "Team 1")
+        self.assertEqual(response.data["results"][1]["rank"], 2)
+
+    def test_retrieve_team_ranking_list_pagination(self):
+        for i in range(12):
+            team = Team.objects.create(name=f"Team {i + 3}", balance=100000 + i * 1000)
+            user = User.objects.create_user(
+                username=f"testuser{i + 3}", password="testpassword"
+            )
+            user.profile.team = team
+            user.profile.save()
+
+        url = reverse("ranking")
+        response = self.client.get(f"{url}?page=2")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data["results"]), 7)
+        self.assertEqual(response.data["count"], 17)
+        self.assertEqual(response.data["num_pages"], 2)
+        self.assertEqual(response.data["current_page"], 2)
+        self.assertEqual(response.data["page_size"], 10)
+        self.assertEqual(response.data["results"][0]["name"], "Team 5")
+        self.assertEqual(response.data["results"][0]["rank"], 11)
+        self.assertEqual(response.data["results"][3]["name"], "default")
+        self.assertEqual(response.data["results"][3]["rank"], 14)
+
+
 class TestCreateUserView(APITestCase):
     def setUp(self):
         self.url = reverse("create-user")
@@ -229,42 +333,6 @@ class TestCreateUserView(APITestCase):
         self.assertEqual(user.profile.team.name, "Team 1")
         self.assertEqual(user.profile.team.code, self.team_code)
         self.assertTrue(user.profile.team.members.filter(user=user).exists())
-
-
-class TestTeamViewSet(APITestCase):
-    def setUp(self):
-        self.user = User.objects.create_user(
-            username="testuser", password="testpassword"
-        )
-        self.team = Team.objects.create(name="Test Team", balance=1000)
-        self.user.profile.team = self.team
-        self.user.profile.save()
-
-        refresh = RefreshToken.for_user(self.user)
-        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}")
-
-        self.stock1 = Stock.objects.create(
-            name="Stock 1", ticker="S1", current_price=Decimal("50.00")
-        )
-        self.stock2 = Stock.objects.create(
-            name="Stock 2", ticker="S2", current_price=Decimal("100.00")
-        )
-        StockHolding.objects.create(team=self.team, stock=self.stock1, amount=2)
-        StockHolding.objects.create(team=self.team, stock=self.stock2, amount=5)
-
-        self.url = reverse("team-detail")
-
-    def test_retrieve_team_success(self):
-        response = self.client.get(self.url)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-        serializer = TeamSerializer(instance=self.team)
-        self.assertEqual(response.data, serializer.data)
-
-    def test_retrieve_team_unauthorized(self):
-        self.client.credentials(HTTP_AUTHORIZATION=None)  # Entferne die Autorisierung
-        response = self.client.get(self.url)
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
 
 class TestWatchlistViewSet(APITestCase):

@@ -95,21 +95,59 @@ class StockSerializer(serializers.ModelSerializer):
             return None
 
 
+class MemberSerializer(serializers.ModelSerializer):
+    """Serializer für Team Members"""
+
+    name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = UserProfile
+        fields = ["id", "name"]
+
+    def get_name(self, obj):
+        return obj.user.username
+
+
+class TeamSerializer(serializers.ModelSerializer):
+    """Serializer für Teams."""
+
+    members = MemberSerializer(many=True, read_only=True)
+    portfolio_value = serializers.SerializerMethodField()
+    trades = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Team
+        fields = [
+            "id",
+            "name",
+            "balance",
+            "portfolio_value",
+            "trades",
+            "rank",
+            "code",
+            "members",
+            "portfolio_history",
+        ]
+        read_only_fields = fields
+
+    def get_portfolio_value(self, obj):
+        return obj.get_portfolio_value()
+
+    def get_trades(self, obj):
+        return Transaction.objects.filter(team=obj).count()
+
+
 class TeamRankingSerializer(serializers.ModelSerializer):
+    """Serializer für die Rangliste der Teams."""
+
     total_balance = serializers.FloatField()
     rank = serializers.IntegerField(read_only=True)
-    members = serializers.SerializerMethodField()
+    members = MemberSerializer(many=True, read_only=True)
     stocks = serializers.SerializerMethodField()
 
     class Meta:
         model = Team
         fields = ("id", "name", "total_balance", "rank", "members", "stocks")
-
-    def get_members(self, obj):
-        members = obj.members.all()
-        return [
-            {"id": member.id, "username": member.user.username} for member in members
-        ]
 
     def get_stocks(self, obj):
         stocks = obj.holdings.filter(amount__gt=0)
@@ -274,47 +312,6 @@ class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserProfile
         fields = ["user", "team_name"]
-
-
-class MemberSerializer(serializers.ModelSerializer):
-    """Serializer für Team Members"""
-
-    name = serializers.SerializerMethodField()
-
-    class Meta:
-        model = UserProfile
-        fields = ["id", "name"]
-
-    def get_name(self, obj):
-        return obj.user.username
-
-
-class TeamSerializer(serializers.ModelSerializer):
-    """Serializer für Teams."""
-
-    members = MemberSerializer(many=True, read_only=True)
-    portfolio_value = serializers.SerializerMethodField()
-    trades = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Team
-        fields = [
-            "id",
-            "name",
-            "balance",
-            "portfolio_value",
-            "trades",
-            "code",
-            "members",
-            "portfolio_history",
-        ]
-        read_only_fields = fields
-
-    def get_portfolio_value(self, obj):
-        return float(obj.portfolio_value().replace("€", ""))
-
-    def get_trades(self, obj):
-        return Transaction.objects.filter(team=obj).count()
 
 
 class WatchlistSerializer(serializers.ModelSerializer):

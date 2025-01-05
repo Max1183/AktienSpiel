@@ -97,7 +97,7 @@ function Contest() {
                             <p className='mb-0'>Mitglieder:</p>
                             <ul>
                                 {modalTeam.members.map((member) => (
-                                    <li key={member.id}>{member.username}</li>
+                                    <li key={member.id}>{member.name}</li>
                                 ))}
                             </ul>
                             {modalTeam.stocks.length > 0 ? <>
