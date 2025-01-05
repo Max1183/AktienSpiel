@@ -48,6 +48,53 @@ class RegistrationRequestSerializer(serializers.ModelSerializer):
         return super().create(validated_data)
 
 
+class HistorySerializer(serializers.ModelSerializer):
+    """Serializer für Aktienhistorie."""
+
+    name = serializers.CharField(source="get_name_display")
+
+    class Meta:
+        model = History
+        fields = ["id", "name", "values"]
+        read_only_fields = fields
+
+
+class StockSerializer(serializers.ModelSerializer):
+    """Serializer für Aktien."""
+
+    history_entries = HistorySerializer(many=True, read_only=True)
+    amount = serializers.SerializerMethodField()
+    watchlist_id = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Stock
+        fields = [
+            "id",
+            "name",
+            "ticker",
+            "current_price",
+            "history_entries",
+            "amount",
+            "watchlist_id",
+        ]
+
+    def get_amount(self, obj):
+        team = self.context["request"].user.profile.team
+        try:
+            stock_holding = StockHolding.objects.get(team=team, stock=obj)
+            return stock_holding.amount
+        except StockHolding.DoesNotExist:
+            return 0
+
+    def get_watchlist_id(self, obj):
+        team = self.context["request"].user.profile.team
+        try:
+            watchlist_entry = Watchlist.objects.get(team=team, stock=obj)
+            return watchlist_entry.pk
+        except Watchlist.DoesNotExist:
+            return None
+
+
 class TeamRankingSerializer(serializers.ModelSerializer):
     total_balance = serializers.FloatField()
     rank = serializers.IntegerField(read_only=True)
@@ -268,52 +315,6 @@ class TeamSerializer(serializers.ModelSerializer):
 
     def get_trades(self, obj):
         return Transaction.objects.filter(team=obj).count()
-
-
-class HistorySerializer(serializers.ModelSerializer):
-    """Serializer für Aktienhistorie."""
-
-    class Meta:
-        model = History
-        fields = ["id", "name", "values"]
-        read_only_fields = fields
-
-
-class StockSerializer(serializers.ModelSerializer):
-    """Serializer für Aktien."""
-
-    history_entries = HistorySerializer(many=True, read_only=True)
-    amount = serializers.SerializerMethodField()
-    watchlist_id = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Stock
-        fields = [
-            "id",
-            "name",
-            "ticker",
-            "current_price",
-            "history_entries",
-            "amount",
-            "watchlist_id",
-        ]
-        read_only_fields = fields
-
-    def get_amount(self, obj):
-        team = self.context["request"].user.profile.team
-        try:
-            stock_holding = StockHolding.objects.get(team=team, stock=obj)
-            return stock_holding.amount
-        except StockHolding.DoesNotExist:
-            return 0
-
-    def get_watchlist_id(self, obj):
-        team = self.context["request"].user.profile.team
-        try:
-            watchlist_entry = Watchlist.objects.get(team=team, stock=obj)
-            return watchlist_entry.pk
-        except Watchlist.DoesNotExist:
-            return None
 
 
 class WatchlistSerializer(serializers.ModelSerializer):

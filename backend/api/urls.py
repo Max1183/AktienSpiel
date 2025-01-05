@@ -6,13 +6,13 @@ from stocks import views as stock_views
 from . import views
 
 router = DefaultRouter()
-router.register(r"stocks", views.StockViewSet, basename="stock")
 router.register(r"stockholdings", views.StockHoldingViewSet, basename="stockholding")
 router.register(r"transactions", views.TransactionViewSet, basename="transaction")
 
 urlpatterns = [
     path("token/", views.MyTokenObtainPairView.as_view(), name="get_token"),
-    path("register/", views.RegistrationRequestView.as_view(), name="register"),
+    path("register/", views.RegistrationRequestCreateView.as_view(), name="register"),
+    path("stocks/<int:pk>/", views.StockDetailView.as_view(), name="stock-detail"),
     path("create-user/", views.CreateUserView.as_view(), name="create-user"),
     path("team/", views.TeamViewSet.as_view(), name="team-detail"),
     path("profile/", views.UserProfileViewSet.as_view(), name="user-profile"),

@@ -42,7 +42,7 @@ class MyTokenObtainPairView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
 
 
-class RegistrationRequestView(generics.CreateAPIView):
+class RegistrationRequestCreateView(generics.CreateAPIView):
     """View zum Erstellen neuer Registrierungsanfragen."""
 
     queryset = RegistrationRequest.objects.all()
@@ -52,6 +52,14 @@ class RegistrationRequestView(generics.CreateAPIView):
     def perform_create(self, serializer):
         registration_request = serializer.save()
         registration_request.send_activation_email()
+
+
+class StockDetailView(generics.RetrieveAPIView):
+    """Viewset für Aktien Details."""
+
+    serializer_class = StockSerializer
+    queryset = Stock.objects.filter(current_price__gt=0)
+    permission_classes = [IsAuthenticated]
 
 
 class TeamRankingViewSet(viewsets.ModelViewSet):
@@ -197,14 +205,6 @@ class WatchlistDelete(generics.DestroyAPIView):
 
     def get_queryset(self):
         return self.request.user.profile.team.watchlist.all()
-
-
-class StockViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
-    """Viewset für Aktien Details."""
-
-    serializer_class = StockSerializer
-    queryset = Stock.objects.filter(current_price__gt=0)
-    permission_classes = [IsAuthenticated]
 
 
 class StockHoldingViewSet(viewsets.ReadOnlyModelViewSet):

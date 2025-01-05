@@ -7,6 +7,7 @@ from rest_framework.test import APITestCase
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 
 from stocks.models import (
+    History,
     RegistrationRequest,
     Stock,
     StockHolding,
@@ -90,6 +91,77 @@ class RegistrationRequestViewTests(APITestCase):
         data = {"email": "test@example.com"}
         response = self.client.post(self.url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+class StockDetailViewTests(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="testuser", password="testpassword"
+        )
+        self.team = Team.objects.create(name="Test Team")
+        self.user.profile.team = self.team
+        self.user.profile.save()
+        self.client.force_authenticate(user=self.user)
+
+        self.stock1 = Stock.objects.create(
+            name="Stock 1", ticker="STK1", current_price=100.00
+        )
+        self.stock2 = Stock.objects.create(
+            name="Stock 2", ticker="STK2", current_price=0
+        )
+        self.history1 = History.objects.create(
+            stock=self.stock1, name="Day", period="1d", interval="5m", values=[1, 2, 3]
+        )
+        self.stock_holding = StockHolding.objects.create(
+            team=self.team, stock=self.stock1, amount=5
+        )
+
+    def test_retrieve_stock_success(self):
+        url = reverse("stock-detail", kwargs={"pk": self.stock1.pk})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["name"], "Stock 1")
+        self.assertEqual(response.data["ticker"], "STK1")
+        self.assertEqual(response.data["current_price"], "100.00")
+        self.assertEqual(response.data["history_entries"][0]["name"], "Tag")
+        self.assertEqual(response.data["history_entries"][0]["values"], [1, 2, 3])
+        self.assertEqual(response.data["amount"], 5)
+
+    def test_retrieve_stock_with_no_holding(self):
+        stock3 = Stock.objects.create(
+            name="Stock 3", ticker="STK3", current_price=50.00
+        )
+        url = reverse("stock-detail", kwargs={"pk": stock3.pk})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["amount"], 0)
+
+    def test_retrieve_stock_with_watchlist_entry(self):
+        watchlist_entry = Watchlist.objects.create(team=self.team, stock=self.stock1)
+        url = reverse("stock-detail", kwargs={"pk": self.stock1.pk})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["watchlist_id"], watchlist_entry.pk)
+
+    def test_retrieve_stock_with_no_watchlist_entry(self):
+        stock3 = Stock.objects.create(
+            name="Stock 3", ticker="STK3", current_price=50.00
+        )
+        url = reverse("stock-detail", kwargs={"pk": stock3.pk})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIsNone(response.data["watchlist_id"])
+
+    def test_retrieve_stock_unauthenticated(self):
+        self.client.force_authenticate(user=None)
+        url = reverse("stock-detail", kwargs={"pk": self.stock1.pk})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_stock_filtering(self):
+        url = reverse("stock-detail", kwargs={"pk": self.stock2.pk})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
 
 class TestCreateUserView(APITestCase):
@@ -253,25 +325,6 @@ class TestWatchlistViewSet(APITestCase):
             reverse("watchlist-delete", args=[self.watchlist.pk])
         )
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-
-
-class TestStockViewSet(APITestCase):
-    # Testen Sie den Zugriff auf die Aktien Details.
-    def setUp(self):
-        self.user = User.objects.create_user(
-            username="testuser", password="testpassword"
-        )
-        refresh = RefreshToken.for_user(self.user)
-        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}")
-        self.stock = Stock.objects.create(
-            name="Test Stock", ticker="TST", current_price=Decimal("100.00")
-        )
-        self.url = reverse("stock-detail", kwargs={"pk": self.stock.pk})
-
-    def test_retrieve_stock_success(self):
-        response = self.client.get(self.url)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.json()["name"], "Test Stock")
 
 
 class TestStockHoldingViewSet(APITestCase):
