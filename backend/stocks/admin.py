@@ -34,7 +34,7 @@ class UserProfileInline(admin.TabularInline):
     model = UserProfile
     can_delete = False
     verbose_name_plural = "Profile"
-    readonly_fields = ["user", "first_name", "last_name", "team"]
+    readonly_fields = ["user", "team"]
 
     def has_add_permission(self, request, obj=None):
         return False

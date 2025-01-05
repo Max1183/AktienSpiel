@@ -189,8 +189,6 @@ class UserCreateSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         """Erstellt einen neuen Benutzer."""
         token = validated_data.pop("token")
-        first_name = validated_data.pop("first_name")
-        last_name = validated_data.pop("last_name")
         team_code = validated_data.pop("team_code", None)
         team_name = validated_data.pop("team_name", None)
         join_team = validated_data.pop("join_team")
@@ -206,8 +204,6 @@ class UserCreateSerializer(serializers.ModelSerializer):
 
         user_profile = user.profile
         user_profile.team = team
-        user_profile.first_name = first_name
-        user_profile.last_name = last_name
         user_profile.save()
 
         registration_request = RegistrationRequest.objects.get(activation_token=token)
@@ -223,7 +219,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ["id", "username", "email"]
+        fields = ["id", "username", "first_name", "last_name", "email"]
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
@@ -234,7 +230,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserProfile
-        fields = ["first_name", "last_name", "user", "team_name"]
+        fields = ["user", "team_name"]
 
 
 class MemberSerializer(serializers.ModelSerializer):

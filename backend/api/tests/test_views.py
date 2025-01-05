@@ -76,8 +76,8 @@ class TestCreateUserView(APITestCase):
         self.assertEqual(User.objects.count(), 1)
 
         user = User.objects.get(username="johndoe")
-        self.assertEqual(user.profile.first_name, "John")
-        self.assertEqual(user.profile.last_name, "Doe")
+        self.assertEqual(user.first_name, "John")
+        self.assertEqual(user.last_name, "Doe")
         self.assertEqual(user.email, "test@example.com")
         self.assertEqual(user.profile.team.name, "Team 1")
         self.assertEqual(user.profile.team.code, self.team_code)
