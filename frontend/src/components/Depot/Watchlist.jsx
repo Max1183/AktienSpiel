@@ -11,7 +11,7 @@ function Watchlist() {
 
     const deleteWatchlist = (e, id) => {
         e.preventDefault();
-        api.delete(`/api/watchlist/delete/${id}/`).then((res) => {
+        api.delete(`/api/watchlist/${id}/delete/`).then((res) => {
             if (res.status === 204) addAlert('Watchlisteintrag erfolgreich entfernt', 'success');
             else addAlert('Fehler beim Löschen des Watchlisteintrags', 'danger');
             loadValue('watchlist')
@@ -23,8 +23,8 @@ function Watchlist() {
             {(getData("watchlist") && getData("watchlist").length > 0) ? <>
                 <p>Hier siehst du alle Aktien in deiner Watchlist.</p>
                 <div className="list-group rounded mt-3">
-                    {getData("watchlist").map((list) => (
-                        <WatchlistItem watchlist={list} onDelete={deleteWatchlist} key={list.id} />
+                    {getData("watchlist").map((watchlistItem) => (
+                        <WatchlistItem watchlist={watchlistItem} onDelete={deleteWatchlist} key={watchlistItem.id} />
                     ))}
                 </div>
             </> : <>

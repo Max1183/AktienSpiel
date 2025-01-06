@@ -32,12 +32,12 @@ class RegistrationRequestSerializer(serializers.ModelSerializer):
         model = RegistrationRequest
         fields = ["email"]
 
-    def create(self, validated_data):
-        email = validated_data["email"]
+    def validate(self, attrs):
+        email = attrs.get("email")
 
         if User.objects.filter(email=email).exists():
             raise serializers.ValidationError(
-                f"Ein Benutzer mit dieser E-Mail-Adresse {email} existiert bereits."
+                f"Ein Benutzer mit der E-Mail-Adresse {email} existiert bereits."
             )
 
         if RegistrationRequest.objects.filter(email=email).exists():
@@ -45,7 +45,7 @@ class RegistrationRequestSerializer(serializers.ModelSerializer):
                 f"Eine Registrierungsanfrage für {email} existiert bereits."
             )
 
-        return super().create(validated_data)
+        return attrs
 
 
 class HistorySerializer(serializers.ModelSerializer):
@@ -152,6 +152,50 @@ class TeamRankingSerializer(serializers.ModelSerializer):
     def get_stocks(self, obj):
         stocks = obj.holdings.filter(amount__gt=0)
         return [{"id": stock.stock.id, "name": stock.stock.name} for stock in stocks]
+
+
+class StockInfoSerializer(serializers.ModelSerializer):
+    """Serializer für Aktieninformationen."""
+
+    class Meta:
+        model = Stock
+        fields = ["id", "name", "ticker", "current_price"]
+
+
+class WatchlistSerializer(serializers.ModelSerializer):
+    """Serializer für die Watchlist."""
+
+    stock = StockInfoSerializer(read_only=True)
+
+    class Meta:
+        model = Watchlist
+        fields = ["id", "stock", "note", "date"]
+        read_only_fields = ["date"]
+
+
+class WatchlistCreateSerializer(serializers.ModelSerializer):
+    """Serializer für die Erstellung von Watchlist-Einträgen."""
+
+    stock = serializers.PrimaryKeyRelatedField(queryset=Stock.objects.all())
+
+    class Meta:
+        model = Watchlist
+        fields = ["id", "stock", "note"]
+
+    def validate(self, data):
+        team = self.context["request"].user.profile.team
+        stock = data["stock"]
+        if Watchlist.objects.filter(team=team, stock=stock).exists():
+            raise serializers.ValidationError("Stock is already in the watchlist.")
+        return data
+
+
+class WatchlistUpdateSerializer(serializers.ModelSerializer):
+    """Serializer zum Aktualisieren der Beschreibung eines Watchlist-Eintrags."""
+
+    class Meta:
+        model = Watchlist
+        fields = ["note"]
 
 
 class UserCreateSerializer(serializers.ModelSerializer):
@@ -314,35 +358,6 @@ class UserProfileSerializer(serializers.ModelSerializer):
         fields = ["user", "team_name"]
 
 
-class WatchlistSerializer(serializers.ModelSerializer):
-    """Serializer für die Watchlist."""
-
-    stock = StockSerializer(read_only=True)
-
-    class Meta:
-        model = Watchlist
-        fields = ["id", "team", "stock", "note", "date"]
-        read_only_fields = ["team"]
-
-
-class WatchlistCreateSerializer(serializers.ModelSerializer):
-    """Serializer für die Erstellung von Watchlist-Einträgen."""
-
-    stock = serializers.PrimaryKeyRelatedField(queryset=Stock.objects.all())
-
-    class Meta:
-        model = Watchlist
-        fields = ["stock", "note"]
-
-
-class WatchlistUpdateSerializer(serializers.ModelSerializer):
-    """Serializer zum Aktualisieren der Beschreibung eines Watchlist-Eintrags."""
-
-    class Meta:
-        model = Watchlist
-        fields = ["note"]
-
-
 class StockHoldingSerializer(serializers.ModelSerializer):
     """Serializer für Aktienbestände."""
 
@@ -387,7 +402,7 @@ class TransactionListSerializer(serializers.ModelSerializer):
         ]
 
     def get_total_price(self, obj):
-        return float(obj.total_price().replace("€", ""))
+        return obj.get_total_price()
 
 
 class TransactionUpdateSerializer(serializers.ModelSerializer):

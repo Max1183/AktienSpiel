@@ -70,8 +70,8 @@ class RegistrationRequestViewTests(APITestCase):
         response = self.client.post(self.url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn(
-            "Ein Benutzer mit dieser E-Mail-Adresse test@example.com existiert bereits.",
-            response.data[0],
+            "Ein Benutzer mit der E-Mail-Adresse test@example.com existiert bereits.",
+            response.data["non_field_errors"],
         )
 
     def test_create_registration_request_already_requested(self):
@@ -81,7 +81,7 @@ class RegistrationRequestViewTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn(
             "Eine Registrierungsanfrage für test@example.com existiert bereits.",
-            response.data[0],
+            response.data["non_field_errors"],
         )
 
     def test_create_registration_request_unauthenticated(self):
@@ -268,6 +268,126 @@ class TeamRankingListViewTests(APITestCase):
         self.assertEqual(response.data["results"][3]["rank"], 14)
 
 
+class WatchlistViewTests(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="testuser", password="testpassword"
+        )
+        self.team = Team.objects.create(name="Test Team")
+        self.user.profile.team = self.team
+        self.user.profile.save()
+        self.client.force_authenticate(user=self.user)
+
+        self.stock1 = Stock.objects.create(
+            name="Stock 1", ticker="STK1", current_price=100.00
+        )
+        self.stock2 = Stock.objects.create(
+            name="Stock 2", ticker="STK2", current_price=50.00
+        )
+
+        self.watchlist2 = Watchlist.objects.create(
+            team=self.team, stock=self.stock2, note="Test Note 2"
+        )
+
+        self.other_user = User.objects.create_user(
+            username="otheruser", password="otherpassword"
+        )
+        self.other_team = Team.objects.create(name="Other Team")
+        self.other_user.profile.team = self.other_team
+        self.other_user.profile.save()
+        self.other_watchlist = Watchlist.objects.create(
+            team=self.other_team, stock=self.stock1, note="Other user note"
+        )
+
+    def test_watchlist_list_success(self):
+        url = reverse("watchlist-list")
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]["stock"]["name"], "Stock 2")
+        self.assertEqual(response.data[0]["note"], "Test Note 2")
+
+    def test_watchlist_list_unauthenticated(self):
+        self.client.force_authenticate(user=None)
+        url = reverse("watchlist-list")
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_watchlist_create_success(self):
+        url = reverse("watchlist-create")
+        data = {"stock": self.stock1.pk, "note": "New Watchlist Item"}
+        response = self.client.post(url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data["stock"], self.stock1.pk)
+        self.assertEqual(response.data["note"], "New Watchlist Item")
+        self.assertTrue(
+            Watchlist.objects.filter(
+                team=self.team, stock=self.stock1, note="New Watchlist Item"
+            ).exists()
+        )
+
+    def test_watchlist_create_duplicate(self):
+        url = reverse("watchlist-create")
+        data = {"stock": self.stock1.pk, "note": "Duplicate Watchlist"}
+        self.client.post(
+            url, data, format="json"
+        )  # Make sure that this entry already exists
+        response = self.client.post(url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn(
+            "Stock is already in the watchlist.", response.data["non_field_errors"]
+        )
+
+    def test_watchlist_create_unauthenticated(self):
+        self.client.force_authenticate(user=None)
+        url = reverse("watchlist-create")
+        data = {"stock": self.stock1.pk, "note": "New Watchlist Item"}
+        response = self.client.post(url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_watchlist_update_success(self):
+        url = reverse("watchlist-update", kwargs={"pk": self.watchlist2.pk})
+        data = {"note": "Updated Note"}
+        response = self.client.patch(url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["note"], "Updated Note")
+        self.watchlist2.refresh_from_db()
+        self.assertEqual(self.watchlist2.note, "Updated Note")
+
+    def test_watchlist_update_other_user(self):
+        url = reverse("watchlist-update", kwargs={"pk": self.other_watchlist.pk})
+        data = {"note": "Updated Note"}
+        response = self.client.patch(url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.other_watchlist.refresh_from_db()
+        self.assertEqual(self.other_watchlist.note, "Other user note")
+
+    def test_watchlist_update_unauthenticated(self):
+        self.client.force_authenticate(user=None)
+        url = reverse("watchlist-update", kwargs={"pk": self.watchlist2.pk})
+        data = {"note": "Updated Note"}
+        response = self.client.patch(url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_watchlist_delete_other_user(self):
+        url = reverse("watchlist-delete", kwargs={"pk": self.other_watchlist.pk})
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertTrue(Watchlist.objects.filter(pk=self.other_watchlist.pk).exists())
+
+    def test_watchlist_delete_unauthenticated(self):
+        self.client.force_authenticate(user=None)
+        url = reverse("watchlist-delete", kwargs={"pk": self.watchlist2.pk})
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_watchlist_delete_success(self):
+        url = reverse("watchlist-delete", kwargs={"pk": self.watchlist2.pk})
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(Watchlist.objects.filter(pk=self.watchlist2.pk).exists())
+
+
 class TestCreateUserView(APITestCase):
     def setUp(self):
         self.url = reverse("create-user")
@@ -333,66 +453,6 @@ class TestCreateUserView(APITestCase):
         self.assertEqual(user.profile.team.name, "Team 1")
         self.assertEqual(user.profile.team.code, self.team_code)
         self.assertTrue(user.profile.team.members.filter(user=user).exists())
-
-
-class TestWatchlistViewSet(APITestCase):
-    # Testen Sie den Zugriff auf die Watchlist.
-    def setUp(self):
-        self.user = User.objects.create_user(
-            username="testuser", password="testpassword"
-        )
-        refresh = RefreshToken.for_user(self.user)
-        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}")
-        self.stock1 = Stock.objects.create(
-            name="Stock 1", ticker="S1", current_price=Decimal("50.00")
-        )
-        self.stock2 = Stock.objects.create(
-            name="Stock 1", ticker="S1", current_price=Decimal("50.00")
-        )
-        self.watchlist = Watchlist.objects.create(
-            stock=self.stock2, team=self.user.profile.team
-        )
-
-        self.url = reverse("watchlist-list")
-        self.create_url = reverse("watchlist-create")
-
-    def test_retrieve_watchlist_success(self):
-        response = self.client.get(self.url)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-    def test_retrieve_watchlist_unauthorized(self):
-        self.client.credentials(HTTP_AUTHORIZATION=None)  # Entferne die Autorisierung
-        response = self.client.get(self.url)
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-
-    def test_add_watchlist_item_success(self):
-        data = {"stock": self.stock1.pk}
-        response = self.client.post(self.create_url, data, format="json")
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-
-    def test_add_watchlist_item_unauthorized(self):
-        self.client.credentials(HTTP_AUTHORIZATION=None)  # Entferne die Autorisierung
-        data = {"stock": self.stock1.pk}
-        response = self.client.post(self.create_url, data, format="json")
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-
-    def test_add_watchlist_item_invalid_data(self):
-        data = {"stock": "invalid_stock_id"}
-        response = self.client.post(self.create_url, data, format="json")
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
-    def test_delete_watchlist_item_success(self):
-        response = self.client.delete(
-            reverse("watchlist-delete", args=[self.watchlist.pk])
-        )
-        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-
-    def test_delete_watchlist_item_unauthorized(self):
-        self.client.credentials(HTTP_AUTHORIZATION=None)  # Entferne die Autorisierung
-        response = self.client.delete(
-            reverse("watchlist-delete", args=[self.watchlist.pk])
-        )
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
 
 class TestStockHoldingViewSet(APITestCase):

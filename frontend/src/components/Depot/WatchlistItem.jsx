@@ -18,7 +18,7 @@ function WatchlistItem({ watchlist, onDelete }) {
         event.preventDefault();
         if (newNote !== watchlist.note) {
             try {
-                const res = await api.patch(`/api/watchlist/${watchlist.id}/`, {
+                const res = await api.patch(`/api/watchlist/${watchlist.id}/update/`, {
                     note: newNote
                 });
                 if (res.status === 200 || res.status === 201 || res.status === 204) {
@@ -27,7 +27,7 @@ function WatchlistItem({ watchlist, onDelete }) {
                     addAlert('Fehler beim Ändern der Beschreibung.', 'danger');
                 }
             } catch (err) {
-                addAlert(err, 'danger');
+                addAlert(err.message, 'danger');
             }
         }
         handleClose();

@@ -31,6 +31,21 @@ export const getRequest = async (url, setIsLoading) => {
     }
 };
 
+export const getError = (error) => {
+    const data = error.response.data;
+    if (!data) {
+        return error.message;
+    }
+
+    if ("non_field_errors" in data) {
+        return data.non_field_errors[0];
+    }
+
+    const problem = Object.values(data).find(data1 => data1.length > 0)?.[0]
+    if (problem) return problem;
+    return error.message;
+}
+
 export const isAdmin = () => {
     const token = localStorage.getItem(ACCESS_TOKEN);
     if (token) {

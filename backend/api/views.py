@@ -1,20 +1,13 @@
 from django.contrib.auth.models import User
 from django.db import transaction
 from django.db.models.aggregates import Count
-from rest_framework import generics, mixins, pagination, serializers, status, viewsets
+from rest_framework import generics, mixins, pagination, status, viewsets
 from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 
-from stocks.models import (
-    RegistrationRequest,
-    Stock,
-    StockHolding,
-    Team,
-    Transaction,
-    Watchlist,
-)
+from stocks.models import RegistrationRequest, Stock, StockHolding, Team, Transaction
 
 from .serializers import (
     AnalysisSerializer,
@@ -115,6 +108,47 @@ class TeamRankingListView(generics.ListAPIView):
         )
 
 
+class WatchlistListView(generics.ListAPIView):
+    """Viewset für die Watchlist."""
+
+    serializer_class = WatchlistSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return self.request.user.profile.team.watchlist.all()
+
+
+class WatchlistCreateView(generics.CreateAPIView):
+    """Viewset für das Erstellen einer Watchlist."""
+
+    serializer_class = WatchlistCreateSerializer
+    permission_classes = [IsAuthenticated]
+
+    def perform_create(self, serializer):
+        team = self.request.user.profile.team
+        serializer.save(team=team)
+
+
+class WatchlistUpdateView(generics.UpdateAPIView):
+    """Viewset für das Aktualisieren einer Watchlist."""
+
+    serializer_class = WatchlistUpdateSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return self.request.user.profile.team.watchlist.all()
+
+
+class WatchlistDeleteView(generics.DestroyAPIView):
+    """Viewset für das Löschen einer Watchlist."""
+
+    serializer_class = WatchlistSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return self.request.user.profile.team.watchlist.all()
+
+
 class CreateUserView(generics.CreateAPIView):
     """View zum Erstellen neuer Benutzer."""
 
@@ -137,71 +171,6 @@ class UserProfileViewSet(generics.RetrieveAPIView):
 
     def get_object(self):
         return self.request.user.profile
-
-
-class WatchlistList(viewsets.ReadOnlyModelViewSet):
-    """Viewset für die Watchlist."""
-
-    serializer_class = WatchlistSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        return self.request.user.profile.team.watchlist.all()
-
-
-class WatchlistCreate(generics.CreateAPIView):
-    """Viewset für das Erstellen einer Watchlist."""
-
-    serializer_class = WatchlistCreateSerializer
-    permission_classes = [IsAuthenticated]
-
-    def perform_create(self, serializer):
-        team = self.request.user.profile.team
-        if Watchlist.objects.filter(
-            team=team, stock=serializer.validated_data["stock"]
-        ).exists():
-            raise serializers.ValidationError("Stock is already in the watchlist.")
-        elif serializer.is_valid():
-            serializer.save(team=self.request.user.profile.team)
-        else:
-            print(serializer.errors)
-
-    def create(self, request, *args, **kwargs):  # Überschreibe die create-Methode
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)  # Wirft eine Exception, wenn ungültig
-        self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
-
-        return Response(
-            {"id": serializer.instance.id, "message": "Watchlist item created"},
-            status=status.HTTP_201_CREATED,
-            headers=headers,
-        )
-
-
-class WatchlistUpdate(generics.UpdateAPIView):
-    """Viewset für das Aktualisieren einer Watchlist."""
-
-    serializer_class = WatchlistUpdateSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        return self.request.user.profile.team.watchlist.all()
-
-    def perform_update(self, serializer):
-        instance = self.get_object()
-        instance.note = serializer.validated_data.get("note", instance.note)
-        instance.save()
-
-
-class WatchlistDelete(generics.DestroyAPIView):
-    """Viewset für das Löschen einer Watchlist."""
-
-    serializer_class = WatchlistSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        return self.request.user.profile.team.watchlist.all()
 
 
 class StockHoldingViewSet(viewsets.ReadOnlyModelViewSet):

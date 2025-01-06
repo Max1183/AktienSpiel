@@ -19,16 +19,22 @@ urlpatterns = [
     path("profile/", views.UserProfileViewSet.as_view(), name="user-profile"),
     path(
         "watchlist/",
-        views.WatchlistList.as_view({"get": "list"}),
+        views.WatchlistListView.as_view(),
         name="watchlist-list",
     ),
-    path("watchlist/create/", views.WatchlistCreate.as_view(), name="watchlist-create"),
     path(
-        "watchlist/<int:pk>/", views.WatchlistUpdate.as_view(), name="watchlist-update"
+        "watchlist/create/",
+        views.WatchlistCreateView.as_view(),
+        name="watchlist-create",
     ),
     path(
-        "watchlist/delete/<int:pk>/",
-        views.WatchlistDelete.as_view(),
+        "watchlist/<int:pk>/update/",
+        views.WatchlistUpdateView.as_view(),
+        name="watchlist-update",
+    ),
+    path(
+        "watchlist/<int:pk>/delete/",
+        views.WatchlistDeleteView.as_view(),
         name="watchlist-delete",
     ),
     path("validate-form/", views.ValidateFormView.as_view(), name="validate-form"),
