@@ -1,5 +1,4 @@
 from django.contrib.auth.models import User
-from django.db import transaction
 from django.db.models.aggregates import Count
 from rest_framework import generics, mixins, pagination, status, viewsets
 from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
@@ -73,7 +72,6 @@ class TeamRankingListView(generics.ListAPIView):
         .exclude(name="default")
         .exclude(name="Admin")
     )
-    queryset = Team.objects.all()
     serializer_class = TeamRankingSerializer
     permission_classes = [AllowAny]
 
@@ -154,13 +152,6 @@ class CreateUserView(generics.CreateAPIView):
 
     serializer_class = UserCreateSerializer
     permission_classes = [AllowAny]
-
-    @transaction.atomic
-    def post(self, request, *args, **kwargs):
-        return super().create(request, *args, **kwargs)
-
-    def perform_create(self, serializer):
-        serializer.save()
 
 
 class UserProfileViewSet(generics.RetrieveAPIView):

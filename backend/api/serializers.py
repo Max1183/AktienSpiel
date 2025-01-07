@@ -1,5 +1,7 @@
 from django.contrib.auth.models import User
+from django.db import transaction
 from rest_framework import serializers
+from rest_framework.validators import UniqueValidator
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from stocks.models import (
@@ -202,11 +204,22 @@ class UserCreateSerializer(serializers.ModelSerializer):
     """Serializer für Benutzer."""
 
     token = serializers.UUIDField(write_only=True)
-    first_name = serializers.CharField(max_length=20, write_only=True)
-    last_name = serializers.CharField(max_length=20, write_only=True)
-    team_code = serializers.CharField(max_length=8, required=False, allow_blank=True)
-    team_name = serializers.CharField(required=False, allow_blank=True)
+    team_code = serializers.CharField(
+        max_length=8, required=False, allow_blank=True, write_only=True
+    )
+    team_name = serializers.CharField(required=False, allow_blank=True, write_only=True)
     join_team = serializers.BooleanField(write_only=True)
+    email = serializers.EmailField(
+        validators=[UniqueValidator(queryset=User.objects.all())]
+    )
+    username = serializers.CharField(
+        validators=[UniqueValidator(queryset=User.objects.all())],
+        min_length=3,
+        max_length=20,
+    )
+    first_name = serializers.CharField(min_length=3, max_length=20)
+    last_name = serializers.CharField(min_length=3, max_length=20)
+    password = serializers.CharField(min_length=8, max_length=30)
 
     class Meta:
         model = User
@@ -223,94 +236,64 @@ class UserCreateSerializer(serializers.ModelSerializer):
         ]
         extra_kwargs = {"password": {"write_only": True}}
 
-    def validate(self, data):  # noqa: C901
-        """Validiert die Eingaben."""
-        try:
-            registration_request = RegistrationRequest.objects.get(
-                activation_token=data["token"]
-            )
-        except RegistrationRequest.DoesNotExist:
+    def validate_password(self, password):
+        if not any(char.isdigit() for char in password):
             raise serializers.ValidationError(
-                {"detail": ["Dieses Token ist ungültig."]}
+                "Das Passwort muss mindestens eine Zahl enthalten."
             )
+        if not any(char.isalpha() for char in password):
+            raise serializers.ValidationError(
+                "Das Passwort muss mindestens einen Buchstaben enthalten."
+            )
+        return password
 
+    def validate_token(self, token):
+        try:
+            RegistrationRequest.objects.get(activation_token=token)
+        except RegistrationRequest.DoesNotExist:
+            raise serializers.ValidationError("Dieses Token ist ungültig.")
+        return token
+
+    def validate_team_code(self, team_code):
+        join_team = self.initial_data.get("join_team")
+
+        if not join_team:
+            return team_code
+        if not team_code:
+            raise serializers.ValidationError("Bitte geben Sie einen Teamcode ein.")
+        if join_team and not team_code:
+            raise serializers.ValidationError("Bitte geben Sie einen Teamcode ein.")
+        if not team_code:
+            return team_code
+        try:
+            team = Team.objects.get(code=team_code)
+        except Team.DoesNotExist:
+            raise serializers.ValidationError("Dieser Teamcode ist ungültig.")
+        if team.members.count() >= 4:
+            raise serializers.ValidationError("Dieses Team ist bereits voll.")
+        return team_code
+
+    def validate_team_name(self, team_name):
+        join_team = self.initial_data.get("join_team")
+
+        if join_team:
+            return team_name
+        if not team_name:
+            raise serializers.ValidationError("Bitte geben Sie einen Teamnamen ein.")
+        if Team.objects.filter(name=team_name).exists():
+            raise serializers.ValidationError("Dieser Teamname ist bereits vergeben.")
+        return team_name
+
+    def validate(self, data):
+        token = data["token"]
+        registration_request = RegistrationRequest.objects.get(activation_token=token)
         if registration_request.email != data["email"]:
             raise serializers.ValidationError(
-                {
-                    "detail": [
-                        "Diese E-Mail-Adresse wurde nicht mit diesem Token registriert."
-                    ]
-                }
+                "Diese E-Mail-Adresse wurde nicht mit diesem Token registriert."
             )
-
-        if User.objects.filter(email=data["email"]).exists():
-            raise serializers.ValidationError(
-                {"detail": ["Diese E-Mail-Adresse ist bereits registriert."]}
-            )
-
-        if len(data["first_name"]) < 3 or len(data["first_name"]) > 20:
-            raise serializers.ValidationError(
-                {"detail": ["Der Vorname muss zwischen 3 und 20 Zeichen lang sein."]}
-            )
-
-        if len(data["last_name"]) < 3 or len(data["last_name"]) > 20:
-            raise serializers.ValidationError(
-                {"detail": ["Der Nachname muss zwischen 3 und 20 Zeichen lang sein."]}
-            )
-
-        if len(data["username"]) < 3 or len(data["username"]) > 20:
-            raise serializers.ValidationError(
-                {"detail": ["Der Nutzername muss zwischen 3 und 20 Zeichen lang sein."]}
-            )
-
-        if User.objects.filter(username=data["username"]).exists():
-            raise serializers.ValidationError(
-                {"detail": ["Dieser Nutzername ist bereits vergeben."]}
-            )
-
-        if len(data["password"]) < 8 or len(data["password"]) > 30:
-            raise serializers.ValidationError(
-                {"detail": ["Das Passwort muss zwischen 8 und 30 Zeichen lang sein."]}
-            )
-
-        if not any(char.isdigit() for char in data["password"]):
-            raise serializers.ValidationError(
-                {"detail": ["Das Passwort muss mindestens eine Zahl enthalten."]}
-            )
-
-        if not any(char.isalpha() for char in data["password"]):
-            raise serializers.ValidationError(
-                {"detail": ["Das Passwort muss mindestens einen Buchstaben enthalten."]}
-            )
-
-        if data["join_team"]:
-            if data["team_code"] == "":
-                raise serializers.ValidationError(
-                    {"detail": ["Bitte geben Sie einen Teamcode ein."]}
-                )
-            try:
-                team = Team.objects.get(code=data["team_code"])
-            except Team.DoesNotExist:
-                raise serializers.ValidationError(
-                    {"detail": ["Dieser Teamcode ist ungültig."]}
-                )
-            if team.members.count() >= 4:
-                raise serializers.ValidationError(
-                    {"detail": ["Dieses Team ist bereits voll."]}
-                )
-
-        else:
-            if data["team_name"] == "":
-                raise serializers.ValidationError(
-                    {"detail": ["Bitte geben Sie einen Teamnamen ein."]}
-                )
-            if Team.objects.filter(name=data["team_name"]).exists():
-                raise serializers.ValidationError(
-                    {"detail": ["Dieser Teamname ist bereits vergeben."]}
-                )
-
         return data
 
+    @transaction.atomic
     def create(self, validated_data):
         """Erstellt einen neuen Benutzer."""
         token = validated_data.pop("token")
@@ -323,9 +306,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
         if join_team:
             team = Team.objects.get(code=team_code)
         else:
-            team = Team.objects.create(
-                name=team_name,
-            )
+            team = Team.objects.create(name=team_name)
 
         user_profile = user.profile
         user_profile.team = team
@@ -488,11 +469,15 @@ class AnalysisSerializer(serializers.Serializer):
     def calculate_profit(self, transactions, current_price):
         """Berechnet den Gesamtgewinn oder -verlust für eine Aktie basierend auf den Transaktionen."""
         total_profit = 0
-        for transaction in transactions:
-            if transaction.transaction_type == "buy":
-                total_profit -= transaction.amount * transaction.price + transaction.fee
-            elif transaction.transaction_type == "sell":
-                total_profit += transaction.amount * transaction.price - transaction.fee
+        for transaction1 in transactions:
+            if transaction1.transaction_type == "buy":
+                total_profit -= (
+                    transaction1.amount * transaction1.price + transaction1.fee
+                )
+            elif transaction1.transaction_type == "sell":
+                total_profit += (
+                    transaction1.amount * transaction1.price - transaction1.fee
+                )
 
         return total_profit
 

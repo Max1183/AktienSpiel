@@ -1,3 +1,4 @@
+import uuid
 from decimal import Decimal
 
 from django.contrib.auth import get_user_model
@@ -235,8 +236,8 @@ class TeamRankingListViewTests(APITestCase):
         url = reverse("ranking")
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data["results"]), 5)
-        self.assertEqual(response.data["count"], 5)
+        self.assertEqual(len(response.data["results"]), 2)
+        self.assertEqual(response.data["count"], 2)
         self.assertEqual(response.data["num_pages"], 1)
         self.assertEqual(response.data["current_page"], 1)
         self.assertEqual(response.data["page_size"], 10)
@@ -257,14 +258,14 @@ class TeamRankingListViewTests(APITestCase):
         url = reverse("ranking")
         response = self.client.get(f"{url}?page=2")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data["results"]), 7)
-        self.assertEqual(response.data["count"], 17)
+        self.assertEqual(len(response.data["results"]), 4)
+        self.assertEqual(response.data["count"], 14)
         self.assertEqual(response.data["num_pages"], 2)
         self.assertEqual(response.data["current_page"], 2)
         self.assertEqual(response.data["page_size"], 10)
         self.assertEqual(response.data["results"][0]["name"], "Team 5")
         self.assertEqual(response.data["results"][0]["rank"], 11)
-        self.assertEqual(response.data["results"][3]["name"], "default")
+        self.assertEqual(response.data["results"][3]["name"], "Team 3")
         self.assertEqual(response.data["results"][3]["rank"], 14)
 
 
@@ -388,75 +389,234 @@ class WatchlistViewTests(APITestCase):
         self.assertFalse(Watchlist.objects.filter(pk=self.watchlist2.pk).exists())
 
 
-class TestCreateUserView(APITestCase):
+class CreateUserViewTests(APITestCase):
     def setUp(self):
         self.url = reverse("create-user")
-        self.team = Team.objects.create(name="Team 1")
-        self.team_code = self.team.code
-        self.email = "test@example.com"
-
-        self.registration_request = RegistrationRequest.objects.create(email=self.email)
-        self.token = self.registration_request.activation_token
-
-        self.data = {
-            "token": self.token,
-            "email": self.email,
-            "first_name": "John",
-            "last_name": "Doe",
-            "username": "johndoe",
-            "password": "testpassword1",
-            "team_code": self.team_code,
+        self.registration_request = RegistrationRequest.objects.create(
+            email="test@example.com"
+        )
+        self.valid_data = {
+            "token": str(self.registration_request.activation_token),
+            "email": "test@example.com",
+            "first_name": "Test",
+            "last_name": "User",
+            "username": "testuser",
+            "password": "Testpassword123",
+            "join_team": False,
             "team_name": "Test Team",
-            "join_team": True,
         }
 
+    def test_create_user_success_new_team(self):
+        response = self.client.post(self.url, self.valid_data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertTrue(User.objects.filter(email="test@example.com").exists())
+        self.assertTrue(Team.objects.filter(name="Test Team").exists())
+        self.assertEqual(response.data["email"], "test@example.com")
+
+    def test_create_user_success_join_team(self):
+        Team.objects.create(name="Existing Team", code="testcode")
+        data = self.valid_data.copy()
+        data["join_team"] = True
+        data["team_code"] = "testcode"
+        del data["team_name"]
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertTrue(User.objects.filter(email="test@example.com").exists())
+        self.assertTrue(Team.objects.filter(code="testcode").exists())
+        self.assertEqual(response.data["email"], "test@example.com")
+
     def test_create_user_invalid_token(self):
-        data = self.data.copy()
-        data["token"] = "invalid_token"
+        data = self.valid_data.copy()
+        data["token"] = str(uuid.uuid4())
         response = self.client.post(self.url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("token", response.data)
+        self.assertIn("Dieses Token ist ungültig.", response.data["token"])
 
-    def test_create_user_invalid_email(self):
-        data = self.data.copy()
-        data["email"] = "invalid_email"
+    def test_create_user_mismatched_email_token(self):
+        data = self.valid_data.copy()
+        data["email"] = "wrong@test.com"
         response = self.client.post(self.url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("non_field_errors", response.data)
+        self.assertIn(
+            "Diese E-Mail-Adresse wurde nicht mit diesem Token registriert.",
+            response.data["non_field_errors"],
+        )
 
-    def test_create_user_invalid_password(self):
-        data = self.data.copy()
-        data["password"] = "short"
+    def test_create_user_email_exists(self):
+        User.objects.create_user(
+            username="test1", password="password", email="test@example.com"
+        )
+        response = self.client.post(self.url, self.valid_data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("email", response.data)
+        self.assertIn("This field must be unique.", response.data["email"])
+
+    def test_create_user_username_exists(self):
+        User.objects.create_user(
+            username="testuser", password="password", email="test2@example.com"
+        )
+        response = self.client.post(self.url, self.valid_data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("username", response.data)
+        self.assertIn("This field must be unique.", response.data["username"])
+
+    def test_create_user_invalid_first_name_length(self):
+        data = self.valid_data.copy()
+        data["first_name"] = "te"
         response = self.client.post(self.url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("first_name", response.data)
+        self.assertIn(
+            "Ensure this field has at least 3 characters.", response.data["first_name"]
+        )
+
+        data = self.valid_data.copy()
+        data["first_name"] = "test" * 10
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("first_name", response.data)
+        self.assertIn(
+            "Ensure this field has no more than 20 characters.",
+            response.data["first_name"],
+        )
+
+    def test_create_user_invalid_last_name_length(self):
+        data = self.valid_data.copy()
+        data["last_name"] = "te"
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("last_name", response.data)
+        self.assertIn(
+            "Ensure this field has at least 3 characters.", response.data["last_name"]
+        )
+
+        data = self.valid_data.copy()
+        data["last_name"] = "test" * 10
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("last_name", response.data)
+        self.assertIn(
+            "Ensure this field has no more than 20 characters.",
+            response.data["last_name"],
+        )
+
+    def test_create_user_invalid_username_length(self):
+        data = self.valid_data.copy()
+        data["username"] = "te"
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("username", response.data)
+        self.assertIn(
+            "Ensure this field has at least 3 characters.", response.data["username"]
+        )
+        data = self.valid_data.copy()
+        data["username"] = "test" * 10
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("username", response.data)
+        self.assertIn(
+            "Ensure this field has no more than 20 characters.",
+            response.data["username"],
+        )
+
+    def test_create_user_invalid_password_length(self):
+        data = self.valid_data.copy()
+        data["password"] = "test1"
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("password", response.data)
+        self.assertIn(
+            "Ensure this field has at least 8 characters.", response.data["password"]
+        )
+        data = self.valid_data.copy()
+        data["password"] = "test1" * 10
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("password", response.data)
+        self.assertIn(
+            "Ensure this field has no more than 30 characters.",
+            response.data["password"],
+        )
+
+    def test_create_user_invalid_password_complexity(self):
+        data = self.valid_data.copy()
+        data["password"] = "testtest"
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("password", response.data)
+        self.assertIn(
+            "Das Passwort muss mindestens eine Zahl enthalten.",
+            response.data["password"],
+        )
+        data = self.valid_data.copy()
+        data["password"] = "12345678"
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("password", response.data)
+        self.assertIn(
+            "Das Passwort muss mindestens einen Buchstaben enthalten.",
+            response.data["password"],
+        )
+
+    def test_create_user_missing_team_code_join_team(self):
+        data = self.valid_data.copy()
+        data["join_team"] = True
+        data["team_code"] = ""
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("team_code", response.data)
+        self.assertIn("Bitte geben Sie einen Teamcode ein.", response.data["team_code"])
 
     def test_create_user_invalid_team_code(self):
-        data = self.data.copy()
-        data["team_code"] = "invalid_code"
+        data = self.valid_data.copy()
+        data["join_team"] = True
+        data["team_code"] = "invalid"
         response = self.client.post(self.url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("team_code", response.data)
+        self.assertIn("Dieser Teamcode ist ungültig.", response.data["team_code"])
+
+    def test_create_user_full_team(self):
+        team = Team.objects.create(name="test", code="testcode")
+        for i in range(4):
+            user = User.objects.create_user(username=f"test{i}", password="password")
+            user.profile.team = team
+            user.profile.save()
+        data = self.valid_data.copy()
+        data["join_team"] = True
+        data["team_code"] = "testcode"
+        del data["team_name"]
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("team_code", response.data)
+        self.assertIn("Dieses Team ist bereits voll.", response.data["team_code"])
+
+    def test_create_user_missing_team_name_create_team(self):
+        data = self.valid_data.copy()
+        data["team_name"] = ""
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("team_name", response.data)
+        self.assertIn(
+            "Bitte geben Sie einen Teamnamen ein.", response.data["team_name"]
+        )
 
     def test_create_user_invalid_team_name(self):
-        data = self.data.copy()
-        data["team_name"] = ""
-        data["join_team"] = False
+        Team.objects.create(name="Existing Team")
+        data = self.valid_data.copy()
+        data["team_name"] = "Existing Team"
         response = self.client.post(self.url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
-    def test_create_user_valid(self):
-        response = self.client.post(self.url, self.data, format="json")
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(User.objects.count(), 1)
-
-        user = User.objects.get(username="johndoe")
-        self.assertEqual(user.first_name, "John")
-        self.assertEqual(user.last_name, "Doe")
-        self.assertEqual(user.email, "test@example.com")
-        self.assertEqual(user.profile.team.name, "Team 1")
-        self.assertEqual(user.profile.team.code, self.team_code)
-        self.assertTrue(user.profile.team.members.filter(user=user).exists())
+        self.assertIn("team_name", response.data)
+        self.assertIn(
+            "Dieser Teamname ist bereits vergeben.", response.data["team_name"]
+        )
 
 
 class TestStockHoldingViewSet(APITestCase):
-    # Testen Sie den Zugriff auf die Stock Holdings eines Teams.
+    # Testen Sie den Zugriff auf die Stock-Holdings eines Teams.
     def setUp(self):
         self.team = Team.objects.create(name="Test Team")
         self.user = User.objects.create_user(
