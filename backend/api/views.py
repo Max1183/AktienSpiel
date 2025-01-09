@@ -1,12 +1,19 @@
 from django.contrib.auth.models import User
-from django.db.models.aggregates import Count
 from rest_framework import generics, mixins, pagination, status, viewsets
 from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 
-from stocks.models import RegistrationRequest, Stock, StockHolding, Team, Transaction
+from stocks.models import (
+    RegistrationRequest,
+    Stock,
+    StockHolding,
+    Team,
+    Transaction,
+    UserProfile,
+    get_team_ranking_queryset,
+)
 
 from .serializers import (
     AnalysisSerializer,
@@ -66,14 +73,11 @@ class TeamDetailView(generics.RetrieveAPIView):
 class TeamRankingListView(generics.ListAPIView):
     """Viewset für die Team-Ranking-Liste."""
 
-    queryset = (
-        Team.objects.annotate(num_members=Count("members"))
-        .filter(num_members__gt=0)
-        .exclude(name="default")
-        .exclude(name="Admin")
-    )
     serializer_class = TeamRankingSerializer
     permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        return get_team_ranking_queryset()
 
     def get(self, request, *args, **kwargs):
         page_size = 10
@@ -154,18 +158,19 @@ class CreateUserView(generics.CreateAPIView):
     permission_classes = [AllowAny]
 
 
-class UserProfileViewSet(generics.RetrieveAPIView):
+class UserProfileDetailView(generics.RetrieveAPIView):
     """Viewset für Benutzerprofile."""
 
     serializer_class = UserProfileSerializer
     permission_classes = [IsAuthenticated]
+    queryset = UserProfile.objects.all()
 
     def get_object(self):
         return self.request.user.profile
 
 
-class StockHoldingViewSet(viewsets.ReadOnlyModelViewSet):
-    """Viewset für die Stock Holdings eines Teams (read-only)."""
+class StockHoldingListView(generics.ListAPIView):
+    """Viewset für die Stock-Holdings eines Teams."""
 
     serializer_class = StockHoldingSerializer
     permission_classes = [IsAuthenticated]

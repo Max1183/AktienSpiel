@@ -25,7 +25,7 @@ class MyTokenObtainPairViewTests(APITestCase):
         self.user = User.objects.create_user(
             username="testuser", password="testpassword", is_staff=True
         )
-        self.url = reverse("get_token")
+        self.url = reverse("get-token")
 
     def test_token_obtain_with_valid_credentials(self):
         data = {"username": "testuser", "password": "testpassword"}
@@ -615,29 +615,67 @@ class CreateUserViewTests(APITestCase):
         )
 
 
-class TestStockHoldingViewSet(APITestCase):
-    # Testen Sie den Zugriff auf die Stock-Holdings eines Teams.
+class UserProfileDetailViewTests(APITestCase):
     def setUp(self):
+        self.user = User.objects.create_user(
+            username="testuser", password="testpassword", email="test@example.com"
+        )
         self.team = Team.objects.create(name="Test Team")
+        self.user_profile = self.user.profile
+        self.user_profile.team = self.team
+        self.client.force_authenticate(user=self.user)
+
+    def test_retrieve_user_profile_success(self):
+        url = reverse("user-profile")
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["user"]["username"], "testuser")
+        self.assertEqual(response.data["user"]["email"], "test@example.com")
+        self.assertEqual(response.data["team"], "Test Team")
+
+    def test_retrieve_user_profile_unauthenticated(self):
+        self.client.force_authenticate(user=None)
+        url = reverse("user-profile")
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+class StockHoldingListViewTests(APITestCase):
+    def setUp(self):
         self.user = User.objects.create_user(
             username="testuser", password="testpassword"
         )
+        self.team = Team.objects.create(name="Test Team")
         self.user.profile.team = self.team
         self.user.profile.save()
-        refresh = RefreshToken.for_user(self.user)
-        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}")
-        self.stock = Stock.objects.create(
-            name="Test Stock", ticker="TST", current_price=Decimal("100.00")
-        )
-        self.stock_holding = StockHolding.objects.create(
-            team=self.team, stock=self.stock, amount=10
-        )
-        self.url = reverse("stockholding-detail", kwargs={"pk": self.stock_holding.pk})
+        self.client.force_authenticate(user=self.user)
 
-    def test_retrieve_stock_holding_success(self):
-        response = self.client.get(self.url)
+        self.stock1 = Stock.objects.create(
+            name="Stock 1", ticker="STK1", current_price=100.00
+        )
+        self.stock2 = Stock.objects.create(
+            name="Stock 2", ticker="STK2", current_price=50.00
+        )
+        self.stock_holding1 = StockHolding.objects.create(
+            team=self.team, stock=self.stock1, amount=5
+        )
+        self.stock_holding2 = StockHolding.objects.create(
+            team=self.team, stock=self.stock2, amount=0
+        )  # Zero amount
+
+    def test_stock_holding_list_success(self):
+        url = reverse("stock-holdings")
+        response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.json()["amount"], 10)
+        self.assertEqual(len(response.data), 1)  # Only one holding with > 0
+        self.assertEqual(response.data[0]["stock"]["name"], "Stock 1")
+        self.assertEqual(response.data[0]["amount"], 5)
+
+    def test_stock_holding_list_unauthenticated(self):
+        self.client.force_authenticate(user=None)
+        url = reverse("stock-holdings")
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
 
 class TestTransactionViewSet(APITestCase):

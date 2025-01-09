@@ -29,11 +29,12 @@ function Team() {
             <div className="col-lg-6 p-2">
                 <div className="bg-primary-subtle p-3 shadow rounded p-3 h-100">
                     <h2>Mein Team</h2>
-                    <p className="fs-5 mt-3">
-                        Teamname: "{team.name}"<br />
+                    <p className="fs-5 mt-3 mb-0">
+                        Teamname: {team.name}<br />
                         Barbestand: {formatCurrency(team.balance)}<br />
                         Gesamtdepotwert: {formatCurrency(team.portfolio_value)}<br />
-                        Trades: {team.trades}
+                        Trades: {team.trades}<br />
+                        Platz {team.rank}
                     </p>
                 </div>
             </div>

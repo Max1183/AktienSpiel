@@ -8,6 +8,7 @@ from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
 from django.db import models
 from django.db.models import F, Sum
+from django.db.models.aggregates import Count
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from django.template.loader import render_to_string
@@ -143,9 +144,10 @@ class Team(models.Model):
     def calculate_rank(self):
         """Berechnet den Rang des Teams basierend auf dem Portfoliowert im Vergleich zu anderen Teams."""
         current_portfolio_value = self.get_portfolio_value()
+        queryset = get_team_ranking_queryset()
 
         higher_ranked_teams = (
-            Team.objects.annotate(
+            queryset.annotate(
                 portfolio_value=models.Case(
                     models.When(holdings__stock__isnull=True, then=F("balance")),
                     default=F("balance")
@@ -183,6 +185,17 @@ class Team(models.Model):
         """Aktualisiert den Kontostand des Teams."""
         self.balance += amount_change
         self.save()
+
+
+def get_team_ranking_queryset():
+    """Gibt eine QuerySet zurück, die Teams enthält, die für das Ranking berücksichtigt werden."""
+    queryset = (
+        Team.objects.annotate(num_members=Count("members"))
+        .filter(num_members__gt=0)
+        .exclude(name="default")
+        .exclude(name="Admin")
+    )
+    return queryset
 
 
 @receiver(pre_save, sender=Team)

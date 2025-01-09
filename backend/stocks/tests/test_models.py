@@ -76,6 +76,19 @@ class TeamTests(TestCase):
     def setUp(self):
         self.team1 = Team.objects.create(name="Team 1", balance=100000)
         self.team2 = Team.objects.create(name="Team 2", balance=50000)
+
+        self.user1 = User.objects.create_user(
+            username="user1", password="password1", email="user1@example.com"
+        )
+        self.user2 = User.objects.create_user(
+            username="user2", password="password2", email="user2@example.com"
+        )
+
+        self.user1.profile.team = self.team1
+        self.user1.profile.save()
+        self.user2.profile.team = self.team2
+        self.user2.profile.save()
+
         self.stock = Stock.objects.create(
             name="Test Stock", ticker="TST", current_price=100.00
         )

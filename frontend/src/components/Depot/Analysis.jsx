@@ -40,7 +40,7 @@ function Analysis() {
                     ))}
                 </div>
             </> : <>
-                <p className="text-center">Keine Aktien gefunden.</p>
+                <p>Du besitzt noch keine Aktien.</p>
             </>}
         </DepotArea>
     </>

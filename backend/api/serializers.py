@@ -332,22 +332,21 @@ class UserProfileSerializer(serializers.ModelSerializer):
     """Serializer für Benutzerprofile."""
 
     user = UserSerializer()
-    team_name = serializers.CharField(source="team.name")
+    team = serializers.CharField(source="team.name")
 
     class Meta:
         model = UserProfile
-        fields = ["user", "team_name"]
+        fields = ["user", "team"]
 
 
 class StockHoldingSerializer(serializers.ModelSerializer):
     """Serializer für Aktienbestände."""
 
-    stock = StockSerializer(read_only=True)
+    stock = StockInfoSerializer(read_only=True)
 
     class Meta:
         model = StockHolding
         fields = ["id", "stock", "amount"]
-        read_only_fields = fields
 
 
 class TransactionListSerializer(serializers.ModelSerializer):
