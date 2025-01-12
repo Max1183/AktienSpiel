@@ -19,8 +19,6 @@ run-frontend:
 
 # Backend (Django)
 MANAGE = $(POETRY) run python manage.py
-run-stocks:
-	$(MANAGE) update_stocks
 migrate:
 	$(MANAGE) migrate
 migrations:
