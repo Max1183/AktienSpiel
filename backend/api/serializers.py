@@ -428,55 +428,11 @@ class TransactionCreateSerializer(serializers.ModelSerializer):
         return data
 
 
-class AnalysisSerializer(serializers.Serializer):
-    """Serializer für die Analyse der Aktien."""
+class StockAnalysisSerializer(serializers.Serializer):
+    """Serializer for stock analysis data."""
 
-    stock_name = serializers.CharField(source="stock.name")
-    stock_ticker = serializers.CharField(source="stock.ticker")
+    id = serializers.IntegerField()
+    name = serializers.CharField()
+    ticker = serializers.CharField()
     total_profit = serializers.DecimalField(max_digits=20, decimal_places=2)
-
-    def calculate_profit(self, transactions, current_price):
-        """Berechnet den Gesamtgewinn oder -verlust für eine Aktie basierend auf den Transaktionen."""
-        total_profit = 0
-        for transaction1 in transactions:
-            if transaction1.transaction_type == "buy":
-                total_profit -= (
-                    transaction1.amount * transaction1.price + transaction1.fee
-                )
-            elif transaction1.transaction_type == "sell":
-                total_profit += (
-                    transaction1.amount * transaction1.price - transaction1.fee
-                )
-
-        return total_profit
-
-    def to_representation(self, team):
-        """Erstellt die serialisierte Darstellung für ein Team."""
-        stock_profits = []
-        unique_stocks = set(
-            Transaction.objects.filter(team=team).values_list("stock", flat=True)
-        )
-
-        for stock_id in unique_stocks:
-            stock = Stock.objects.get(id=stock_id)
-            transactions = Transaction.objects.filter(team=team, stock=stock)
-            total_profit = self.calculate_profit(transactions, stock.current_price)
-
-            try:
-                stock_holding = StockHolding.objects.get(team=team, stock=stock)
-                total_profit += stock_holding.amount * stock.current_price
-                current_holding = stock_holding.amount * stock.current_price
-            except StockHolding.DoesNotExist:
-                current_holding = 0
-
-            stock_profits.append(
-                {
-                    "id": stock.pk,
-                    "name": stock.name,
-                    "ticker": stock.ticker,
-                    "total_profit": total_profit,
-                    "current_holding": current_holding,
-                }
-            )
-
-        return stock_profits
+    current_holding = serializers.DecimalField(max_digits=20, decimal_places=2)

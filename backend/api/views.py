@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.contrib.auth.models import User
 from rest_framework import generics, pagination, status
 from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
@@ -14,12 +16,13 @@ from stocks.models import (
     UserProfile,
     get_team_ranking_queryset,
 )
+from stocks.services import calculate_stock_profit
 from stocks.transactions import execute_transaction
 
 from .serializers import (
-    AnalysisSerializer,
     MyTokenObtainPairSerializer,
     RegistrationRequestSerializer,
+    StockAnalysisSerializer,
     StockHoldingSerializer,
     StockSerializer,
     TeamRankingSerializer,
@@ -231,13 +234,36 @@ class AnalysisView(APIView):
 
     def get(self, request):
         team = request.user.profile.team
-        serializer = AnalysisSerializer()
-        sorted_data = sorted(
-            serializer.to_representation(team),
-            key=lambda x: x["total_profit"],
-            reverse=True,
+        stock_profits = []
+        unique_stocks = set(
+            Transaction.objects.filter(team=team).values_list("stock", flat=True)
         )
-        return Response(sorted_data)
+        for stock_id in unique_stocks:
+            stock = Stock.objects.get(id=stock_id)
+            transactions = Transaction.objects.filter(team=team, stock=stock)
+            total_profit = calculate_stock_profit(transactions, stock.current_price)
+            try:
+                stock_holding = StockHolding.objects.get(team=team, stock=stock)
+                current_holding = stock_holding.amount * stock.current_price
+                total_profit += current_holding
+            except StockHolding.DoesNotExist:
+                current_holding = Decimal("0.00")
+
+            stock_profits.append(
+                {
+                    "id": stock.pk,
+                    "name": stock.name,
+                    "ticker": stock.ticker,
+                    "total_profit": total_profit,
+                    "current_holding": current_holding,
+                }
+            )
+
+        sorted_stock_profits = sorted(
+            stock_profits, key=lambda x: x["total_profit"], reverse=True
+        )
+        serializer = StockAnalysisSerializer(sorted_stock_profits, many=True)
+        return Response(serializer.data)
 
 
 class ValidateFormView(APIView):

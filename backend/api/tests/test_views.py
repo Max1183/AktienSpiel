@@ -796,3 +796,91 @@ class TransactionViewTests(APITestCase):
         data = {"description": "Updated description"}
         response = self.client.patch(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+class AnalysisViewTests(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="testuser", password="testpassword"
+        )
+        self.team = Team.objects.create(name="Test Team", balance=100000)
+        self.user.profile.team = self.team
+        self.user.profile.save()
+        self.client.force_authenticate(user=self.user)
+        self.stock1 = Stock.objects.create(
+            name="Stock 1", ticker="STK1", current_price=100.00
+        )
+        self.stock2 = Stock.objects.create(
+            name="Stock 2", ticker="STK2", current_price=50.00
+        )
+        self.stock3 = Stock.objects.create(
+            name="Stock 3", ticker="STK3", current_price=200.00
+        )
+
+    def test_retrieve_analysis_success(self):
+        # Create transactions and holdings to test data
+        Transaction.objects.create(
+            team=self.team,
+            stock=self.stock1,
+            transaction_type="buy",
+            amount=2,
+            price=100.00,
+            fee=15.00,
+        )
+        Transaction.objects.create(
+            team=self.team,
+            stock=self.stock2,
+            transaction_type="sell",
+            amount=3,
+            price=50.00,
+            fee=10.00,
+        )
+        StockHolding.objects.create(team=self.team, stock=self.stock1, amount=3)
+
+        url = reverse("analysis")
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 2)
+        # Asserts for the stock1
+        self.assertEqual(response.data[1]["name"], "Stock 1")
+        self.assertEqual(response.data[1]["ticker"], "STK1")
+        self.assertEqual(response.data[1]["total_profit"], "85.00")
+        self.assertEqual(response.data[1]["current_holding"], "300.00")
+
+        # Asserts for the stock2
+        self.assertEqual(response.data[0]["name"], "Stock 2")
+        self.assertEqual(response.data[0]["ticker"], "STK2")
+        self.assertEqual(response.data[0]["total_profit"], "140.00")
+        self.assertEqual(response.data[0]["current_holding"], "0.00")
+
+    def test_retrieve_analysis_no_transactions_or_holdings(self):
+        url = reverse("analysis")
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 0)
+
+    def test_retrieve_analysis_unauthenticated(self):
+        self.client.force_authenticate(user=None)
+        url = reverse("analysis")
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_retrieve_analysis_pagination(self):
+        # Create more transactions and holdings
+        for i in range(12):
+            stock = Stock.objects.create(
+                name=f"Stock {i + 4}", ticker=f"STK{i + 4}", current_price=100.00
+            )
+            Transaction.objects.create(
+                team=self.team,
+                stock=stock,
+                transaction_type="buy",
+                amount=1,
+                price=100.00,
+                fee=15.00,
+            )
+
+        url = reverse("analysis")
+        response = self.client.get(f"{url}?page=2")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 12)
