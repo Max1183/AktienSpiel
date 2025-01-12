@@ -14,7 +14,6 @@ from stocks.models import (
     UserProfile,
     Watchlist,
 )
-from stocks.transactions import execute_transaction
 
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -352,8 +351,8 @@ class StockHoldingSerializer(serializers.ModelSerializer):
 class TransactionListSerializer(serializers.ModelSerializer):
     """Serializer für die Liste der Transaktionen."""
 
-    stock = StockSerializer(read_only=True)
-    total_price = serializers.SerializerMethodField()
+    stock = StockInfoSerializer(read_only=True)
+    total_price = serializers.SerializerMethodField(method_name="get_total_price")
 
     class Meta:
         model = Transaction
@@ -369,19 +368,9 @@ class TransactionListSerializer(serializers.ModelSerializer):
             "description",
             "date",
         ]
-        read_only_fields = [
-            "id",
-            "stock",
-            "status",
-            "transaction_type",
-            "amount",
-            "price",
-            "fee",
-            "total_price",
-            "date",
-        ]
 
     def get_total_price(self, obj):
+        """Calculates the total price of the transaction, by using the model method."""
         return obj.get_total_price()
 
 
@@ -398,15 +387,20 @@ class TransactionCreateSerializer(serializers.ModelSerializer):
 
     stock = serializers.PrimaryKeyRelatedField(queryset=Stock.objects.all())
     description = serializers.CharField(required=False, allow_blank=True)
+    amount = serializers.IntegerField(min_value=1)
+    transaction_type = serializers.ChoiceField(
+        choices=Transaction.TRANSACTION_TYPE_CHOICES
+    )
 
     class Meta:
         model = Transaction
         fields = ["stock", "transaction_type", "amount", "description"]
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if self.context["request"].method == "GET":
-            self.fields["stock"].read_only = True
+    def validate_amount(self, amount):
+        """Validiert die Anzahl der Aktien."""
+        if amount <= 0:
+            raise serializers.ValidationError("Die Anzahl muss größer als 0 sein")
+        return amount
 
     def validate(self, data):
         """Validiert die Transaktionsdaten."""
@@ -415,47 +409,23 @@ class TransactionCreateSerializer(serializers.ModelSerializer):
         amount = data["amount"]
         transaction_type = data["transaction_type"]
 
-        if amount <= 0:
-            raise serializers.ValidationError({"detail": ["Ungültige Anzahl."]})
-
         if transaction_type == "buy":
             price = amount * stock.current_price + stock.calculate_fee(amount)
             if team.balance < price:
-                raise serializers.ValidationError(
-                    {"detail": ["Nicht genügend Guthaben."]}
-                )
+                raise serializers.ValidationError("Nicht genügend Guthaben.")
 
-        elif transaction_type == "sell":
+        else:
             try:
                 stock_holding = StockHolding.objects.get(team=team, stock=stock)
                 if stock_holding.amount < amount:
-                    raise serializers.ValidationError(
-                        {"detail": ["Nicht genügend Aktien im Depot."]}
-                    )
+                    raise serializers.ValidationError("Nicht genügend Aktien im Depot.")
 
             except StockHolding.DoesNotExist:
                 raise serializers.ValidationError(
-                    {"detail": ["Sie besitzen keine Aktien dieses Typs."]}
+                    "Sie besitzen keine Aktien dieses Typs."
                 )
 
-        else:
-            raise serializers.ValidationError(
-                {"detail": ["Ungültiger Transaktionstyp."]}
-            )
-
         return data
-
-    def create(self, validated_data):
-        """Erstellt eine neue Transaktion."""
-        team = self.context["request"].user.profile.team
-        validated_data["team"] = team
-        validated_data["price"] = validated_data["stock"].current_price
-        fee = validated_data["stock"].calculate_fee(validated_data["amount"])
-        validated_data["fee"] = fee
-
-        transaction = Transaction.objects.create(**validated_data)
-        execute_transaction(transaction)
-        return transaction
 
 
 class AnalysisSerializer(serializers.Serializer):

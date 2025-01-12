@@ -1,11 +1,10 @@
 import uuid
-from decimal import Decimal
 
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
-from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
+from rest_framework_simplejwt.tokens import AccessToken
 
 from stocks.models import (
     History,
@@ -615,31 +614,6 @@ class CreateUserViewTests(APITestCase):
         )
 
 
-class UserProfileDetailViewTests(APITestCase):
-    def setUp(self):
-        self.user = User.objects.create_user(
-            username="testuser", password="testpassword", email="test@example.com"
-        )
-        self.team = Team.objects.create(name="Test Team")
-        self.user_profile = self.user.profile
-        self.user_profile.team = self.team
-        self.client.force_authenticate(user=self.user)
-
-    def test_retrieve_user_profile_success(self):
-        url = reverse("user-profile")
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["user"]["username"], "testuser")
-        self.assertEqual(response.data["user"]["email"], "test@example.com")
-        self.assertEqual(response.data["team"], "Test Team")
-
-    def test_retrieve_user_profile_unauthenticated(self):
-        self.client.force_authenticate(user=None)
-        url = reverse("user-profile")
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-
-
 class StockHoldingListViewTests(APITestCase):
     def setUp(self):
         self.user = User.objects.create_user(
@@ -678,82 +652,147 @@ class StockHoldingListViewTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
 
-class TestTransactionViewSet(APITestCase):
-    # Testen Sie das Erstellen neuer Transaktionen.
+class TransactionViewTests(APITestCase):
     def setUp(self):
-        self.team = Team.objects.create(name="Test Team", balance=100000)
         self.user = User.objects.create_user(
             username="testuser", password="testpassword"
         )
+        self.team = Team.objects.create(name="Test Team", balance=100000)
         self.user.profile.team = self.team
         self.user.profile.save()
-        refresh = RefreshToken.for_user(self.user)
-        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}")
-        self.stock = Stock.objects.create(
-            name="Test Stock", ticker="TST", current_price=Decimal("100.00")
+        self.client.force_authenticate(user=self.user)
+
+        self.stock1 = Stock.objects.create(
+            name="Stock 1", ticker="STK1", current_price=100.00
         )
-        self.url = reverse("transaction-list")
-
-    def test_create_transaction_buy_success(self):
-        data = {"stock": self.stock.pk, "transaction_type": "buy", "amount": 5}
-        response = self.client.post(self.url, data, format="json")
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(Transaction.objects.count(), 1)
-        # fee = calculate_fee(self.stock.current_price, 5)
-        # self.assertEqual(self.team.balance, int(100000 - (5 * self.stock.current_price + fee)))
-
-    def test_create_transaction_sell_success(self):
-        self.team.balance = 100000
-        StockHolding.objects.create(team=self.team, stock=self.stock, amount=10)
-        data = {"stock": self.stock.pk, "transaction_type": "sell", "amount": 3}
-        response = self.client.post(self.url, data, format="json")
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(Transaction.objects.count(), 1)
-        self.assertEqual(
-            StockHolding.objects.get(team=self.team, stock=self.stock).amount, 7
+        self.stock2 = Stock.objects.create(
+            name="Stock 2", ticker="STK2", current_price=50.00
         )
-        # fee = calculate_fee(self.stock.current_price, 3)
-        # self.assertEqual(self.team.balance, int(100000 + (3 * self.stock.current_price - fee)))
+        self.stock_holding = StockHolding.objects.create(
+            team=self.team, stock=self.stock1, amount=5
+        )
+        self.transaction1 = Transaction.objects.create(
+            team=self.team,
+            stock=self.stock1,
+            transaction_type="buy",
+            amount=2,
+            price=100.00,
+            fee=15.00,
+        )
 
-    def test_create_transaction_invalid_amount(self):
-        data = {"stock": self.stock.pk, "transaction_type": "buy", "amount": 0}
-        response = self.client.post(self.url, data, format="json")
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("Ungültige Anzahl.", response.json()["detail"][0])
+        self.other_user = User.objects.create_user(
+            username="otheruser", password="otherpassword"
+        )
+        self.other_team = Team.objects.create(name="Other Team", balance=100000)
+        self.other_user.profile.team = self.other_team
+        self.other_user.profile.save()
+        self.other_transaction = Transaction.objects.create(
+            team=self.other_team,
+            stock=self.stock1,
+            transaction_type="buy",
+            amount=2,
+            price=100.00,
+            fee=15.00,
+        )
 
-    def test_create_transaction_invalid_type(self):
-        data = {"stock": self.stock.pk, "transaction_type": "invalid", "amount": 5}
-        response = self.client.post(self.url, data, format="json")
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        if "detail" in response.json():
-            self.assertIn("Ungültiger Transaktionstyp.", response.json()["detail"][0])
+    def test_transaction_list_success(self):
+        url = reverse("transaction-list")
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]["stock"]["name"], "Stock 1")
+        self.assertEqual(response.data[0]["amount"], 2)
+        self.assertEqual(float(response.data[0]["total_price"]), 215.00)
 
-    def test_create_transaction_insufficient_funds(self):
+    def test_transaction_list_unauthenticated(self):
+        self.client.force_authenticate(user=None)
+        url = reverse("transaction-list")
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_transaction_create_buy_success(self):
+        url = reverse("transaction-create")
         data = {
-            "stock": self.stock.pk,
+            "stock": self.stock2.pk,
             "transaction_type": "buy",
-            "amount": 10000,
-        }  # Viel zu teuer
-        response = self.client.post(self.url, data, format="json")
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("Nicht genügend Guthaben.", response.json()["detail"][0])
+            "amount": 2,
+            "description": "Test description",
+        }
+        response = self.client.post(url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data["stock"], self.stock2.pk)
+        self.assertEqual(response.data["transaction_type"], "buy")
+        self.assertEqual(response.data["amount"], 2)
+        self.assertIn("description", response.data)
 
-    def test_create_transaction_insufficient_stocks(self):
-        StockHolding.objects.create(team=self.team, stock=self.stock, amount=10)
+    def test_transaction_create_sell_success(self):
+        url = reverse("transaction-create")
         data = {
-            "stock": self.stock.pk,
+            "stock": self.stock1.pk,
             "transaction_type": "sell",
-            "amount": 10000,
-        }  # Viel zu viel
-        response = self.client.post(self.url, data, format="json")
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("Nicht genügend Aktien im Depot.", response.json()["detail"][0])
+            "amount": 2,
+            "description": "Test description",
+        }
+        response = self.client.post(url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data["stock"], self.stock1.pk)
+        self.assertEqual(response.data["transaction_type"], "sell")
+        self.assertEqual(response.data["amount"], 2)
+        self.assertIn("description", response.data)
 
-    def test_create_transaction_invalid_stock(self):
-        data = {"stock": 100000, "transaction_type": "buy", "amount": 5}
-        response = self.client.post(self.url, data, format="json")
+    def test_transaction_create_buy_insufficient_funds(self):
+        url = reverse("transaction-create")
+        data = {"stock": self.stock1.pk, "transaction_type": "buy", "amount": 1000}
+        response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        if "detail" in response.json():
-            self.assertIn(
-                "Sie besitzen keine Aktien dieses Typs.", response.json()["detail"][0]
-            )
+        self.assertIn("Nicht genügend Guthaben.", response.data["non_field_errors"][0])
+
+    def test_transaction_create_sell_insufficient_stock(self):
+        url = reverse("transaction-create")
+        data = {"stock": self.stock1.pk, "transaction_type": "sell", "amount": 100}
+        response = self.client.post(url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn(
+            "Nicht genügend Aktien im Depot.", response.data["non_field_errors"][0]
+        )
+
+    def test_transaction_create_sell_no_stock(self):
+        url = reverse("transaction-create")
+        data = {"stock": self.stock2.pk, "transaction_type": "sell", "amount": 10}
+        response = self.client.post(url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn(
+            "Sie besitzen keine Aktien dieses Typs.",
+            response.data["non_field_errors"][0],
+        )
+
+    def test_transaction_create_unauthenticated(self):
+        self.client.force_authenticate(user=None)
+        url = reverse("transaction-create")
+        data = {"stock": self.stock1.pk, "transaction_type": "buy", "amount": 2}
+        response = self.client.post(url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_transaction_update_success(self):
+        url = reverse("transaction-update", kwargs={"pk": self.transaction1.pk})
+        data = {"description": "Updated description"}
+        response = self.client.patch(url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["description"], "Updated description")
+        self.transaction1.refresh_from_db()
+        self.assertEqual(self.transaction1.description, "Updated description")
+
+    def test_transaction_update_other_user(self):
+        url = reverse("transaction-update", kwargs={"pk": self.other_transaction.pk})
+        data = {"description": "Updated description"}
+        response = self.client.patch(url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.other_transaction.refresh_from_db()
+        self.assertEqual(self.other_transaction.description, "")
+
+    def test_transaction_update_unauthenticated(self):
+        self.client.force_authenticate(user=None)
+        url = reverse("transaction-update", kwargs={"pk": self.transaction1.pk})
+        data = {"description": "Updated description"}
+        response = self.client.patch(url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)

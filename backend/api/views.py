@@ -1,5 +1,5 @@
 from django.contrib.auth.models import User
-from rest_framework import generics, mixins, pagination, status, viewsets
+from rest_framework import generics, pagination, status
 from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -14,6 +14,7 @@ from stocks.models import (
     UserProfile,
     get_team_ranking_queryset,
 )
+from stocks.transactions import execute_transaction
 
 from .serializers import (
     AnalysisSerializer,
@@ -181,36 +182,62 @@ class StockHoldingListView(generics.ListAPIView):
         ).select_related("team", "stock")
 
 
-class TransactionViewSet(
-    mixins.CreateModelMixin,
-    mixins.ListModelMixin,
-    mixins.UpdateModelMixin,
-    viewsets.GenericViewSet,
-):
-    """Viewset zum Erstellen neuer Transaktionen."""
+class TransactionListView(generics.ListAPIView):
+    """Viewset für die Transaktionen eines Teams."""
+
+    serializer_class = TransactionListSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return (
+            Transaction.objects.filter(team=self.request.user.profile.team)
+            .order_by("-date")
+            .select_related("stock")
+        )
+
+
+class TransactionUpdateView(generics.UpdateAPIView):
+    """Viewset für das Aktualisieren von Transaktionen."""
+
+    serializer_class = TransactionUpdateSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Transaction.objects.filter(team=self.request.user.profile.team)
+
+
+class TransactionCreateView(generics.CreateAPIView):
+    """Viewset für das Erstellen neuer Transaktionen."""
+
+    serializer_class = TransactionCreateSerializer
+    permission_classes = [IsAuthenticated]
+
+    def perform_create(self, serializer):
+        """Erstellt eine neue Transaktion und führt sie aus."""
+        team = self.request.user.profile.team
+        validated_data = serializer.validated_data
+        validated_data["team"] = team
+        validated_data["price"] = validated_data["stock"].current_price
+        fee = validated_data["stock"].calculate_fee(validated_data["amount"])
+        validated_data["fee"] = fee
+        transaction_created = serializer.save()
+        execute_transaction(transaction_created)
+
+
+class AnalysisView(APIView):
+    """View zum Berechnen des Gewinns eines Teams."""
 
     permission_classes = [IsAuthenticated]
 
-    def get_serializer_class(self):
-        if self.action == "list":
-            return TransactionListSerializer
-        elif self.action == "create":
-            return TransactionCreateSerializer
-        elif self.action == "update" or self.action == "partial_update":
-            return TransactionUpdateSerializer
-        return TransactionListSerializer
-
-    def get_queryset(self):
-        return Transaction.objects.filter(team=self.request.user.profile.team).order_by(
-            "-date"
+    def get(self, request):
+        team = request.user.profile.team
+        serializer = AnalysisSerializer()
+        sorted_data = sorted(
+            serializer.to_representation(team),
+            key=lambda x: x["total_profit"],
+            reverse=True,
         )
-
-    def perform_update(self, serializer):
-        instance = self.get_object()
-        instance.description = serializer.validated_data.get(
-            "description", instance.description
-        )
-        instance.save()
+        return Response(sorted_data)
 
 
 class ValidateFormView(APIView):
@@ -275,19 +302,3 @@ class ValidateFormView(APIView):
             return Response(
                 {"valid": False, "message": message}, status=status.HTTP_200_OK
             )
-
-
-class AnalysisView(APIView):
-    """View zum Berechnen des Gewinns eines Teams."""
-
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        team = request.user.profile.team
-        serializer = AnalysisSerializer()
-        sorted_data = sorted(
-            serializer.to_representation(team),
-            key=lambda x: x["total_profit"],
-            reverse=True,
-        )
-        return Response(sorted_data)

@@ -83,7 +83,7 @@ function StockDetail() {
         if (window.confirm(`Sind Sie sicher, dass Sie ${amount} Aktien ${buy ? 'kaufen' : 'verkaufen'} wollen?`)) {
             setIsLoading(true);
             try {
-                   const res = await api.post('/api/transactions/', {
+                   const res = await api.post('/api/transactions/create/', {
                         stock: id,
                         transaction_type: buy ? 'buy' : 'sell',
                         amount: amount

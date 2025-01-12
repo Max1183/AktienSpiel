@@ -1,12 +1,8 @@
-from django.urls import include, path
-from rest_framework.routers import DefaultRouter
+from django.urls import path
 
 from stocks import views as stock_views
 
 from . import views
-
-router = DefaultRouter()
-router.register(r"transactions", views.TransactionViewSet, basename="transaction")
 
 urlpatterns = [
     path("token/", views.MyTokenObtainPairView.as_view(), name="get-token"),
@@ -37,8 +33,18 @@ urlpatterns = [
     path("create-user/", views.CreateUserView.as_view(), name="create-user"),
     path("profile/", views.UserProfileDetailView.as_view(), name="user-profile"),
     path("stockholdings/", views.StockHoldingListView.as_view(), name="stock-holdings"),
+    path("transactions/", views.TransactionListView.as_view(), name="transaction-list"),
+    path(
+        "transactions/create/",
+        views.TransactionCreateView.as_view(),
+        name="transaction-create",
+    ),
+    path(
+        "transactions/<int:pk>/update/",
+        views.TransactionUpdateView.as_view(),
+        name="transaction-update",
+    ),
     path("validate-form/", views.ValidateFormView.as_view(), name="validate-form"),
     path("analysis/", views.AnalysisView.as_view(), name="analysis"),
     path("search/", stock_views.search_stocks, name="stock-search"),
-    path("", include(router.urls)),
 ]
