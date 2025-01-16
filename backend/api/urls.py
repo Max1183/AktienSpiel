@@ -1,8 +1,6 @@
 from django.urls import path
 from rest_framework_simplejwt.views import TokenRefreshView
 
-from stocks import views as stock_views
-
 from . import views
 
 urlpatterns = [
@@ -48,5 +46,10 @@ urlpatterns = [
     ),
     path("validate-form/", views.ValidateFormView.as_view(), name="validate-form"),
     path("analysis/", views.AnalysisView.as_view(), name="analysis"),
-    path("search/", stock_views.search_stocks, name="stock-search"),
+    path("search/", views.SearchStocksView.as_view(), name="stock-search"),
+    path(
+        "validate-token/<str:token>/",
+        views.ValidateActivationTokenView.as_view(),
+        name="validate-token",
+    ),
 ]

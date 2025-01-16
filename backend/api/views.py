@@ -1,5 +1,7 @@
 from decimal import Decimal
 
+from django.http import Http404
+from django.shortcuts import get_object_or_404
 from rest_framework import generics, pagination, serializers, status
 from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
@@ -22,6 +24,7 @@ from .serializers import (
     RegistrationRequestSerializer,
     StockAnalysisSerializer,
     StockHoldingSerializer,
+    StockInfoSerializer,
     StockSerializer,
     TeamRankingSerializer,
     TeamSerializer,
@@ -306,4 +309,51 @@ class ValidateFormView(APIView):
         return Response(
             {"valid": False, "message": serializer.errors},
             status=status.HTTP_400_BAD_REQUEST,
+        )
+
+
+class SearchStocksView(APIView):
+    """View to search stocks, and to return the results paginated."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        query = request.GET.get("q", "")
+        if query:
+            results = Stock.objects.filter(
+                name__icontains=query, current_price__gt=0
+            ).order_by("name")[:50]
+        else:
+            results = []
+
+        serializer = StockInfoSerializer(results, many=True)
+        return Response(serializer.data)
+
+
+class ValidateActivationTokenView(APIView):
+    """View for validating the activation token."""
+
+    permission_classes = [AllowAny]
+
+    def get(self, request, token):
+        """Validates the token, and returns if the token is valid, or if it has already been activated."""
+        try:
+            registration_request = get_object_or_404(
+                RegistrationRequest, activation_token=token
+            )
+        except Http404:
+            return Response(
+                {"valid": False, "message": "Ungültiges Token"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if registration_request.activated:
+            return Response(
+                {"valid": False, "message": "Bereits aktiviert"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        return Response(
+            {"valid": True, "email": registration_request.email},
+            status=status.HTTP_200_OK,
         )

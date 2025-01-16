@@ -1000,3 +1000,82 @@ class ValidateFormViewTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data["valid"], False)
         self.assertEqual(response.data["message"], "Ungültige Anfrage!")
+
+
+class SearchStocksViewTests(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="testuser", password="testpassword"
+        )
+        self.client.force_authenticate(user=self.user)
+        self.url = reverse("stock-search")
+        self.stock1 = Stock.objects.create(
+            name="Stock Test 1", ticker="STK1", current_price=100.00
+        )
+        self.stock2 = Stock.objects.create(
+            name="Stock Test 2", ticker="STK2", current_price=50.00
+        )
+        self.stock3 = Stock.objects.create(
+            name="Another Stock", ticker="STK3", current_price=100.00
+        )
+
+    def test_search_stocks_success(self):
+        response = self.client.get(self.url, {"q": "Test"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 2)
+        self.assertEqual(response.data[0]["name"], "Stock Test 1")
+        self.assertEqual(response.data[1]["name"], "Stock Test 2")
+
+    def test_search_stocks_no_results(self):
+        response = self.client.get(self.url, {"q": "nonexistent"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 0)
+
+    def test_search_stocks_unauthenticated(self):
+        self.client.force_authenticate(user=None)
+        response = self.client.get(self.url, {"q": "Test"})
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+class ValidateActivationTokenViewTests(APITestCase):
+    def setUp(self):
+        self.url = reverse("validate-token", kwargs={"token": str(uuid.uuid4())})
+        self.registration_request = RegistrationRequest.objects.create(
+            email="test@example.com"
+        )
+
+    def test_validate_token_success(self):
+        url = reverse(
+            "validate-token",
+            kwargs={"token": str(self.registration_request.activation_token)},
+        )
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data["valid"])
+        self.assertEqual(response.data["email"], "test@example.com")
+
+    def test_validate_token_invalid(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data["valid"], False)
+        self.assertEqual(response.data["message"], "Ungültiges Token")
+
+    def test_validate_token_already_activated(self):
+        self.registration_request.activated = True
+        self.registration_request.save()
+        url = reverse(
+            "validate-token",
+            kwargs={"token": str(self.registration_request.activation_token)},
+        )
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data["valid"], False)
+        self.assertEqual(response.data["message"], "Bereits aktiviert")
+
+    def test_validate_token_unauthenticated(self):
+        url = reverse(
+            "validate-token",
+            kwargs={"token": str(self.registration_request.activation_token)},
+        )
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)

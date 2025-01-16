@@ -33,7 +33,7 @@ function ProfileActivation({ match }) {
 
     useEffect(() => {
         localStorage.clear();
-        getRequest(`/validate_activation_token/${token}/`, setLoading)
+        getRequest(`/api/validate-token/${token}/`, setLoading)
             .then(data => {
                 if (data.valid) {
                     setEmail(data.email);
@@ -43,7 +43,11 @@ function ProfileActivation({ match }) {
                 }
             }).catch(error => {
                 setIsValid(false);
-                setError(error.message);
+                if (error.response) {
+                    setError(error.response.data.message);
+                } else {
+                    setError(error.message);
+                }
             });
     }, [token]);
 
