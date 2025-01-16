@@ -19,7 +19,7 @@ function StockDetail() {
     const [amount, setAmount] = useState(0);
     const navigate = useNavigate();
     const { addAlert } = useAlert();
-    const timeSpans = ["Day", "5 Days", "Month", "3 Months", "Year", "5 Years"];
+    const timeSpans = ["Tag", "5 Tage", "Monat", "3 Monate", "Jahr", "5 Jahre"];
     const chartRef = useRef(null);
 
     useEffect(() => {

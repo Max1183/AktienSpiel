@@ -884,3 +884,14 @@ class AnalysisViewTests(APITestCase):
         response = self.client.get(f"{url}?page=2")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 12)
+
+
+class ValidateFormViewTests(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="testuser", password="testpassword"
+        )
+        self.team = Team.objects.create(name="Test Team", balance=100000)
+        self.user.profile.team = self.team
+        self.user.profile.save()
+        self.client.force_authenticate(user=self.user)
