@@ -436,3 +436,50 @@ class StockAnalysisSerializer(serializers.Serializer):
     ticker = serializers.CharField()
     total_profit = serializers.DecimalField(max_digits=20, decimal_places=2)
     current_holding = serializers.DecimalField(max_digits=20, decimal_places=2)
+
+
+class ValidateFieldSerializer(serializers.Serializer):
+    """Serializer for validating fields"""
+
+    field = serializers.CharField(required=True)
+    value = serializers.CharField(required=True)
+
+    def validate_username(self, value):
+        if User.objects.filter(username=value).exists():
+            raise serializers.ValidationError("Dieser Benutzername existiert bereits.")
+        return value
+
+    def validate_password(self, value):
+        if len(value) < 8:
+            raise serializers.ValidationError(
+                "Das Passwort muss mindestens 8 Zeichen lang sein."
+            )
+        elif len(value) > 30:
+            raise serializers.ValidationError(
+                "Das Passwort kann maximal 30 Zeichen lang sein."
+            )
+        elif not any(char.isdigit() for char in value):
+            raise serializers.ValidationError(
+                "Das Passwort muss mindestens eine Zahl enthalten."
+            )
+        elif not any(char.isalpha() for char in value):
+            raise serializers.ValidationError(
+                "Das Passwort muss mindestens einen Buchstaben enthalten."
+            )
+        return value
+
+    def validate_team_code(self, value):
+        try:
+            team = Team.objects.get(code=value)
+            if team.members.count() >= 4:
+                raise serializers.ValidationError("Das Team ist bereits voll.")
+            return {"valid": True, "team_name": team.name}
+        except Team.DoesNotExist:
+            raise serializers.ValidationError("Ungültiger Teamcode.")
+
+    def validate_team_name(self, value):
+        if Team.objects.filter(name=value).exists():
+            raise serializers.ValidationError(
+                "Ein Team mit diesem Namen existiert bereits."
+            )
+        return value

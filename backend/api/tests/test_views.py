@@ -888,10 +888,115 @@ class AnalysisViewTests(APITestCase):
 
 class ValidateFormViewTests(APITestCase):
     def setUp(self):
+        self.url = reverse("validate-form")
         self.user = User.objects.create_user(
             username="testuser", password="testpassword"
         )
-        self.team = Team.objects.create(name="Test Team", balance=100000)
-        self.user.profile.team = self.team
-        self.user.profile.save()
-        self.client.force_authenticate(user=self.user)
+        self.team = Team.objects.create(name="Test Team", code="testcode")
+
+    def test_validate_username_success(self):
+        data = {"field": "username", "value": "newuser"}
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data["valid"])
+
+    def test_validate_password_success(self):
+        data = {"field": "password", "value": "Test1234"}
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data["valid"])
+
+    def test_validate_team_code_success(self):
+        data = {"field": "team_code", "value": "testcode"}
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data["valid"])
+        self.assertEqual(response.data["team_name"], "Test Team")
+
+    def test_validate_team_name_success(self):
+        data = {"field": "team_name", "value": "new team"}
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data["valid"])
+
+    def test_validate_username_exists(self):
+        data = {"field": "username", "value": "testuser"}
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["valid"], False)
+        self.assertEqual(
+            response.data["message"], "Dieser Benutzername existiert bereits."
+        )
+
+    def test_validate_password_invalid_length(self):
+        data = {"field": "password", "value": "test1"}
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["valid"], False)
+        self.assertEqual(
+            response.data["message"],
+            "Das Passwort muss mindestens 8 Zeichen lang sein.",
+        )
+        data = {"field": "password", "value": "test1" * 10}
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["valid"], False)
+        self.assertEqual(
+            response.data["message"], "Das Passwort kann maximal 30 Zeichen lang sein."
+        )
+
+    def test_validate_password_invalid_complexity(self):
+        data = {"field": "password", "value": "testtest"}
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["valid"], False)
+        self.assertEqual(
+            response.data["message"],
+            "Das Passwort muss mindestens eine Zahl enthalten.",
+        )
+        data = {"field": "password", "value": "12345678"}
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["valid"], False)
+        self.assertEqual(
+            response.data["message"],
+            "Das Passwort muss mindestens einen Buchstaben enthalten.",
+        )
+
+    def test_validate_team_code_invalid(self):
+        data = {"field": "team_code", "value": "invalid"}
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["valid"], False)
+        self.assertEqual(response.data["message"], "Ungültiger Teamcode.")
+
+    def test_validate_team_code_full(self):
+        for i in range(4):
+            user = User.objects.create_user(
+                username=f"testuser{i}", password="password"
+            )
+            user.profile.team = self.team
+            user.profile.save()
+
+        data = {"field": "team_code", "value": "testcode"}
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["valid"], False)
+        self.assertEqual(response.data["message"], "Das Team ist bereits voll.")
+
+    def test_validate_team_name_exists(self):
+        Team.objects.create(name="Existing Team")
+        data = {"field": "team_name", "value": "Existing Team"}
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["valid"], False)
+        self.assertEqual(
+            response.data["message"], "Ein Team mit diesem Namen existiert bereits."
+        )
+
+    def test_validate_invalid_field(self):
+        data = {"field": "invalid", "value": "test"}
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data["valid"], False)
+        self.assertEqual(response.data["message"], "Ungültige Anfrage!")

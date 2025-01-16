@@ -1,7 +1,6 @@
 from decimal import Decimal
 
-from django.contrib.auth.models import User
-from rest_framework import generics, pagination, status
+from rest_framework import generics, pagination, serializers, status
 from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -11,7 +10,6 @@ from stocks.models import (
     RegistrationRequest,
     Stock,
     StockHolding,
-    Team,
     Transaction,
     UserProfile,
     get_team_ranking_queryset,
@@ -32,6 +30,7 @@ from .serializers import (
     TransactionUpdateSerializer,
     UserCreateSerializer,
     UserProfileSerializer,
+    ValidateFieldSerializer,
     WatchlistCreateSerializer,
     WatchlistSerializer,
     WatchlistUpdateSerializer,
@@ -271,60 +270,40 @@ class ValidateFormView(APIView):
 
     permission_classes = [AllowAny]
 
-    def post(self, request):  # Noqa: C901
-        try:
+    def post(self, request):
+        """Validates the form data"""
+        serializer = ValidateFieldSerializer(data=request.data)
+        if serializer.is_valid():
             field = request.data.get("field")
-            value = request.data.get("value")
-            message = ""
-
-            if field == "username":
-                if User.objects.filter(username=value).exists():
-                    message = "Dieser Benutzername existiert bereits."
-
-            elif field == "password":
-                if len(value) < 8:
-                    message = "Das Passwort muss mindestens 8 Zeichen lang sein."
-                elif len(value) > 30:
-                    message = "Das Passwort kann maximal 30 Zeichen lang sein."
-                elif not any(char.isdigit() for char in value):
-                    message = "Das Passwort muss mindestens eine Zahl enthalten."
-                elif not any(char.isalpha() for char in value):
-                    message = "Das Passwort muss mindestens einen Buchstaben enthalten."
-
-            elif field == "team_code":
-                try:
-                    team = Team.objects.get(code=value)
-
-                    if team.members.count() >= 4:
-                        message = "Das Team ist bereits voll."
-                    else:
-                        return Response(
-                            {"valid": True, "team_name": team.name},
-                            status=status.HTTP_200_OK,
-                        )
-
-                except Team.DoesNotExist:
-                    message = "Ungültiger Teamcode."
-
-            elif field == "team_name":
-                if Team.objects.filter(name=value).exists():
-                    message = "Ein Team mit diesem Namen existiert bereits."
-
-            else:
+            value = serializer.validated_data.get("value")
+            try:
+                if field == "username":
+                    serializer.validate_username(value)
+                elif field == "password":
+                    serializer.validate_password(value)
+                elif field == "team_code":
+                    return Response(
+                        serializer.validate_team_code(value), status=status.HTTP_200_OK
+                    )
+                elif field == "team_name":
+                    serializer.validate_team_name(value)
+                else:
+                    return Response(
+                        {"valid": False, "message": "Ungültige Anfrage!"},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                return Response({"valid": True}, status=status.HTTP_200_OK)
+            except serializers.ValidationError as e:
                 return Response(
-                    {"valid": False, "message": "Ungültige Anfrage!"},
+                    {"valid": False, "message": e.detail[0]}, status=status.HTTP_200_OK
+                )
+            except Exception:
+                return Response(
+                    {"valid": False, "message": "Fehler beim validieren des Feldes."},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
-        except Exception:
-            return Response(
-                {"valid": False, "message": "Fehler beim Validieren des Feldes."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        if message == "":
-            return Response({"valid": True}, status=status.HTTP_200_OK)
-        else:
-            return Response(
-                {"valid": False, "message": message}, status=status.HTTP_200_OK
-            )
+        return Response(
+            {"valid": False, "message": serializer.errors},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
