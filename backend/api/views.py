@@ -16,8 +16,7 @@ from stocks.models import (
     UserProfile,
     get_team_ranking_queryset,
 )
-from stocks.services import calculate_stock_profit
-from stocks.transactions import execute_transaction
+from stocks.services import calculate_stock_profit, execute_transaction
 
 from .serializers import (
     MyTokenObtainPairSerializer,
@@ -243,7 +242,7 @@ class AnalysisView(APIView):
         for stock_id in unique_stocks:
             stock = Stock.objects.get(id=stock_id)
             transactions = Transaction.objects.filter(team=team, stock=stock)
-            total_profit = calculate_stock_profit(transactions, stock.current_price)
+            total_profit = calculate_stock_profit(transactions)
             try:
                 stock_holding = StockHolding.objects.get(team=team, stock=stock)
                 current_holding = stock_holding.amount * stock.current_price
