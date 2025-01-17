@@ -43,8 +43,8 @@ def execute_transaction(ta: Transaction):
 
             team.update_balance(-total_price)
 
-            stock_holding, created = StockHolding.objects.update_or_create(
-                team=team, stock=stock, defaults={"amount": 0}
+            stock_holding, created = StockHolding.objects.get_or_create(
+                team=team, stock=stock
             )
             stock_holding.adjust_amount(amount)
 
