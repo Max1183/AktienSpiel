@@ -53,7 +53,7 @@ function Contest() {
         <div className="bg-primary-subtle p-3 shadow rounded p-3">
             <h1>Rangliste:</h1>
             <div className="table-responsive">
-                <table className="table table-bordered table-hover">
+                <table className="table table-bordered table-hover m-0">
                     <thead>
                         <tr className="table-secondary">
                             <th scope="col">Platz</th>
@@ -97,7 +97,7 @@ function Contest() {
                             <p className='mb-0'>Mitglieder:</p>
                             <ul>
                                 {modalTeam.members.map((member) => (
-                                    <li key={member.id}>{member.username}</li>
+                                    <li key={member.id}>{member.name}</li>
                                 ))}
                             </ul>
                             {modalTeam.stocks.length > 0 ? <>

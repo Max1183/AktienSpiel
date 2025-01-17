@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import api from '../api';
 import { useAlert } from '../components/Alerts/AlertProvider';
+import { getError } from '../utils/helpers';
 
 function Admin() {
     const [email, setEmail] = useState('');
@@ -10,17 +11,10 @@ function Admin() {
         e.preventDefault();
         api.post('/api/register/', {
             email: email,
-        }).then(res => {
-            if (res.status === 201) {
-                addAlert(`Eine Aktivierungs E-Mail wurde an ${email} gesendet.`, 'success');
-            }
-            else alert(res.detail, 'danger');
-        }).catch((err) => {
-            try {
-                addAlert(err.response.data.detail, 'danger');
-            } catch (error) {
-                addAlert(error.message, 'danger');
-            }
+        }).then(() => {
+            addAlert(`Eine Aktivierungs E-Mail wurde an ${email} gesendet.`, 'success');
+        }).catch((error) => {
+            addAlert(getError(error), "danger")
         });
     }
 

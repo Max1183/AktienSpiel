@@ -18,16 +18,6 @@ function DepotSearch() {
             return;
         }
 
-        const forbidden = [" inc. ", " holding ", " corporation ", " company "];
-
-        for (let i = 0; i < forbidden.length; i++) {
-            if (forbidden[i].includes(query.toLowerCase())) {
-                addAlert('Versuchen Sie es mit einem anderen Suchbegriff.', 'danger');
-                setSearchResults([]);
-                return;
-            }
-        }
-
         getRequest(`/api/search/?q=${query}`, setIsLoading)
             .then(data => setSearchResults(data))
             .catch(error => addAlert(error.message, 'danger'));

@@ -9,7 +9,7 @@ function WatchlistMarker({ stock_id, watchlist }) {
 
     const handleToggleWatchlist = (e) => {
         if (watchlist_id) {
-            api.delete(`/api/watchlist/delete/${watchlist_id}/`).then((res) => {
+            api.delete(`/api/watchlist/${watchlist_id}/delete/`).then((res) => {
                 if (res.status === 204) addAlert('Aktie erfolgreich von der Watchlist entfernt', 'success');
                 else addAlert('Fehler beim Entfernen der Aktie von der Watchlist', 'danger');
             }).catch((err) => {

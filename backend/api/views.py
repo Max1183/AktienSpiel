@@ -1,8 +1,8 @@
-from django.contrib.auth.models import User
-from django.db import transaction
-from django.db.models.aggregates import Count
-from rest_framework import generics, mixins, pagination, serializers, status, viewsets
-from rest_framework.decorators import action
+from decimal import Decimal
+
+from django.http import Http404
+from django.shortcuts import get_object_or_404
+from rest_framework import generics, pagination, serializers, status
 from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -12,16 +12,18 @@ from stocks.models import (
     RegistrationRequest,
     Stock,
     StockHolding,
-    Team,
     Transaction,
-    Watchlist,
+    UserProfile,
+    get_team_ranking_queryset,
 )
+from stocks.services import calculate_stock_profit, execute_transaction
 
 from .serializers import (
-    AnalysisSerializer,
     MyTokenObtainPairSerializer,
     RegistrationRequestSerializer,
+    StockAnalysisSerializer,
     StockHoldingSerializer,
+    StockInfoSerializer,
     StockSerializer,
     TeamRankingSerializer,
     TeamSerializer,
@@ -30,6 +32,7 @@ from .serializers import (
     TransactionUpdateSerializer,
     UserCreateSerializer,
     UserProfileSerializer,
+    ValidateFieldSerializer,
     WatchlistCreateSerializer,
     WatchlistSerializer,
     WatchlistUpdateSerializer,
@@ -42,21 +45,47 @@ class MyTokenObtainPairView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
 
 
-class TeamRankingViewSet(viewsets.ModelViewSet):
+class RegistrationRequestCreateView(generics.CreateAPIView):
+    """View zum Erstellen neuer Registrierungsanfragen."""
+
+    queryset = RegistrationRequest.objects.all()
+    serializer_class = RegistrationRequestSerializer
+    permission_classes = [IsAdminUser]
+
+    def perform_create(self, serializer):
+        registration_request = serializer.save()
+        registration_request.send_activation_email()
+
+
+class StockDetailView(generics.RetrieveAPIView):
+    """Viewset für Aktien Details."""
+
+    serializer_class = StockSerializer
+    queryset = Stock.objects.filter(current_price__gt=0)
+    permission_classes = [IsAuthenticated]
+
+
+class TeamDetailView(generics.RetrieveAPIView):
+    """Viewset für Teams."""
+
+    serializer_class = TeamSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        return self.request.user.profile.team
+
+
+class TeamRankingListView(generics.ListAPIView):
     """Viewset für die Team-Ranking-Liste."""
 
-    queryset = (
-        Team.objects.annotate(num_members=Count("members"))
-        .filter(num_members__gt=0)
-        .exclude(name="default")
-        .exclude(name="Admin")
-    )
     serializer_class = TeamRankingSerializer
     permission_classes = [AllowAny]
 
-    @action(detail=False, methods=["get"])
-    def ranking(self, request):
-        page_size = 20
+    def get_queryset(self):
+        return get_team_ranking_queryset()
+
+    def get(self, request, *args, **kwargs):
+        page_size = 10
         page_number = int(request.GET.get("page", 1))
 
         queryset = self.get_queryset()
@@ -75,8 +104,6 @@ class TeamRankingViewSet(viewsets.ModelViewSet):
         for i, item in enumerate(serializer.data):
             item["rank"] = (page_number - 1) * page_size + i + 1
 
-        print(serializer.data)
-
         return Response(
             {
                 "results": serializer.data,
@@ -88,53 +115,7 @@ class TeamRankingViewSet(viewsets.ModelViewSet):
         )
 
 
-class RegistrationRequestView(generics.CreateAPIView):
-    """View zum Erstellen neuer Registrierungsanfragen."""
-
-    queryset = RegistrationRequest.objects.all()
-    serializer_class = RegistrationRequestSerializer
-    permission_classes = [IsAdminUser]
-
-    def perform_create(self, serializer):
-        registration_request = serializer.save()
-        registration_request.send_activation_email()
-
-
-class CreateUserView(generics.CreateAPIView):
-    """View zum Erstellen neuer Benutzer."""
-
-    serializer_class = UserCreateSerializer
-    permission_classes = [AllowAny]
-
-    @transaction.atomic
-    def post(self, request, *args, **kwargs):
-        return super().create(request, *args, **kwargs)
-
-    def perform_create(self, serializer):
-        serializer.save()
-
-
-class UserProfileViewSet(generics.RetrieveAPIView):
-    """Viewset für Benutzerprofile."""
-
-    serializer_class = UserProfileSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_object(self):
-        return self.request.user.profile
-
-
-class TeamViewSet(generics.RetrieveAPIView):
-    """Viewset für Teams."""
-
-    serializer_class = TeamSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_object(self):
-        return self.request.user.profile.team
-
-
-class WatchlistList(viewsets.ReadOnlyModelViewSet):
+class WatchlistListView(generics.ListAPIView):
     """Viewset für die Watchlist."""
 
     serializer_class = WatchlistSerializer
@@ -144,7 +125,7 @@ class WatchlistList(viewsets.ReadOnlyModelViewSet):
         return self.request.user.profile.team.watchlist.all()
 
 
-class WatchlistCreate(generics.CreateAPIView):
+class WatchlistCreateView(generics.CreateAPIView):
     """Viewset für das Erstellen einer Watchlist."""
 
     serializer_class = WatchlistCreateSerializer
@@ -152,29 +133,10 @@ class WatchlistCreate(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         team = self.request.user.profile.team
-        if Watchlist.objects.filter(
-            team=team, stock=serializer.validated_data["stock"]
-        ).exists():
-            raise serializers.ValidationError("Stock is already in the watchlist.")
-        elif serializer.is_valid():
-            serializer.save(team=self.request.user.profile.team)
-        else:
-            print(serializer.errors)
-
-    def create(self, request, *args, **kwargs):  # Überschreibe die create-Methode
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)  # Wirft eine Exception, wenn ungültig
-        self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
-
-        return Response(
-            {"id": serializer.instance.id, "message": "Watchlist item created"},
-            status=status.HTTP_201_CREATED,
-            headers=headers,
-        )
+        serializer.save(team=team)
 
 
-class WatchlistUpdate(generics.UpdateAPIView):
+class WatchlistUpdateView(generics.UpdateAPIView):
     """Viewset für das Aktualisieren einer Watchlist."""
 
     serializer_class = WatchlistUpdateSerializer
@@ -183,13 +145,8 @@ class WatchlistUpdate(generics.UpdateAPIView):
     def get_queryset(self):
         return self.request.user.profile.team.watchlist.all()
 
-    def perform_update(self, serializer):
-        instance = self.get_object()
-        instance.note = serializer.validated_data.get("note", instance.note)
-        instance.save()
 
-
-class WatchlistDelete(generics.DestroyAPIView):
+class WatchlistDeleteView(generics.DestroyAPIView):
     """Viewset für das Löschen einer Watchlist."""
 
     serializer_class = WatchlistSerializer
@@ -199,16 +156,26 @@ class WatchlistDelete(generics.DestroyAPIView):
         return self.request.user.profile.team.watchlist.all()
 
 
-class StockViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
-    """Viewset für Aktien Details."""
+class CreateUserView(generics.CreateAPIView):
+    """View zum Erstellen neuer Benutzer."""
 
-    serializer_class = StockSerializer
-    queryset = Stock.objects.filter(current_price__gt=0)
+    serializer_class = UserCreateSerializer
+    permission_classes = [AllowAny]
+
+
+class UserProfileDetailView(generics.RetrieveAPIView):
+    """Viewset für Benutzerprofile."""
+
+    serializer_class = UserProfileSerializer
     permission_classes = [IsAuthenticated]
+    queryset = UserProfile.objects.all()
+
+    def get_object(self):
+        return self.request.user.profile
 
 
-class StockHoldingViewSet(viewsets.ReadOnlyModelViewSet):
-    """Viewset für die Stock Holdings eines Teams (read-only)."""
+class StockHoldingListView(generics.ListAPIView):
+    """Viewset für die Stock-Holdings eines Teams."""
 
     serializer_class = StockHoldingSerializer
     permission_classes = [IsAuthenticated]
@@ -219,100 +186,46 @@ class StockHoldingViewSet(viewsets.ReadOnlyModelViewSet):
         ).select_related("team", "stock")
 
 
-class TransactionViewSet(
-    mixins.CreateModelMixin,
-    mixins.ListModelMixin,
-    mixins.UpdateModelMixin,
-    viewsets.GenericViewSet,
-):
-    """Viewset zum Erstellen neuer Transaktionen."""
+class TransactionListView(generics.ListAPIView):
+    """Viewset für die Transaktionen eines Teams."""
 
+    serializer_class = TransactionListSerializer
     permission_classes = [IsAuthenticated]
 
-    def get_serializer_class(self):
-        if self.action == "list":
-            return TransactionListSerializer
-        elif self.action == "create":
-            return TransactionCreateSerializer
-        elif self.action == "update" or self.action == "partial_update":
-            return TransactionUpdateSerializer
-        return TransactionListSerializer
+    def get_queryset(self):
+        return (
+            Transaction.objects.filter(team=self.request.user.profile.team)
+            .order_by("-date")
+            .select_related("stock")
+        )
+
+
+class TransactionUpdateView(generics.UpdateAPIView):
+    """Viewset für das Aktualisieren von Transaktionen."""
+
+    serializer_class = TransactionUpdateSerializer
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return Transaction.objects.filter(team=self.request.user.profile.team).order_by(
-            "-date"
-        )
-
-    def perform_update(self, serializer):
-        instance = self.get_object()
-        instance.description = serializer.validated_data.get(
-            "description", instance.description
-        )
-        instance.save()
+        return Transaction.objects.filter(team=self.request.user.profile.team)
 
 
-class ValidateFormView(APIView):
-    """View zum Validieren von Formulardaten."""
+class TransactionCreateView(generics.CreateAPIView):
+    """Viewset für das Erstellen neuer Transaktionen."""
 
-    permission_classes = [AllowAny]
+    serializer_class = TransactionCreateSerializer
+    permission_classes = [IsAuthenticated]
 
-    def post(self, request):  # Noqa: C901
-        try:
-            field = request.data.get("field")
-            value = request.data.get("value")
-            message = ""
-
-            if field == "username":
-                if User.objects.filter(username=value).exists():
-                    message = "Dieser Benutzername existiert bereits."
-
-            elif field == "password":
-                if len(value) < 8:
-                    message = "Das Passwort muss mindestens 8 Zeichen lang sein."
-                elif len(value) > 30:
-                    message = "Das Passwort kann maximal 30 Zeichen lang sein."
-                elif not any(char.isdigit() for char in value):
-                    message = "Das Passwort muss mindestens eine Zahl enthalten."
-                elif not any(char.isalpha() for char in value):
-                    message = "Das Passwort muss mindestens einen Buchstaben enthalten."
-
-            elif field == "team_code":
-                try:
-                    team = Team.objects.get(code=value)
-
-                    if team.members.count() >= 4:
-                        message = "Das Team ist bereits voll."
-                    else:
-                        return Response(
-                            {"valid": True, "team_name": team.name},
-                            status=status.HTTP_200_OK,
-                        )
-
-                except Team.DoesNotExist:
-                    message = "Ungültiger Teamcode."
-
-            elif field == "team_name":
-                if Team.objects.filter(name=value).exists():
-                    message = "Ein Team mit diesem Namen existiert bereits."
-
-            else:
-                return Response(
-                    {"valid": False, "message": "Ungültige Anfrage!"},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-
-        except Exception:
-            return Response(
-                {"valid": False, "message": "Fehler beim Validieren des Feldes."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        if message == "":
-            return Response({"valid": True}, status=status.HTTP_200_OK)
-        else:
-            return Response(
-                {"valid": False, "message": message}, status=status.HTTP_200_OK
-            )
+    def perform_create(self, serializer):
+        """Erstellt eine neue Transaktion und führt sie aus."""
+        team = self.request.user.profile.team
+        validated_data = serializer.validated_data
+        validated_data["team"] = team
+        validated_data["price"] = validated_data["stock"].current_price
+        fee = validated_data["stock"].calculate_fee(validated_data["amount"])
+        validated_data["fee"] = fee
+        transaction_created = serializer.save()
+        execute_transaction(transaction_created)
 
 
 class AnalysisView(APIView):
@@ -322,10 +235,124 @@ class AnalysisView(APIView):
 
     def get(self, request):
         team = request.user.profile.team
-        serializer = AnalysisSerializer()
-        sorted_data = sorted(
-            serializer.to_representation(team),
-            key=lambda x: x["total_profit"],
-            reverse=True,
+        stock_profits = []
+        unique_stocks = set(
+            Transaction.objects.filter(team=team).values_list("stock", flat=True)
         )
-        return Response(sorted_data)
+        for stock_id in unique_stocks:
+            stock = Stock.objects.get(id=stock_id)
+            transactions = Transaction.objects.filter(team=team, stock=stock)
+            total_profit = calculate_stock_profit(transactions)
+            try:
+                stock_holding = StockHolding.objects.get(team=team, stock=stock)
+                current_holding = stock_holding.amount * stock.current_price
+                total_profit += current_holding
+            except StockHolding.DoesNotExist:
+                current_holding = Decimal("0.00")
+
+            stock_profits.append(
+                {
+                    "id": stock.pk,
+                    "name": stock.name,
+                    "ticker": stock.ticker,
+                    "total_profit": total_profit,
+                    "current_holding": current_holding,
+                }
+            )
+
+        sorted_stock_profits = sorted(
+            stock_profits, key=lambda x: x["total_profit"], reverse=True
+        )
+        serializer = StockAnalysisSerializer(sorted_stock_profits, many=True)
+        return Response(serializer.data)
+
+
+class ValidateFormView(APIView):
+    """View zum Validieren von Formulardaten."""
+
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        """Validates the form data"""
+        serializer = ValidateFieldSerializer(data=request.data)
+        if serializer.is_valid():
+            field = request.data.get("field")
+            value = serializer.validated_data.get("value")
+            try:
+                if field == "username":
+                    serializer.validate_username(value)
+                elif field == "password":
+                    serializer.validate_password(value)
+                elif field == "team_code":
+                    return Response(
+                        serializer.validate_team_code(value), status=status.HTTP_200_OK
+                    )
+                elif field == "team_name":
+                    serializer.validate_team_name(value)
+                else:
+                    return Response(
+                        {"valid": False, "message": "Ungültige Anfrage!"},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                return Response({"valid": True}, status=status.HTTP_200_OK)
+            except serializers.ValidationError as e:
+                return Response(
+                    {"valid": False, "message": e.detail[0]}, status=status.HTTP_200_OK
+                )
+            except Exception:
+                return Response(
+                    {"valid": False, "message": "Fehler beim validieren des Feldes."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        return Response(
+            {"valid": False, "message": serializer.errors},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+
+class SearchStocksView(APIView):
+    """View to search stocks, and to return the results paginated."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        query = request.GET.get("q", "")
+        if query:
+            results = Stock.objects.filter(
+                name__icontains=query, current_price__gt=0
+            ).order_by("name")[:50]
+        else:
+            results = []
+
+        serializer = StockInfoSerializer(results, many=True)
+        return Response(serializer.data)
+
+
+class ValidateActivationTokenView(APIView):
+    """View for validating the activation token."""
+
+    permission_classes = [AllowAny]
+
+    def get(self, request, token):
+        """Validates the token, and returns if the token is valid, or if it has already been activated."""
+        try:
+            registration_request = get_object_or_404(
+                RegistrationRequest, activation_token=token
+            )
+        except Http404:
+            return Response(
+                {"valid": False, "message": "Ungültiges Token"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if registration_request.activated:
+            return Response(
+                {"valid": False, "message": "Bereits aktiviert"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        return Response(
+            {"valid": True, "email": registration_request.email},
+            status=status.HTTP_200_OK,
+        )

@@ -19,7 +19,7 @@ function StockDetail() {
     const [amount, setAmount] = useState(0);
     const navigate = useNavigate();
     const { addAlert } = useAlert();
-    const timeSpans = ["Day", "5 Days", "Month", "3 Months", "Year", "5 Years"];
+    const timeSpans = ["Tag", "5 Tage", "Monat", "3 Monate", "Jahr", "5 Jahre"];
     const chartRef = useRef(null);
 
     useEffect(() => {
@@ -83,7 +83,7 @@ function StockDetail() {
         if (window.confirm(`Sind Sie sicher, dass Sie ${amount} Aktien ${buy ? 'kaufen' : 'verkaufen'} wollen?`)) {
             setIsLoading(true);
             try {
-                   const res = await api.post('/api/transactions/', {
+                   const res = await api.post('/api/transactions/create/', {
                         stock: id,
                         transaction_type: buy ? 'buy' : 'sell',
                         amount: amount

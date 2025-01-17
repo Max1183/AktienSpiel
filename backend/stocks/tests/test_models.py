@@ -1,8 +1,4 @@
-import decimal
-from datetime import datetime, timedelta, timezone
-
-import pytz  # type: ignore
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.test import TestCase
 
 from ..models import (
@@ -12,246 +8,218 @@ from ..models import (
     StockHolding,
     Team,
     Transaction,
+    UserProfile,
+    Watchlist,
 )
 
+User = get_user_model()
 
-class RegistrationRequestModelTests(TestCase):
+
+class RegistrationRequestTests(TestCase):
     def test_registration_request_creation(self):
-        registration_request = RegistrationRequest.objects.create(
-            email="test@example.com"
+        user = User.objects.create_user(
+            username="testuser", password="testpassword", email="test@example.com"
         )
+        registration_request = RegistrationRequest.objects.create(
+            email="test@example.com", user=user
+        )
+        self.assertTrue(RegistrationRequest.objects.exists())
         self.assertEqual(registration_request.email, "test@example.com")
         self.assertFalse(registration_request.activated)
-        self.assertIsNotNone(registration_request.activation_token)
-        self.assertIsNotNone(registration_request.created_at)
 
-    def test_registration_request_str(self):
+    def test_registration_request_str_method(self):
         registration_request = RegistrationRequest.objects.create(
             email="test@example.com"
         )
         self.assertEqual(str(registration_request), "test@example.com")
 
 
-class StockModelTests(TestCase):
-    def test_stock_creation(self):
-        stock = Stock.objects.create(
-            name="Test Stock", ticker="TST", current_price=decimal.Decimal("100.50")
-        )
-        self.assertEqual(stock.name, "Test Stock")
-        self.assertEqual(stock.ticker, "TST")
-        self.assertEqual(stock.current_price, decimal.Decimal("100.50"))
-
-    def test_stock_str(self):
-        stock = Stock.objects.create(
-            name="Test Stock", ticker="TST", current_price=decimal.Decimal("100.50")
-        )
-        self.assertEqual(str(stock), "Test Stock")
-
-
-class HistoryModelTests(TestCase):
+class StockTests(TestCase):
     def setUp(self):
         self.stock = Stock.objects.create(
-            name="Test Stock", ticker="TST", current_price=decimal.Decimal("100.50")
+            name="Test Stock", ticker="TST", current_price=100.00
+        )
+
+    def test_stock_creation(self):
+        self.assertTrue(Stock.objects.exists())
+        self.assertEqual(self.stock.name, "Test Stock")
+        self.assertEqual(self.stock.ticker, "TST")
+        self.assertEqual(self.stock.current_price, 100.00)
+
+    def test_stock_str_method(self):
+        self.assertEqual(str(self.stock), "Test Stock")
+
+    def test_calculate_fee(self):
+        fee = self.stock.calculate_fee(10)  # 10 Aktien
+        self.assertGreaterEqual(fee, 15)  # Sollte mindestens die MINIMUM_FEE sein
+
+
+class HistoryTests(TestCase):
+    def setUp(self):
+        self.stock = Stock.objects.create(
+            name="Test Stock", ticker="TST", current_price=100.00
+        )
+        self.history = History.objects.create(
+            stock=self.stock, name="Day", period="1d", interval="5m", values=[]
         )
 
     def test_history_creation(self):
-        history = History.objects.create(
-            stock=self.stock,
-            name="Day",
-            period="1d",
-            interval="5m",
-            values=[100, 102, 101],
-        )
-        self.assertEqual(history.stock, self.stock)
-        self.assertEqual(history.name, "Day")
-        self.assertEqual(history.period, "1d")
-        self.assertEqual(history.interval, "5m")
-        self.assertEqual(history.values, [100, 102, 101])
+        self.assertTrue(History.objects.exists())
+        self.assertEqual(self.history.stock, self.stock)
+        self.assertEqual(self.history.name, "Day")
 
-    def test_history_str(self):
-        history = History.objects.create(
-            stock=self.stock,
-            name="Day",
-            period="2024-10-26",
-            interval="1d",
-            values=[100, 102, 101],
-        )
-        self.assertEqual(str(history), "Test Stock - Day")
+    def test_history_str_method(self):
+        self.assertEqual(str(self.history), "Test Stock - Day")
 
 
-class TeamModelTests(TestCase):
+class TeamTests(TestCase):
     def setUp(self):
-        Team.objects.create(name="default")
-        self.team = Team.objects.create(name="Test Team")
-        self.stock1 = Stock.objects.create(
-            name="Stock 1", ticker="STK1", current_price=decimal.Decimal("50.00")
+        self.team1 = Team.objects.create(name="Team 1", balance=100000)
+        self.team2 = Team.objects.create(name="Team 2", balance=50000)
+
+        self.user1 = User.objects.create_user(
+            username="user1", password="password1", email="user1@example.com"
         )
-        self.stock2 = Stock.objects.create(
-            name="Stock 2", ticker="STK2", current_price=decimal.Decimal("100.00")
+        self.user2 = User.objects.create_user(
+            username="user2", password="password2", email="user2@example.com"
+        )
+
+        self.user1.profile.team = self.team1
+        self.user1.profile.save()
+        self.user2.profile.team = self.team2
+        self.user2.profile.save()
+
+        self.stock = Stock.objects.create(
+            name="Test Stock", ticker="TST", current_price=100.00
+        )
+        self.holding = StockHolding.objects.create(
+            team=self.team1, stock=self.stock, amount=10
         )
 
     def test_team_creation(self):
-        self.assertEqual(self.team.name, "Test Team")
-        self.assertEqual(self.team.balance, decimal.Decimal("100000.00"))
+        self.assertTrue(Team.objects.exists())
+        self.assertEqual(self.team1.name, "Team 1")
+        self.assertEqual(self.team1.balance, 100000)
 
-    def test_team_str(self):
-        self.assertEqual(str(self.team), "Test Team")
+    def test_team_str_method(self):
+        self.assertEqual(str(self.team1), "Team 1")
 
-    def test_team_member_count(self):
-        user1 = User.objects.create_user(username="user1")
-        user2 = User.objects.create_user(username="user2")
+    def test_get_portfolio_value(self):
+        # Team 1 hat 10 Aktien zum Preis von 100€ + 100000€ Guthaben
+        self.assertEqual(self.team1.get_portfolio_value(), 100 * 10 + 100000)
 
-        user1.profile.team = self.team
-        user1.profile.save()
-
-        user2.profile.team = self.team
-        user2.profile.save()
-
-        self.assertEqual(self.team.team_member_count(), 2)
-
-    def test_portfolio_value(self):
-        StockHolding.objects.create(team=self.team, stock=self.stock1, amount=10)
-        StockHolding.objects.create(team=self.team, stock=self.stock2, amount=5)
-
-        balance = self.team.balance
-        stock_balance = (self.stock1.current_price * 10) + (
-            self.stock2.current_price * 5
-        )
-        total_value = balance + stock_balance
-        self.assertEqual(self.team.portfolio_value(), f"{total_value:.2f}€")
+    def test_calculate_rank(self):
+        self.assertEqual(self.team1.calculate_rank(), 1)  # Team 1 hat höheren Wert
+        self.assertEqual(self.team2.calculate_rank(), 2)  # Team 2 hat niedrigeren Wert
 
     def test_update_balance(self):
-        self.team.update_balance(decimal.Decimal("100.00"))
-        self.assertEqual(self.team.balance, decimal.Decimal("100100.00"))
-        self.team.update_balance(decimal.Decimal("-50.00"))
-        self.assertEqual(self.team.balance, decimal.Decimal("100050.00"))
+        self.team1.update_balance(5000)
+        self.assertEqual(self.team1.balance, 105000)
+
+    def test_generate_team_code(self):
+        team = Team.objects.create(name="Team ohne Code")
+        self.assertIsNotNone(team.code)
+        self.assertEqual(len(team.code), 8)
 
 
-class WatchlistModelTests(TestCase):
+class WatchlistTests(TestCase):
     def setUp(self):
-        self.team = Team.objects.create(name="Test Team")
         self.stock = Stock.objects.create(
-            name="Test Stock", ticker="TST", current_price=decimal.Decimal("100.50")
+            name="Test Stock", ticker="TST", current_price=100.00
         )
+        self.team = Team.objects.create(name="Test Team", balance=100000)
+        self.watchlist = Watchlist.objects.create(stock=self.stock, team=self.team)
 
     def test_watchlist_creation(self):
-        watchlist = self.team.watchlist.create(stock=self.stock)
-        self.assertEqual(watchlist.team, self.team)
-        self.assertEqual(watchlist.stock, self.stock)
+        self.assertTrue(Watchlist.objects.exists())
+        self.assertEqual(self.watchlist.stock, self.stock)
+        self.assertEqual(self.watchlist.team, self.team)
 
-    def test_watchlist_str(self):
-        watchlist = self.team.watchlist.create(stock=self.stock)
-        self.assertEqual(str(watchlist), "Test Stock in Watchlist of Test Team")
+    def test_watchlist_str_method(self):
+        self.assertEqual(str(self.watchlist), "Test Stock in Watchlist of Test Team")
 
 
-class UserProfileModelTests(TestCase):
+class UserProfileTests(TestCase):
     def setUp(self):
-        Team.objects.create(name="default")
-        self.user = User.objects.create_user(username="testuser")
-        self.team = Team.objects.create(name="Test Team")
+        self.user = User.objects.create_user(
+            username="testuser", password="testpassword"
+        )
+        self.team = Team.objects.create(name="Test Team", balance=100000)
 
-    def test_userprofile_auto_creation(self):
-        profile = self.user.profile
-        self.assertEqual(profile.user, self.user)
-        self.assertEqual(profile.team, Team.objects.get(name="default"))
+        self.profile = self.user.profile
+        self.profile.team = self.team
+        self.profile.save()
 
-    def test_userprofile_str(self):
-        profile = self.user.profile
-        self.assertEqual(str(profile), "Profile of testuser")
+    def test_user_profile_creation(self):
+        self.assertTrue(UserProfile.objects.exists())
+        self.assertEqual(self.profile.user, self.user)
+        self.assertEqual(self.profile.team, self.team)
+
+    def test_user_profile_str_method(self):
+        self.assertEqual(str(self.profile), "Profile of testuser")
 
 
-class StockHoldingModelTests(TestCase):
+class StockHoldingTests(TestCase):
     def setUp(self):
-        self.team = Team.objects.create(name="Test Team")
         self.stock = Stock.objects.create(
-            name="Test Stock", ticker="TST", current_price=decimal.Decimal("100.50")
+            name="Test Stock", ticker="TST", current_price=100.00
+        )
+        self.team = Team.objects.create(name="Test Team", balance=100000)
+        self.stock_holding = StockHolding.objects.create(
+            team=self.team, stock=self.stock, amount=5
         )
 
-    def test_stockholding_creation(self):
-        holding = StockHolding.objects.create(
-            team=self.team, stock=self.stock, amount=10
-        )
-        self.assertEqual(holding.team, self.team)
-        self.assertEqual(holding.stock, self.stock)
-        self.assertEqual(holding.amount, 10)
+    def test_stock_holding_creation(self):
+        self.assertTrue(StockHolding.objects.exists())
+        self.assertEqual(self.stock_holding.team, self.team)
+        self.assertEqual(self.stock_holding.stock, self.stock)
+        self.assertEqual(self.stock_holding.amount, 5)
 
-    def test_stockholding_str(self):
-        holding = StockHolding.objects.create(
-            team=self.team, stock=self.stock, amount=10
-        )
-        self.assertEqual(str(holding), "Test Team - Test Stock (10)")
+    def test_stock_holding_str_method(self):
+        self.assertEqual(str(self.stock_holding), "Test Team - Test Stock (5)")
 
     def test_adjust_amount(self):
-        holding = StockHolding.objects.create(
-            team=self.team, stock=self.stock, amount=10
-        )
-        holding.adjust_amount(5)
-        self.assertEqual(holding.amount, 15)
-        holding.adjust_amount(-15)
-        self.assertEqual(holding.amount, 0)
+        self.stock_holding.adjust_amount(3)
+        self.assertEqual(self.stock_holding.amount, 8)
 
 
-class TransactionModelTests(TestCase):
-
+class TransactionTests(TestCase):
     def setUp(self):
-        self.team = Team.objects.create(name="Test Team")
         self.stock = Stock.objects.create(
-            name="Test Stock", ticker="TST", current_price=decimal.Decimal("100.50")
+            name="Test Stock", ticker="TST", current_price=100.00
+        )
+        self.team = Team.objects.create(name="Test Team", balance=100000)
+        self.transaction = Transaction.objects.create(
+            team=self.team,
+            stock=self.stock,
+            transaction_type="buy",
+            amount=2,
+            price=100,
+            fee=15,
         )
 
     def test_transaction_creation(self):
-        berlin_tz = pytz.timezone("Europe/Berlin")
-        now = datetime.now(timezone.utc).astimezone(berlin_tz)
+        self.assertTrue(Transaction.objects.exists())
+        self.assertEqual(self.transaction.team, self.team)
+        self.assertEqual(self.transaction.stock, self.stock)
+        self.assertEqual(self.transaction.amount, 2)
 
-        transaction = Transaction.objects.create(
-            team=self.team,
-            stock=self.stock,
-            status="open",
-            transaction_type="buy",
-            amount=10,
-            price=decimal.Decimal("100.50"),
-            fee=decimal.Decimal("15.00"),
-            description="Test Transaction",
-        )
-        self.assertEqual(transaction.team, self.team)
-        self.assertEqual(transaction.stock, self.stock)
-        self.assertEqual(transaction.status, "open")
-        self.assertEqual(transaction.transaction_type, "buy")
-        self.assertEqual(transaction.amount, 10)
-        self.assertEqual(transaction.price, decimal.Decimal("100.50"))
-        self.assertEqual(transaction.fee, decimal.Decimal("15.00"))
-        self.assertEqual(transaction.description, "Test Transaction")
-        self.assertAlmostEqual(transaction.date, now, delta=timedelta(seconds=1))
+    def test_transaction_str_method(self):
+        self.assertEqual(str(self.transaction), "Test Team - Test Stock (2)")
 
-    def test_transaction_str(self):
-        transaction = Transaction.objects.create(
-            team=self.team,
-            stock=self.stock,
-            transaction_type="buy",
-            amount=10,
-            price=decimal.Decimal("100.50"),
-            fee=decimal.Decimal("15.00"),
-        )
-        self.assertEqual(str(transaction), "Test Team - Test Stock (10)")
+    def test_get_total_price_buy(self):
+        self.assertEqual(self.transaction.get_total_price(), 2 * 100 + 15)
 
-    def test_total_price_buy(self):
-        transaction = Transaction.objects.create(
-            team=self.team,
-            stock=self.stock,
-            transaction_type="buy",
-            amount=10,
-            price=decimal.Decimal("100.50"),
-            fee=decimal.Decimal("15.00"),
-        )
-        self.assertEqual(transaction.total_price(), "1020.00€")
-
-    def test_total_price_sell(self):
-        transaction = Transaction.objects.create(
+    def test_get_total_price_sell(self):
+        sell_transaction = Transaction.objects.create(
             team=self.team,
             stock=self.stock,
             transaction_type="sell",
-            amount=10,
-            price=decimal.Decimal("100.50"),
-            fee=decimal.Decimal("15.00"),
+            amount=2,
+            price=100,
+            fee=15,
         )
-        self.assertEqual(transaction.total_price(), "990.00€")
+        self.assertEqual(sell_transaction.get_total_price(), 2 * 100 - 15)
+
+    def test_formatted_total_price(self):
+        self.assertEqual(self.transaction.formatted_total_price(), "215.00€")

@@ -27,13 +27,13 @@ function ProfileActivation({ match }) {
         team_code: ''
     });
     const [validationErrors, setValidationErrors] = useState({});
-    const [submissionErrors, setSubmissionErrors] = useState({});
+    const [submissionErrors, setSubmissionErrors] = useState([]);
 
     const navigate = useNavigate();
 
     useEffect(() => {
         localStorage.clear();
-        getRequest(`/validate_activation_token/${token}/`, setLoading)
+        getRequest(`/api/validate-token/${token}/`, setLoading)
             .then(data => {
                 if (data.valid) {
                     setEmail(data.email);
@@ -43,7 +43,11 @@ function ProfileActivation({ match }) {
                 }
             }).catch(error => {
                 setIsValid(false);
-                setError(error.message);
+                if (error.response) {
+                    setError(error.response.data.message);
+                } else {
+                    setError(error.message);
+                }
             });
     }, [token]);
 
@@ -169,7 +173,7 @@ function ProfileActivation({ match }) {
         e.preventDefault();
         setStep(step - 1);
         setError(null);
-        setSubmissionErrors({});
+        setSubmissionErrors([]);
     };
 
     const handleSubmit = async (e) => {
@@ -191,9 +195,11 @@ function ProfileActivation({ match }) {
 
             navigate('/login');
         } catch (err) {
-            console.log(err);
-            if (err.response && err.response.status === 400 && err.response.data) {
-                setSubmissionErrors(err.response.data);
+            const data = err.response.data;
+            console.log(data);
+
+            if (err.response.status === 400 && data) {
+                setSubmissionErrors(data);
                 setError("Bitte verbessere die unten aufgeführten Fehler und versuche es erneut.");
             } else {
                 setError(err.message || 'Fehler beim Erstellen des Accounts.');

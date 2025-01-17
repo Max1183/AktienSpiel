@@ -18,7 +18,7 @@ function TransactionItem({ transaction }) {
         event.preventDefault();
         if (newDescription !== transaction.description) {
             try {
-                const res = await api.patch(`/api/transactions/${transaction.id}/`, {
+                const res = await api.patch(`/api/transactions/${transaction.id}/update/`, {
                     description: newDescription
                 });
                 if (res.status === 200 || res.status === 201 || res.status === 204) {
