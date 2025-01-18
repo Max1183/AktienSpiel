@@ -14,7 +14,7 @@ function StockDetail() {
     const { id } = useParams();
     const { getData, loadValue } = useOutletContext();
     const [isLoading, setIsLoading] = useState(false);
-    const [activeTimeSpan, setActiveTimeSpan] = useState('Day');
+    const [activeTimeSpan, setActiveTimeSpan] = useState('Tag');
     const [buy, setBuy] = useState(true);
     const [amount, setAmount] = useState(0);
     const navigate = useNavigate();

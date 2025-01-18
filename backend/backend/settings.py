@@ -49,6 +49,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "backend.middleware.RetryOnOperationalErrorMiddleware",
 ]
 
 ROOT_URLCONF = "backend.urls"
@@ -72,9 +73,27 @@ TEMPLATES = [
 WSGI_APPLICATION = "backend.wsgi.application"
 ASGI_APPLICATION = "backend.asgi.application"
 
+
 #####################
 #   Database Settings
 #####################
+def get_bool_env(name, default=False):
+    """Helper function to get boolean values from environment variables."""
+    value = os.environ.get(name)
+    return value == "True" if value is not None else default
+
+
+def get_int_env(name, default=None):
+    """Helper function to get integer values from environment variables."""
+    value = os.environ.get(name)
+    return int(value) if value is not None else default
+
+
+def get_str_env(name, default=None):
+    """Helper function to get string values from environment variables."""
+    return os.environ.get(name, default)
+
+
 if os.environ.get("USE_DEVELOPMENT_DB") == "True":
     DATABASES = {
         "default": {
@@ -92,6 +111,9 @@ else:
             default="postgres://user:pass@host:port/dbname"
         )
     }
+
+DATABASE_RETRY_MAX_RETRIES = get_int_env("DATABASE_RETRY_MAX_RETRIES", 3)  # Add this
+DATABASE_RETRY_BASE_DELAY = get_int_env("DATABASE_RETRY_BASE_DELAY", 0.5)  # Add this
 
 #####################
 #   Password Validation
@@ -164,23 +186,6 @@ CORS_ALLOWS_CREDENTIALS = True
 #####################
 #   Security Settings (for production with HTTPS)
 #####################
-def get_bool_env(name, default=False):
-    """Helper function to get boolean values from environment variables."""
-    value = os.environ.get(name)
-    return value == "True" if value is not None else default
-
-
-def get_int_env(name, default=None):
-    """Helper function to get integer values from environment variables."""
-    value = os.environ.get(name)
-    return int(value) if value is not None else default
-
-
-def get_str_env(name, default=None):
-    """Helper function to get string values from environment variables."""
-    return os.environ.get(name, default)
-
-
 if not DEBUG:
     SECURE_SSL_REDIRECT = get_bool_env("SECURE_SSL_REDIRECT")
     SECURE_HSTS_SECONDS = get_int_env("SECURE_HSTS_SECONDS", 31536000)

@@ -99,14 +99,13 @@ class StockSerializer(serializers.ModelSerializer):
 class MemberSerializer(serializers.ModelSerializer):
     """Serializer für Team Members"""
 
-    name = serializers.SerializerMethodField()
+    username = serializers.CharField(source="user.username")
+    first_name = serializers.CharField(source="user.first_name")
+    last_name = serializers.CharField(source="user.last_name")
 
     class Meta:
         model = UserProfile
-        fields = ["id", "name"]
-
-    def get_name(self, obj):
-        return obj.user.username
+        fields = ["id", "username", "first_name", "last_name"]
 
 
 class TeamSerializer(serializers.ModelSerializer):
