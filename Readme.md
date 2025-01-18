@@ -15,6 +15,7 @@ Dieses Projekt ist ein Spiel, bei dem die Spieler Aktien kaufen und zu verkaufen
   - [Frontend](#frontend-tests)
 - [Git-Workflow](#git-workflow)
 - [Lizenz](#lizenz)
+- [Deployment](#deployment)
 
 ## Features
 
