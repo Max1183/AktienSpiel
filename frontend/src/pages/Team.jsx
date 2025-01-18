@@ -43,7 +43,7 @@ function Team() {
                     <h2>Team-Mitglieder</h2>
                     <ul className="list-group mt-3">
                         {team.members.map((member) => (
-                            <li key={member.id} className="list-group-item">{member.name}</li>
+                            <li key={member.id} className="list-group-item">{`${member.username} (${member.first_name} ${member.last_name})`}</li>
                         ))}
                     </ul>
                     <div className="mt-3">

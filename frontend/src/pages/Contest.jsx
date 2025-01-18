@@ -52,32 +52,31 @@ function Contest() {
     return <>
         <div className="bg-primary-subtle p-3 shadow rounded p-3">
             <h1>Rangliste:</h1>
-            <div className="table-responsive">
-                <table className="table table-bordered table-hover m-0">
-                    <thead>
-                        <tr className="table-secondary">
-                            <th scope="col">Platz</th>
-                            <th scope="col">Team-Name</th>
-                            <th scope="col">Gesamter Depotwert</th>
-                            <th scope="col">Performance</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {rankingData && rankingData.map((team) => (
-                            <tr key={team.id} onClick={(e) => {handleShow(e, team)}}>
-                                <th scope="row">{team.rank}</th>
-                                <td>{team.name}</td>
-                                <td>{formatCurrency(team.total_balance)}</td>
-                                <td>{(team.total_balance / 100000 * 100 - 100).toFixed(2) + "%"}</td>
+            {isLoading ? <LoadingSite /> : <>
+                <div className="table-responsive">
+                    <table className="table table-bordered table-hover m-0">
+                        <thead>
+                            <tr className="table-secondary">
+                                <th scope="col">Platz</th>
+                                <th scope="col">Team-Name</th>
+                                <th scope="col">Gesamter Depotwert</th>
+                                <th scope="col">Performance</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-            {isLoading ?
-                <LoadingSite /> :
+                        </thead>
+                        <tbody>
+                            {rankingData && rankingData.map((team) => (
+                                <tr key={team.id} onClick={(e) => {handleShow(e, team)}}>
+                                    <th scope="row">{team.rank}</th>
+                                    <td>{team.name}</td>
+                                    <td>{formatCurrency(team.total_balance)}</td>
+                                    <td>{(team.total_balance / 100000 * 100 - 100).toFixed(2) + "%"}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
                 <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
-            }
+            </>}
         </div>
 
         {showModal && <>
@@ -97,7 +96,7 @@ function Contest() {
                             <p className='mb-0'>Mitglieder:</p>
                             <ul>
                                 {modalTeam.members.map((member) => (
-                                    <li key={member.id}>{member.name}</li>
+                                    <li key={member.id}>{`${member.username} (${member.first_name} ${member.last_name})`}</li>
                                 ))}
                             </ul>
                             {modalTeam.stocks.length > 0 ? <>
