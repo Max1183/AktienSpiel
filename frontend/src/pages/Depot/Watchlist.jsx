@@ -1,9 +1,10 @@
 import React from 'react';
-import WatchlistItem from './WatchlistItem';
-import { useAlert } from '../Alerts/AlertProvider';
+import WatchlistItem from '../../components/Depot/WatchlistItem';
+import { useAlert } from '../../components/Alerts/AlertProvider';
 import { useOutletContext } from 'react-router-dom';
-import DepotArea from './DepotArea';
+import Area from '../../components/General/Area';
 import api from '../../api';
+import DepotNavigation from '../../components/Navigation/DepotNavigation';
 
 function Watchlist() {
     const { getData, loadValue } = useOutletContext();
@@ -19,7 +20,8 @@ function Watchlist() {
     };
 
     return <>
-        <DepotArea title="Watchlist" key1="watchlist">
+        <DepotNavigation />
+        <Area title="Watchlist" key1="watchlist">
             {(getData("watchlist") && getData("watchlist").length > 0) ? <>
                 <p>Hier siehst du alle Aktien in deiner Watchlist.</p>
                 <div className="list-group rounded mt-3">
@@ -31,7 +33,7 @@ function Watchlist() {
                 <p>Du hast noch keine Aktien in der Watchlist</p>
                 <p>Füge Aktien hinzu, indem du auf das Sternsymbol bei der Aktie klickst.</p>
             </>}
-        </DepotArea>
+        </Area>
     </>
 }
 

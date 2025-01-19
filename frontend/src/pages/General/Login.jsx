@@ -1,9 +1,9 @@
 import {useState} from 'react'
-import api from '../api'
+import api from '../../api'
 import { useNavigate } from 'react-router-dom'
-import { ACCESS_TOKEN, REFRESH_TOKEN } from '../constants'
-import "../styles/Form.css"
-import LoadingIndicator from '../components/Loading/LoadingIndicator'
+import { ACCESS_TOKEN, REFRESH_TOKEN } from '../../constants'
+import "../../styles/Form.css"
+import LoadingIndicator from '../../components/Loading/LoadingIndicator'
 
 function Login() {
     const [username, setUsername] = useState('')

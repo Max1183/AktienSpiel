@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import api from '../../api';
 import { formatDate, formatCurrency } from '../../utils/helpers';
 import { useAlert } from '../../components/Alerts/AlertProvider';
+import StockDetailLink from './StockDetailLink';
 
 function TransactionItem({ transaction }) {
     const [newDescription, setNewDescription] = useState(transaction.description);
@@ -35,7 +36,7 @@ function TransactionItem({ transaction }) {
 
     return (
         <>
-            <a className="list-group-item list-group-item-action" key={transaction.id} href={`stocks/${transaction.stock.id}`}>
+            <StockDetailLink stock_id={transaction.stock.id}>
                 <div className="d-flex w-100 justify-content-between">
                     <h5 className="mb-1">{transaction.stock.name}</h5>
                     <small className="text-muted">{formatDate(transaction.date)}</small>
@@ -49,7 +50,7 @@ function TransactionItem({ transaction }) {
                         <small>Details</small>
                     </button>
                 </div>
-            </a>
+            </StockDetailLink>
 
             {showModal && (
                 <>

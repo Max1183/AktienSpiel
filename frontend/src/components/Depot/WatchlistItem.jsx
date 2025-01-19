@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import api from '../../api';
 import { formatDate, formatCurrency } from '../../utils/helpers';
 import { useAlert } from '../../components/Alerts/AlertProvider';
+import StockDetailLink from './StockDetailLink';
 
 function WatchlistItem({ watchlist, onDelete }) {
     const [newNote, setNewNote] = useState(watchlist.note ?? "");
@@ -35,7 +36,7 @@ function WatchlistItem({ watchlist, onDelete }) {
 
     return (
         <>
-            <a className="list-group-item list-group-item-action" key={watchlist.id} href={`stocks/${watchlist.stock.id}`}>
+            <StockDetailLink stock_id={watchlist.stock.id}>
                 <div className="d-flex w-100 justify-content-between">
                     <h5 className="mb-1">{watchlist.stock.name}</h5>
                     <small className="text-muted">{formatDate(watchlist.date)}</small>
@@ -53,7 +54,7 @@ function WatchlistItem({ watchlist, onDelete }) {
                         </button>
                     </div>
                 </div>
-            </a>
+            </StockDetailLink>
 
             {showModal && (
                 <>

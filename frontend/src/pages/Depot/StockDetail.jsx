@@ -2,13 +2,14 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, useOutletContext } from 'react-router-dom';
 import Chart from 'chart.js/auto';
 import * as bootstrap from 'bootstrap';
-import LoadingSite from '../Loading/LoadingSite';
-import WatchlistMarker from './WatchlistMarker';
-import Tooltip from '../Tooltip';
+import LoadingSite from '../../components/Loading/LoadingSite';
+import WatchlistMarker from '../../components/Depot/WatchlistMarker';
+import Tooltip from '../../components/General/Tooltip';
 import { formatCurrency } from '../../utils/helpers';
 import api from '../../api';
-import { useAlert } from '../Alerts/AlertProvider';
-import DepotArea from './DepotArea';
+import { useAlert } from '../../components/Alerts/AlertProvider';
+import Area from '../../components/General/Area';
+import DepotNavigation from '../../components/Navigation/DepotNavigation';
 
 function StockDetail() {
     const { id } = useParams();
@@ -141,7 +142,8 @@ function StockDetail() {
     }
 
     return !isLoading ? <>
-        <DepotArea title={getTitle()} key1="stocks" handleReload={() => loadValue('stocks', id)} size="6" reloadButton={true}>
+        <DepotNavigation />
+        <Area title={getTitle()} key1="stocks" handleReload={() => loadValue('stocks', id)} size="6" reloadButton={true}>
             {getData('stocks') && getData('stocks')[id] && <>
                 <p>Ticker: {getData('stocks')[id].ticker}</p>
                 <canvas className="mb-3" id="stock-chart"></canvas>
@@ -170,8 +172,8 @@ function StockDetail() {
                     <WatchlistMarker stock_id={id} watchlist={getData('stocks')[id].watchlist_id}/>
                 </div>
             </>}
-        </DepotArea>
-        <DepotArea title="Order-Formular" key1="team" size="6" reloadButton={false}>
+        </Area>
+        <Area title="Order-Formular" key1="team" size="6" reloadButton={false}>
             {(getData('team') &&  getData('stocks') &&  getData('stocks')[id]) ? <>
                <div className="row bg-info p-2 border rounded mt-1 mb-3 fs-5">
                     {buy ? (
@@ -228,7 +230,7 @@ function StockDetail() {
                     </div>
                 </form>
             </> : <LoadingSite />}
-        </DepotArea>
+        </Area>
     </> : <LoadingSite />
 }
 

@@ -1,13 +1,15 @@
 import React from 'react';
-import TransactionItem from './TransactionItem';
+import TransactionItem from '../../components/Depot/TransactionItem';
 import { useOutletContext } from 'react-router-dom';
-import DepotArea from './DepotArea';
+import Area from '../../components/General/Area';
+import DepotNavigation from '../../components/Navigation/DepotNavigation';
 
 function Transactions() {
     const { getData } = useOutletContext();
 
     return <>
-        <DepotArea title="Meine Transaktionen" key1="transactions" size="12">
+        <DepotNavigation />
+        <Area title="Meine Transaktionen" key1="transactions" size="12">
            {getData("transactions") && (getData("transactions").length > 0 ? (
                 <>
                     <p>Durch Klicken auf die Transaktionen gelangst du zu den Aktien.</p>
@@ -20,7 +22,7 @@ function Transactions() {
             ) : (
                 <p>Du hast noch keine Transaktionen durchgeführt.</p>
             ))}
-        </DepotArea>
+        </Area>
     </>
 }
 

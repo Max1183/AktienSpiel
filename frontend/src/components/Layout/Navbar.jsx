@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import SearchBar from '../SearchBar'
+import SearchBar from '../Depot/SearchBar'
 import ProfileDropdown from './ProfileDropdown'
 import { PersonCircle } from 'react-bootstrap-icons';
 

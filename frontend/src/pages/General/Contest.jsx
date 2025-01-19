@@ -1,8 +1,8 @@
-import Pagination from '../components/Layout/Pagination'
+import Pagination from '../../components/Layout/Pagination'
 import React, { useState, useEffect } from 'react';
-import { getRequest, formatCurrency } from '../utils/helpers';
-import LoadingSite from '../components/Loading/LoadingSite';
-import { useAlert } from '../components/Alerts/AlertProvider';
+import { getRequest, formatCurrency } from '../../utils/helpers';
+import LoadingSite from '../../components/Loading/LoadingSite';
+import { useAlert } from '../../components/Alerts/AlertProvider';
 
 function Contest() {
     const [rankingData, setRankingData] = useState(null);
