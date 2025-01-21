@@ -17,7 +17,12 @@ function StockHoldings() {
             const chartData = teamData.portfolio_history;
 
             if (chartData) {
-                const ctx = document.getElementById('portfolio-chart').getContext('2d');
+                const chart = document.getElementById('portfolio-chart');
+                if (!chart) {
+                    return;
+                }
+
+                const ctx = chart.getContext('2d');
 
 
                 if (chartRef.current) {
@@ -54,33 +59,35 @@ function StockHoldings() {
     return <>
         <DepotNavigation />
         <Area title="Portfolio Übersicht" key1="team" size="6">
-            {getData("team") && <div className="row row-cols-2 row-cols-md-3">
-                <InfoField label="Summe Positionen" value={formatCurrency(getData("team").portfolio_value - getData("team").balance)} />
-                <InfoField label="Barbestand" value={formatCurrency(getData("team").balance)} />
-                <InfoField label="Gesamter Depotwert" value={formatCurrency(getData("team").portfolio_value)} />
-                <InfoField label="Performance abs." value={formatCurrency(getData("team").portfolio_value - 100000)} />
-                <InfoField label="Performance %" value={(getData("team").portfolio_value / 100000 * 100 - 100).toFixed(2) + "%"} />
-                <InfoField label="Trades" value={getData("team").trades} />
+            {({ value: team }) => <div className='row g-2 m-0'>
+                <InfoField label="Summe Positionen" value={formatCurrency(team.portfolio_value - team.balance)} />
+                <InfoField label="Barbestand" value={formatCurrency(team.balance)} />
+                <InfoField label="Gesamter Depotwert" value={formatCurrency(team.portfolio_value)} />
+                <InfoField label="Performance abs." value={formatCurrency(team.portfolio_value - 100000)} />
+                <InfoField label="Performance %" value={(team.portfolio_value / 100000 * 100 - 100).toFixed(2) + "%"} />
+                <InfoField label="Trades" value={team.trades} />
             </div>}
         </Area>
         <Area title="Depotverlauf" size="6">
-            {(getData("team") && getData("team").portfolio_history.length >= 3) ? (
+            {({ value: team }) => team && team.portfolio_history.length >= 3 ? (
                 <canvas className="mb-3" id="portfolio-chart"></canvas>
             ) : <p>Hier kannst du den Verlauf deines Depots sehen</p>}
         </Area>
         <Area title="Mein Depot" key1="stockholdings">
-            {(getData("stockholdings") && getData("stockholdings").length > 0) ? <div className="list-group rounded">
-                {getData("stockholdings").map((stockHolding) => (
-                    <StockDetailLink stock_id={stockHolding.stock.id}>
-                        <div className="d-flex w-100 justify-content-between">
-                            <h5 className="mb-1">{stockHolding.stock.name}</h5>
-                            <small>Kurs: {formatCurrency(stockHolding.stock.current_price)}</small>
-                        </div>
-                        <p className="mb-1">Anzahl: {stockHolding.amount}</p>
-                        <small>Gesamtwert: {formatCurrency(stockHolding.amount * stockHolding.stock.current_price)}</small>
-                    </StockDetailLink>
-                ))}
-            </div> : <div>
+            {({ value: stockholdings }) => stockholdings.length > 0 ? (
+                <div className="list-group rounded">
+                    {stockholdings.map((stockHolding) => (
+                        <StockDetailLink stock_id={stockHolding.stock.id}>
+                            <div className="d-flex w-100 justify-content-between">
+                                <h5 className="mb-1">{stockHolding.stock.name}</h5>
+                                <small>Kurs: {formatCurrency(stockHolding.stock.current_price)}</small>
+                            </div>
+                            <p className="mb-1">Anzahl: {stockHolding.amount}</p>
+                            <small>Gesamtwert: {formatCurrency(stockHolding.amount * stockHolding.stock.current_price)}</small>
+                        </StockDetailLink>
+                    ))}
+                </div>
+            ) : <div>
                 <p>Du besitzt noch keine Aktien!</p>
                 <p>Klicke <a href="/depot/search/">hier</a>, um nach Aktien zu suchen.</p>
             </div>}

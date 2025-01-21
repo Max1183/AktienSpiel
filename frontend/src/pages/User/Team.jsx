@@ -10,12 +10,12 @@ function Team() {
     return <>
         <ProfileNavigation />
         <Area title="Mein Team" key1="team" size='6'>
-            {getData("team") && <p className="fs-5 mt-3 mb-0">
-                Teamname: {getData("team").name}<br />
-                Barbestand: {formatCurrency(getData("team").balance)}<br />
-                Gesamtdepotwert: {formatCurrency(getData("team").portfolio_value)}<br />
-                Trades: {getData("team").trades}<br />
-                Platz {getData("team").rank}
+            {({ value: team }) => <p className="fs-5 mt-3 mb-0">
+                Teamname: {team.name}<br />
+                Barbestand: {formatCurrency(team.balance)}<br />
+                Gesamtdepotwert: {formatCurrency(team.portfolio_value)}<br />
+                Trades: {team.trades}<br />
+                Platz {team.rank}
             </p>}
         </Area>
         <Area title="Team-Mitglieder" size='6'>

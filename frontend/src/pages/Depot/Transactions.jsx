@@ -1,27 +1,24 @@
 import React from 'react';
 import TransactionItem from '../../components/Depot/TransactionItem';
-import { useOutletContext } from 'react-router-dom';
 import Area from '../../components/General/Area';
 import DepotNavigation from '../../components/Navigation/DepotNavigation';
 
 function Transactions() {
-    const { getData } = useOutletContext();
-
     return <>
         <DepotNavigation />
         <Area title="Meine Transaktionen" key1="transactions" size="12">
-           {getData("transactions") && (getData("transactions").length > 0 ? (
+        {({ value: transactions }) => transactions.length > 0 ? (
                 <>
                     <p>Durch Klicken auf die Transaktionen gelangst du zu den Aktien.</p>
                     <div className="list-group rounded mt-3">
-                        {getData("transactions").map((transaction) => (
+                        {transactions.map((transaction) => (
                             <TransactionItem transaction={transaction} key={transaction.id} />
                         ))}
                     </div>
                 </>
             ) : (
                 <p>Du hast noch keine Transaktionen durchgeführt.</p>
-            ))}
+            )}
         </Area>
     </>
 }

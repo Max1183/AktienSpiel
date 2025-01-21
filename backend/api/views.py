@@ -85,7 +85,7 @@ class TeamRankingListView(generics.ListAPIView):
         return get_team_ranking_queryset()
 
     def get(self, request, *args, **kwargs):
-        page_size = 10
+        page_size = 2
         page_number = int(request.GET.get("page", 1))
 
         queryset = self.get_queryset()

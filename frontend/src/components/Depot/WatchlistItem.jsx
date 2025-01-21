@@ -11,8 +11,12 @@ function WatchlistItem({ watchlist, onDelete }) {
 
     const handleClose = () => setShowModal(false);
     const handleShow = (e) => {
-        e.preventDefault();
+        e.stopPropagation();
         setShowModal(true);
+    }
+    const handleDelete = (e) => {
+        e.stopPropagation();
+        onDelete(e, watchlist.id);
     }
 
     const handleSubmit = async (event) => {
@@ -49,7 +53,7 @@ function WatchlistItem({ watchlist, onDelete }) {
                         <button type="button" className="btn btn-primary mt-auto me-1" onClick={handleShow}>
                             <small>Details</small>
                         </button>
-                        <button type="button" className="btn btn-danger mt-auto" onClick={(e) => onDelete(e, watchlist.id)}>
+                        <button type="button" className="btn btn-danger mt-auto" onClick={handleDelete}>
                             <small>Löschen</small>
                         </button>
                     </div>

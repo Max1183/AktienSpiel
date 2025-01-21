@@ -1,65 +1,86 @@
-import React, { useState } from 'react';
-import { Outlet } from 'react-router-dom';
-import { useAlert } from '../Alerts/AlertProvider';
-import { getRequest } from '../../utils/helpers';
+import React, { useState } from "react";
+import { Outlet } from "react-router-dom";
+import { useAlert } from "../Alerts/AlertProvider";
+import { getRequest } from "../../utils/helpers";
 
 function PageOutlet() {
     const { addAlert } = useAlert();
-
     const [data, setData] = useState({});
 
-    const loadValue = (key, id=null) => {
-        changeLoading(key, true);
-        getRequest(`/api/${key}/${id ? id + '/' : ''}`)
-            .then(data => {changeData(key, data, id)})
-            .catch(error => addAlert(error.message, 'danger'))
-            .finally(() => changeLoading(key, false));
-    }
+    const loadValue = (key, id = null, page = null) => {
+        changeLoading(key, true, id, page);
+        getRequest(`/api/${key}/${id ? `${id}/` : page ? `?page=${page}` : ""}`)
+            .then((data) => changeData(key, data, id, page))
+            .catch((error) => addAlert(error.message, "danger"))
+            .finally(() => changeLoading(key, false, id, page));
+    };
 
-    const getLoading = (key) => {
-        if (!data[key]) return false;
-        return data[key].isLoading;
-    }
+    const getLoading = (key, id = null, page = null) => {
+        const value = data[key];
+        if (!value) return null;
+        if (id) return value[id]?.isLoading || null;
+        if (page) return value[page]?.isLoading || null;
+        return value.isLoading || null;
+    };
 
-    const getData = (key) => {
-        if (!data[key]) return null;
-        return data[key].data;
-    }
+    const getData = (key, id = null, page = null) => {
+        const value = data[key];
+        if (!value) return undefined;
+        if (id) return value[id]?.data;
+        if (page) return value[page]?.data;
+        return value.data;
+    };
 
-    const changeLoading = (key, newIsLoading) => {
-        setData(prevData => ({
+    const changeLoading = (key, newIsLoading, id = null, page = null) => {
+        setData((prevData) => ({
             ...prevData,
             [key]: {
                 ...prevData[key],
-                isLoading: newIsLoading
-            }
+                ...(id !== null
+                    ? {
+                          [id]: {
+                              ...prevData[key]?.[id],
+                              isLoading: newIsLoading,
+                          },
+                      }
+                    : page !== null
+                    ? {
+                          [page]: {
+                              ...prevData[key]?.[page],
+                              isLoading: newIsLoading,
+                          },
+                      }
+                    : { isLoading: newIsLoading }),
+            },
         }));
-    }
-
-    const changeData = (key, newData, id = null) => {
-        setData(prevData => {
-            const updatedData = {
-                ...prevData,
-                [key]: {
-                    isLoading: false,
-                    data: id
-                        ? { ...((prevData[key] && prevData[key].data) || {}), [id]: newData }
-                        : newData
-                }
-            };
-            return updatedData;
-        });
     };
 
-    return <>
+    const changeData = (key, newData, id = null, page = null) => {
+        setData((prevData) => ({
+            ...prevData,
+            [key]: {
+                ...prevData[key],
+                ...(id !== null
+                    ? { [id]: { ...prevData[key]?.[id], data: newData } }
+                    : page !== null
+                    ? { [page]: { ...prevData[key]?.[page], data: newData } }
+                    : { data: newData }),
+            },
+        }));
+    };
+
+    return (
         <div className="row">
-            <Outlet context={{
-                loadValue: loadValue,
-                getLoading: getLoading,
-                getData: getData,
-            }} />
+            <Outlet
+                context={{
+                    loadValue,
+                    getLoading,
+                    getData,
+                    changeLoading,
+                }}
+            />
         </div>
-    </>;
+    );
 }
 
-export default PageOutlet
+export default PageOutlet;
