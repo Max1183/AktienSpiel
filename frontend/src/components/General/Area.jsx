@@ -34,7 +34,9 @@ const Area = ({
         if (newPage === page) return;
         setPage(newPage);
 
-        if (getData(key1, id, newPage)) return;
+        const newPageData = getData(key1, id, newPage);
+        const newPageLoading = getLoading(key1, id, newPage);
+        if (newPageData || newPageLoading) return;
         loadValue(key1, id, newPage);
     }
 

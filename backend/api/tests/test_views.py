@@ -840,24 +840,24 @@ class AnalysisViewTests(APITestCase):
         url = reverse("analysis")
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 2)
+        self.assertEqual(len(response.data["results"]), 2)
         # Asserts for the stock1
-        self.assertEqual(response.data[1]["name"], "Stock 1")
-        self.assertEqual(response.data[1]["ticker"], "STK1")
-        self.assertEqual(response.data[1]["total_profit"], "85.00")
-        self.assertEqual(response.data[1]["current_holding"], "300.00")
+        self.assertEqual(response.data["results"][1]["name"], "Stock 1")
+        self.assertEqual(response.data["results"][1]["ticker"], "STK1")
+        self.assertEqual(response.data["results"][1]["total_profit"], "85.00")
+        self.assertEqual(response.data["results"][1]["current_holding"], "300.00")
 
         # Asserts for the stock2
-        self.assertEqual(response.data[0]["name"], "Stock 2")
-        self.assertEqual(response.data[0]["ticker"], "STK2")
-        self.assertEqual(response.data[0]["total_profit"], "140.00")
-        self.assertEqual(response.data[0]["current_holding"], "0.00")
+        self.assertEqual(response.data["results"][0]["name"], "Stock 2")
+        self.assertEqual(response.data["results"][0]["ticker"], "STK2")
+        self.assertEqual(response.data["results"][0]["total_profit"], "140.00")
+        self.assertEqual(response.data["results"][0]["current_holding"], "0.00")
 
     def test_retrieve_analysis_no_transactions_or_holdings(self):
         url = reverse("analysis")
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 0)
+        self.assertEqual(len(response.data["results"]), 0)
 
     def test_retrieve_analysis_unauthenticated(self):
         self.client.force_authenticate(user=None)
@@ -883,7 +883,7 @@ class AnalysisViewTests(APITestCase):
         url = reverse("analysis")
         response = self.client.get(f"{url}?page=2")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 12)
+        self.assertEqual(len(response.data["results"]), 2)
 
 
 class ValidateFormViewTests(APITestCase):

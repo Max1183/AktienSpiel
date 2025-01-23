@@ -85,7 +85,7 @@ class TeamRankingListView(generics.ListAPIView):
         return get_team_ranking_queryset()
 
     def get(self, request, *args, **kwargs):
-        page_size = 2
+        page_size = 10
         page_number = int(request.GET.get("page", 1))
 
         queryset = self.get_queryset()
@@ -234,6 +234,9 @@ class AnalysisView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        page_size = 10
+        page_number = int(request.GET.get("page", 1))
+
         team = request.user.profile.team
         stock_profits = []
         unique_stocks = set(
@@ -252,7 +255,7 @@ class AnalysisView(APIView):
 
             stock_profits.append(
                 {
-                    "id": stock.pk,
+                    "id": stock.id,
                     "name": stock.name,
                     "ticker": stock.ticker,
                     "total_profit": total_profit,
@@ -263,8 +266,22 @@ class AnalysisView(APIView):
         sorted_stock_profits = sorted(
             stock_profits, key=lambda x: x["total_profit"], reverse=True
         )
-        serializer = StockAnalysisSerializer(sorted_stock_profits, many=True)
-        return Response(serializer.data)
+
+        paginator = pagination.PageNumberPagination()
+        paginator.page_size = page_size
+        page = paginator.paginate_queryset(sorted_stock_profits, request)
+
+        serializer = StockAnalysisSerializer(page, many=True)
+
+        return Response(
+            {
+                "results": serializer.data,
+                "count": paginator.page.paginator.count,
+                "num_pages": paginator.page.paginator.num_pages,
+                "current_page": page_number,
+                "page_size": page_size,
+            }
+        )
 
 
 class ValidateFormView(APIView):
