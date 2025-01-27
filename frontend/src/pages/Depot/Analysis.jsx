@@ -21,7 +21,7 @@ function Analysis() {
             <Area
                 title="Auswertung"
                 key1="analysis"
-                pagination={true}
+                frontendPagination={true}
                 size="12"
             >
                 {({ value: analysis }) =>

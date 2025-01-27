@@ -209,10 +209,9 @@ function StockDetail() {
                                         onClick={() =>
                                             setActiveTimeSpan(entry.name)
                                         }
-                                        className={`btn btn-primary ${
-                                            activeTimeSpan === entry.name
-                                                ? "active"
-                                                : ""
+                                        className={`btn btn-primary my-1${
+                                            activeTimeSpan === entry.name &&
+                                            "active"
                                         }`}
                                         disabled={entry.values.length === 0}
                                     >
