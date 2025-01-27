@@ -1,7 +1,11 @@
 import { NavLink } from 'react-router-dom';
 import { Search } from 'react-bootstrap-icons';
 
-function BottomNavbar () {
+function Navigation () {
+    const getNavLinkClass = (isActive) => {
+        return `navbar_brand nav-link ${isActive && 'active'}`;
+    };
+
     return <nav className="navbar bg-dark navbar-expand-lg sticky-bottom" data-bs-theme="dark">
         <div className="container-fluid">
             <ul className="navbar-nav d-flex flex-row gap-4 me-auto mb-lg-0 fs-5">
@@ -45,4 +49,4 @@ function BottomNavbar () {
     </nav>
 }
 
-export default BottomNavbar;
+export default Navigation;

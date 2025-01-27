@@ -1,8 +1,8 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 function SearchBar({ oldSearchTerm }) {
-    const [searchTerm, setSearchTerm] = useState(oldSearchTerm || "");
+    const [searchTerm, setSearchTerm] = useState(oldSearchTerm || '');
     const navigate = useNavigate();
 
     const handleSearch = (event) => {
@@ -18,6 +18,7 @@ function SearchBar({ oldSearchTerm }) {
                 placeholder="Nach Aktien suchen..."
                 aria-label="Search"
                 value={searchTerm}
+                minLength={3}
                 maxLength={100}
                 onChange={(e) => setSearchTerm(e.target.value)}
             />

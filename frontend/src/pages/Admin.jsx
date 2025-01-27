@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import api from '../../api';
-import { useAlert } from '../../components/Alerts/AlertProvider';
-import { getError } from '../../utils/helpers';
+import api from '../api';
+import { useAlert } from '../components/Alerts/AlertProvider';
+import { getError } from '../utils/helpers';
 
 function Admin() {
     const [email, setEmail] = useState('');

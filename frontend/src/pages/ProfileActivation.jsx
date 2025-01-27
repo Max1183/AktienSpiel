@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom'
-import api from '../../api';
-import FormField from '../../components/General/FormField';
-import LoadingSite from '../../components/Loading/LoadingSite';
-import { getRequest } from '../../utils/helpers';
+import api from '../api';
+import FormField from '../components/FormField';
+import LoadingSite from '../components/Loading/LoadingSite';
+import { getRequest } from '../utils/helpers';
 
 function ProfileActivation({ match }) {
     const [step, setStep] = useState(0);

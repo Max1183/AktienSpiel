@@ -13,6 +13,4 @@ COPY --chown=10001:10001 . /app/
 
 USER 10001
 
-RUN python manage.py collectstatic --noinput
-
 CMD exec gunicorn backend.wsgi:application --bind 0.0.0.0:8000
