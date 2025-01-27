@@ -1,7 +1,7 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import { useWindowSize } from '../../App.jsx';
 
-function Navigation({ to, name, icon, icon_active }) {
+function DepotNavigation({ to, name, icon, icon_active }) {
     const { width } = useWindowSize();
     const small = width < 500;
     const location = useLocation();
@@ -15,8 +15,7 @@ function Navigation({ to, name, icon, icon_active }) {
     };
 
     const getName = () => {
-        if (!icon) return name;
-        return small ? ((isActive() && icon_active) ? icon_active : icon) : name;
+        return small ? (isActive() ? icon_active : icon) : name;
     };
 
     return <>
@@ -26,4 +25,4 @@ function Navigation({ to, name, icon, icon_active }) {
     </>;
 }
 
-export default Navigation;
+export default DepotNavigation;
