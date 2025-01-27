@@ -64,7 +64,7 @@ function StockHoldings() {
             <DepotNavigation />
             <Area title="Portfolio Übersicht" key1="team" size="6">
                 {({ value: team }) => (
-                    <div className="row g-2 m-0">
+                    <div className="row row-cols-sm-2 row-cols-md-3 g-2 m-0">
                         <InfoField
                             label="Summe Positionen"
                             value={formatCurrency(
