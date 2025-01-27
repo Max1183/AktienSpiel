@@ -1,11 +1,13 @@
 import React, { useState } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import { useAlert } from "../Alerts/AlertProvider";
 import { getRequest } from "../../utils/helpers";
+import DepotNavigation from "../Navigation/DepotNavigation";
 
 function PageOutlet() {
     const { addAlert } = useAlert();
     const [data, setData] = useState({});
+    const location = useLocation();
 
     const loadValue = (key, id = null, page = null) => {
         changeLoading(key, true, id, page);
@@ -70,16 +72,19 @@ function PageOutlet() {
     };
 
     return (
-        <div className="row">
-            <Outlet
-                context={{
-                    loadValue,
-                    getLoading,
-                    getData,
-                    changeLoading,
-                }}
-            />
-        </div>
+        <>
+            {location.pathname.startsWith("/depot") && <DepotNavigation />}
+            <div className="row">
+                <Outlet
+                    context={{
+                        loadValue,
+                        getLoading,
+                        getData,
+                        changeLoading,
+                    }}
+                />
+            </div>
+        </>
     );
 }
 

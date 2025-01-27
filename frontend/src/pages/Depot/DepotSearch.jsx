@@ -36,38 +36,35 @@ function DepotSearch() {
     }
 
     return (
-        <>
-            <DepotNavigation />
-            <div className="bg-primary-subtle p-3 shadow rounded">
-                <h1>Suchen</h1>
-                <SearchBar oldSearchTerm={query} />
-                <p>
-                    {query
-                        ? `${searchResults.length} Ergebnisse für "${query}".`
-                        : "Geben Sie einen Suchbegriff ein."}
-                </p>
-                <div className="mb-3">{isLoading && <LoadingSite />}</div>
-                <div className="list-group">
-                    {getPageData(page).map((stock) => (
-                        <StockDetailLink stock_id={stock.id}>
-                            <div className="d-flex w-100 justify-content-between">
-                                <p className="mb-0">{stock.name}</p>
-                                <p className="mb-0">
-                                    {formatCurrency(stock.current_price)}
-                                </p>
-                            </div>
-                        </StockDetailLink>
-                    ))}
-                </div>
-                {searchResults.length > 0 && (
-                    <Pagination
-                        currentPage={page}
-                        totalPages={Math.ceil(searchResults.length / page_size)}
-                        onPageChange={setPage}
-                    />
-                )}
+        <div className="bg-primary-subtle p-3 shadow rounded">
+            <h1>Suchen</h1>
+            <SearchBar oldSearchTerm={query} />
+            <p>
+                {query
+                    ? `${searchResults.length} Ergebnisse für "${query}".`
+                    : "Geben Sie einen Suchbegriff ein."}
+            </p>
+            <div className="mb-3">{isLoading && <LoadingSite />}</div>
+            <div className="list-group">
+                {getPageData(page).map((stock) => (
+                    <StockDetailLink stock_id={stock.id}>
+                        <div className="d-flex w-100 justify-content-between">
+                            <p className="mb-0">{stock.name}</p>
+                            <p className="mb-0">
+                                {formatCurrency(stock.current_price)}
+                            </p>
+                        </div>
+                    </StockDetailLink>
+                ))}
             </div>
-        </>
+            {searchResults.length > 0 && (
+                <Pagination
+                    currentPage={page}
+                    totalPages={Math.ceil(searchResults.length / page_size)}
+                    onPageChange={setPage}
+                />
+            )}
+        </div>
     );
 }
 

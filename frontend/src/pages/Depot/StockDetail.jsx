@@ -188,7 +188,6 @@ function StockDetail() {
 
     return !isLoading ? (
         <>
-            <DepotNavigation />
             <Area title={getTitle()} key1="stocks" id={id} size="6">
                 {({ value: stock }) => (
                     <>

@@ -31,37 +31,32 @@ function Watchlist() {
     };
 
     return (
-        <>
-            <DepotNavigation />
-            <Area title="Watchlist" frontendPagination={true} key1="watchlist">
-                {({ value: watchlist }) =>
-                    watchlist.length > 0 ? (
-                        <>
-                            <p>
-                                Hier siehst du alle Aktien in deiner Watchlist.
-                            </p>
-                            <div className="list-group rounded mt-3">
-                                {watchlist.map((watchlistItem) => (
-                                    <WatchlistItem
-                                        watchlist={watchlistItem}
-                                        onDelete={deleteWatchlist}
-                                        key={watchlistItem.id}
-                                    />
-                                ))}
-                            </div>
-                        </>
-                    ) : (
-                        <>
-                            <p>Du hast noch keine Aktien in der Watchlist</p>
-                            <p>
-                                Füge Aktien hinzu, indem du auf das Sternsymbol
-                                bei der Aktie klickst.
-                            </p>
-                        </>
-                    )
-                }
-            </Area>
-        </>
+        <Area title="Watchlist" frontendPagination={true} key1="watchlist">
+            {({ value: watchlist }) =>
+                watchlist.length > 0 ? (
+                    <>
+                        <p>Hier siehst du alle Aktien in deiner Watchlist.</p>
+                        <div className="list-group rounded mt-3">
+                            {watchlist.map((watchlistItem) => (
+                                <WatchlistItem
+                                    watchlist={watchlistItem}
+                                    onDelete={deleteWatchlist}
+                                    key={watchlistItem.id}
+                                />
+                            ))}
+                        </div>
+                    </>
+                ) : (
+                    <>
+                        <p>Du hast noch keine Aktien in der Watchlist</p>
+                        <p>
+                            Füge Aktien hinzu, indem du auf das Sternsymbol bei
+                            der Aktie klickst.
+                        </p>
+                    </>
+                )
+            }
+        </Area>
     );
 }
 
