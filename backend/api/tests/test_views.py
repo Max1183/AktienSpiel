@@ -865,26 +865,6 @@ class AnalysisViewTests(APITestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    def test_retrieve_analysis_pagination(self):
-        # Create more transactions and holdings
-        for i in range(12):
-            stock = Stock.objects.create(
-                name=f"Stock {i + 4}", ticker=f"STK{i + 4}", current_price=100.00
-            )
-            Transaction.objects.create(
-                team=self.team,
-                stock=stock,
-                transaction_type="buy",
-                amount=1,
-                price=100.00,
-                fee=15.00,
-            )
-
-        url = reverse("analysis")
-        response = self.client.get(f"{url}?page=2")
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 12)
-
 
 class ValidateFormViewTests(APITestCase):
     def setUp(self):

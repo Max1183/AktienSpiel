@@ -6,7 +6,8 @@ function ProfileDropdown () {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef(null);
 
-    const toggleDropdown = () => {
+    const toggleDropdown = (e) => {
+        e.preventDefault();
         setIsOpen(!isOpen);
     };
 
@@ -27,7 +28,7 @@ function ProfileDropdown () {
         <li className="nav-item dropdown" ref={dropdownRef}>
             <a
                 className={`nav-link dropdown-toggle ${isOpen && 'show'}`}
-                href="#"
+                href=""
                 role="button"
                 aria-expanded={isOpen}
                 onClick={toggleDropdown}
@@ -39,7 +40,7 @@ function ProfileDropdown () {
                     <NavLink
                         to="/user/profile"
                         className={({ isActive }) => `dropdown-item ${isActive ? 'active' : ''}`}
-                        onClick={toggleDropdown}
+                        onClick={() => setIsOpen(false)}
                     >
                         Profil
                     </NavLink>
@@ -48,7 +49,7 @@ function ProfileDropdown () {
                     <NavLink
                         to="/user/team"
                         className={({ isActive }) => `dropdown-item ${isActive ? 'active' : ''}`}
-                        onClick={toggleDropdown}
+                        onClick={() => setIsOpen(false)}
                     >
                         Team
                     </NavLink>
@@ -58,7 +59,7 @@ function ProfileDropdown () {
                     <NavLink
                         to="/logout"
                         className={({ isActive }) => `dropdown-item ${isActive ? 'active' : ''}`}
-                        onClick={toggleDropdown}
+                        onClick={() => setIsOpen(false)}
                     >
                         Logout
                     </NavLink>

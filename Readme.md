@@ -1,11 +1,10 @@
 # Aktien Spiel
 
-Dieses Projekt ist ein Spiel, bei dem die Spieler Aktien kaufen und zu verkaufen können, um Gewinne zu erzielen.
+Dieses Projekt ist ein Spiel, bei dem die Teilnehmer Aktien kaufen und zu verkaufen können, um Gewinne zu erzielen.
 
 ## Inhaltsverzeichnis
 
 - [Features](#features)
-- [Regeln](#regeln)
 - [Installation](#installation)
   - [Backend](#backend)
   - [Frontend](#frontend)
@@ -15,16 +14,19 @@ Dieses Projekt ist ein Spiel, bei dem die Spieler Aktien kaufen und zu verkaufen
   - [Frontend](#frontend-tests)
 - [Git-Workflow](#git-workflow)
 - [Lizenz](#lizenz)
+- [Deployment](#deployment)
 
 ## Features
 
+- Die Aktienkurse werden jede Stunde aktualisiert.
+- Der Admin kann Spieler über ihre E-Mail-Adresse einladen.
+- Man spielt im Team mit bis zu 4 Spielern.
 - Spieler können Aktien kaufen und verkaufen.
-- Spieler können ihre Gewinne und Verluste verfolgen.
-- Spieler können ihre Strategien anpassen, um Gewinne zu erzielen.
-
-## Regeln
-
-Jeder, der die Zusammenarbeit behindert, wird mit sofortiger Wirkung aus dem Projekt entfernt.
+- Es gibt eine Depotübersicht mit den aktuellen Werten und dem Verlauf.
+- Alle Transaktionen können angesehen werden und es können Notizen hinzugefügt werden.
+- Es gibt eine Auswertung für die Gewinne der einzelnen Aktien.
+- Es gibt eine Watchlist für die Aktien, die der Spieler beobachten möchte.
+- Es gibt eine Rangliste, die die Spieler nach ihrem Gewinn sortiert.
 
 ## Installation
 
@@ -50,6 +52,7 @@ Jeder, der die Zusammenarbeit behindert, wird mit sofortiger Wirkung aus dem Pro
 
 1. Öffne den Browser und navigiere zur URL, auf der der Entwicklungsserver läuft: http://localhost:3000.
 2. Das Backend ist unter http://localhost:8000 erreichbar.
+3. Im Frontend kann der Admin über /admin/ weitere Spieler einladen.
 
 ## Tests
 
