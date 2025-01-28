@@ -252,7 +252,7 @@ class AnalysisView(APIView):
 
             stock_profits.append(
                 {
-                    "id": stock.pk,
+                    "id": stock.id,
                     "name": stock.name,
                     "ticker": stock.ticker,
                     "total_profit": total_profit,
@@ -263,6 +263,7 @@ class AnalysisView(APIView):
         sorted_stock_profits = sorted(
             stock_profits, key=lambda x: x["total_profit"], reverse=True
         )
+
         serializer = StockAnalysisSerializer(sorted_stock_profits, many=True)
         return Response(serializer.data)
 
@@ -317,11 +318,13 @@ class SearchStocksView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        result_limit = 100
+
         query = request.GET.get("q", "")
         if query:
             results = Stock.objects.filter(
                 name__icontains=query, current_price__gt=0
-            ).order_by("name")[:50]
+            ).order_by("name")[:result_limit]
         else:
             results = []
 
