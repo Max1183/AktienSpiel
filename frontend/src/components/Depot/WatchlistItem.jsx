@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import api from '../../api';
 import { formatDate, formatCurrency } from '../../utils/helpers';
 import { useAlert } from '../../components/Alerts/AlertProvider';
+import StockDetailLink from './StockDetailLink';
 
 function WatchlistItem({ watchlist, onDelete }) {
     const [newNote, setNewNote] = useState(watchlist.note ?? "");
@@ -10,8 +11,12 @@ function WatchlistItem({ watchlist, onDelete }) {
 
     const handleClose = () => setShowModal(false);
     const handleShow = (e) => {
-        e.preventDefault();
+        e.stopPropagation();
         setShowModal(true);
+    }
+    const handleDelete = (e) => {
+        e.stopPropagation();
+        onDelete(e, watchlist.id);
     }
 
     const handleSubmit = async (event) => {
@@ -35,7 +40,7 @@ function WatchlistItem({ watchlist, onDelete }) {
 
     return (
         <>
-            <a className="list-group-item list-group-item-action" key={watchlist.id} href={`stocks/${watchlist.stock.id}`}>
+            <StockDetailLink stock_id={watchlist.stock.id}>
                 <div className="d-flex w-100 justify-content-between">
                     <h5 className="mb-1">{watchlist.stock.name}</h5>
                     <small className="text-muted">{formatDate(watchlist.date)}</small>
@@ -48,12 +53,12 @@ function WatchlistItem({ watchlist, onDelete }) {
                         <button type="button" className="btn btn-primary mt-auto me-1" onClick={handleShow}>
                             <small>Details</small>
                         </button>
-                        <button type="button" className="btn btn-danger mt-auto" onClick={(e) => onDelete(e, watchlist.id)}>
+                        <button type="button" className="btn btn-danger mt-auto" onClick={handleDelete}>
                             <small>Löschen</small>
                         </button>
                     </div>
                 </div>
-            </a>
+            </StockDetailLink>
 
             {showModal && (
                 <>

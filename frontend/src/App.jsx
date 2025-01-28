@@ -1,49 +1,38 @@
 import React, { useState, useEffect } from 'react';
-import {BrowserRouter, Routes, Route, Navigate, Outlet} from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import ProtectedRoute from './components/ProtectedRoute'
-import { AlertProvider, useAlert } from './components/Alerts/AlertProvider'
+import { AlertProvider } from './components/Alerts/AlertProvider'
 import AlertList from './components/Alerts/AlertList'
 import { isAdmin } from './utils/helpers';
 
-import Login from './pages/Login'
-import NotFound from './pages/NotFound'
-import ProfileActivation from './pages/ProfileActivation'
-import Admin from './pages/Admin'
+import Login from './pages/General/Login'
+import NotFound from './pages/General/NotFound'
+import ProfileActivation from './pages/General/ProfileActivation'
+import Admin from './pages/General/Admin'
 
-import Start from './pages/Start'
+import Start from './pages/General/Start'
 
-import Depot from './pages/Depot'
-import StockHoldings from './components/Depot/StockHoldings'
-import Transactions from './components/Depot/Transactions'
-import Analysis from './components/Depot/Analysis'
-import Watchlist from './components/Depot/Watchlist'
-import DepotSearch from './components/Depot/DepotSearch'
-import StockDetail from './components/Depot/StockDetail'
+import PageOutlet from './components/General/PageOutlet'
+import StockHoldings from './pages/Depot/StockHoldings'
+import Transactions from './pages/Depot/Transactions'
+import Analysis from './pages/Depot/Analysis'
+import Watchlist from './pages/Depot/Watchlist'
+import DepotSearch from './pages/Depot/DepotSearch'
+import StockDetail from './pages/Depot/StockDetail'
 
-import Contest from './pages/Contest'
+import Contest from './pages/General/Contest'
 
-import Profile from './pages/Profile'
-import Team from './pages/Team'
+import Profile from './pages/User/Profile'
+import Team from './pages/User/Team'
 
 import Navbar from './components/Layout/Navbar'
 import Footer from './components/Layout/Footer'
-import Navigation from './components/Layout/Navigation'
+import BottomNavbar from './components/Layout/BottomNavbar'
 
 
 function Logout() {
     localStorage.clear()
     return <Navigate to="/login" />
-}
-
-function Protected(Component, path) {
-    return <Route
-        path={path}
-        element={
-            <ProtectedRoute>
-                <Component />
-            </ProtectedRoute>
-        }
-    />
 }
 
 export function useWindowSize() {
@@ -77,9 +66,9 @@ function ProtectedLayout() {
         <Navbar small={small} />
         <section className="container mt-3">
             <AlertList />
-            {location.pathname.startsWith('/depot') ? <Depot /> : <Outlet />}
+            <PageOutlet />
         </section>
-        {small ? <Navigation /> : <Footer />}
+        {small ? <BottomNavbar /> : <Footer />}
     </ProtectedRoute>
 }
 
@@ -89,10 +78,6 @@ function AdminRoute({ children }) {
 }
 
 function App() {
-    const { width } = useWindowSize();
-    const small = width < 992;
-    const breakpoint = 992;
-
     return <AlertProvider>
         <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true, }}>
             <main className="content">
