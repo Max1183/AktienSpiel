@@ -48,7 +48,7 @@ function Watchlist() {
                     </>
                 ) : (
                     <>
-                        <p>Du hast noch keine Aktien in der Watchlist</p>
+                        <p>Du hast noch keine Aktien in der Watchlist.</p>
                         <p>
                             Füge Aktien hinzu, indem du auf das Sternsymbol bei
                             der Aktie klickst.
