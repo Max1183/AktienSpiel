@@ -234,6 +234,7 @@ class UserProfile(models.Model):
     user = models.OneToOneField(USER, on_delete=models.CASCADE, related_name="profile")
     team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="members")
     # avatar = models.ImageField(upload_to="avatars/", blank=True, null=True)
+    last_edited = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return f"Profile of {self.user.username}"

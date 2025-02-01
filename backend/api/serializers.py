@@ -337,6 +337,59 @@ class UserProfileSerializer(serializers.ModelSerializer):
         fields = ["user", "team"]
 
 
+class UserProfileUpdateSerializer(serializers.ModelSerializer):
+    """Serializer for updating a UserProfile."""
+
+    email = serializers.EmailField(
+        validators=[UniqueValidator(queryset=User.objects.all())], required=False
+    )
+    username = serializers.CharField(
+        validators=[UniqueValidator(queryset=User.objects.all())],
+        min_length=3,
+        max_length=20,
+        required=False,
+    )
+    first_name = serializers.CharField(min_length=3, max_length=20, required=False)
+    last_name = serializers.CharField(min_length=3, max_length=20, required=False)
+
+    class Meta:
+        model = UserProfile
+        fields = ["email", "username", "first_name", "last_name"]
+
+    def validate(self, data):
+        user = self.instance.user
+        if (
+            "email" in data
+            and User.objects.filter(email=data["email"]).exclude(pk=user.pk).exists()
+        ):
+            raise serializers.ValidationError(
+                "Diese E-Mail-Adresse ist bereits registriert."
+            )
+        if (
+            "username" in data
+            and User.objects.filter(username=data["username"])
+            .exclude(pk=user.pk)
+            .exists()
+        ):
+            raise serializers.ValidationError(
+                "Dieser Benutzername ist bereits vergeben."
+            )
+        return data
+
+    def update(self, instance, validated_data):
+        user = instance.user
+        if "username" in validated_data:
+            user.username = validated_data.pop("username")
+        if "email" in validated_data:
+            user.email = validated_data.pop("email")
+        if "first_name" in validated_data:
+            user.first_name = validated_data.pop("first_name")
+        if "last_name" in validated_data:
+            user.last_name = validated_data.pop("last_name")
+        user.save()
+        return super().update(instance, validated_data)
+
+
 class StockHoldingSerializer(serializers.ModelSerializer):
     """Serializer für Aktienbestände."""
 

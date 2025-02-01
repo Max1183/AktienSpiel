@@ -2,18 +2,16 @@ import React from "react";
 import ProfileNavigation from "../../components/Navigation/ProfileNavigation";
 import Area from "../../components/General/Area";
 import FormField from "../../components/General/FormField";
+import api from "../../api";
 
 function Profile() {
     const [isEditing, setIsEditing] = React.useState(false);
-    const [formData, setFormData] = React.useState({
-        username: "",
-        first_name: "",
-        last_name: "",
-    });
+    const [formData, setFormData] = React.useState({});
 
     const handleEdit = (profile) => {
         setFormData({
             username: profile.user.username,
+            email: profile.user.email,
             first_name: profile.user.first_name,
             last_name: profile.user.last_name,
         });
@@ -46,6 +44,16 @@ function Profile() {
                                     value={formData.username}
                                     onChange={handleChange}
                                     showError={false}
+                                    width="col-md-6"
+                                />
+                                <FormField
+                                    label="Email"
+                                    type="email"
+                                    name="email"
+                                    value={formData.email}
+                                    onChange={handleChange}
+                                    showError={false}
+                                    width="col-md-6"
                                 />
                                 <FormField
                                     label="Vorname"
@@ -65,53 +73,6 @@ function Profile() {
                                     showError={false}
                                     width="col-md-6"
                                 />
-                                {/*<div className="my-3">
-                                    <label
-                                        htmlFor="username"
-                                        className="form-label"
-                                    >
-                                        Benutzername
-                                    </label>
-                                    <input
-                                        type="text"
-                                        className="form-control"
-                                        id="username"
-                                        value={formData.username}
-                                        onChange={handleChange}
-                                    />
-                                </div>
-                                <div className="row mb-3">
-                                    <div className="col">
-                                        <label
-                                            htmlFor="firstname"
-                                            className="form-label"
-                                        >
-                                            Vorname
-                                        </label>
-                                        <input
-                                            type="text"
-                                            className="form-control"
-                                            id="firstname"
-                                            value={formData.first_name}
-                                            onChange={handleChange}
-                                        />
-                                    </div>
-                                    <div className="col">
-                                        <label
-                                            htmlFor="lastname"
-                                            className="form-label"
-                                        >
-                                            Nachname
-                                        </label>
-                                        <input
-                                            type="text"
-                                            className="form-control"
-                                            id="lastname"
-                                            value={formData.last_name}
-                                            onChange={handleChange}
-                                        />
-                                    </div>
-                                </div>*/}
                             </form>
                         ) : (
                             <p className="fs-5 mt-3">

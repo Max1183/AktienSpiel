@@ -32,6 +32,7 @@ from .serializers import (
     TransactionUpdateSerializer,
     UserCreateSerializer,
     UserProfileSerializer,
+    UserProfileUpdateSerializer,
     ValidateFieldSerializer,
     WatchlistCreateSerializer,
     WatchlistSerializer,
@@ -167,6 +168,17 @@ class UserProfileDetailView(generics.RetrieveAPIView):
     """Viewset für Benutzerprofile."""
 
     serializer_class = UserProfileSerializer
+    permission_classes = [IsAuthenticated]
+    queryset = UserProfile.objects.all()
+
+    def get_object(self):
+        return self.request.user.profile
+
+
+class UserProfileUpdateView(generics.UpdateAPIView):
+    """View zum Aktualisieren des Benutzerprofils."""
+
+    serializer_class = UserProfileUpdateSerializer
     permission_classes = [IsAuthenticated]
     queryset = UserProfile.objects.all()
 

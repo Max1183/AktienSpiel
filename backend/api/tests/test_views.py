@@ -614,6 +614,113 @@ class CreateUserViewTests(APITestCase):
         )
 
 
+class UserProfileUpdateViewTests(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="testuser",
+            password="testpassword",
+            email="test@example.com",
+            first_name="Test",
+            last_name="User",
+        )
+        self.team = Team.objects.create(name="Test Team")
+        self.profile = self.user.profile
+        self.url = reverse("user-profile-update")
+        self.client.force_authenticate(user=self.user)
+
+    def test_update_user_profile_success(self):
+        data = {
+            "first_name": "UpdatedFirst",
+            "last_name": "UpdatedLast",
+            "username": "updateduser",
+            "email": "updated@example.com",
+        }
+        response = self.client.patch(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.first_name, "UpdatedFirst")
+        self.assertEqual(self.user.last_name, "UpdatedLast")
+        self.assertEqual(self.user.username, "updateduser")
+        self.assertEqual(self.user.email, "updated@example.com")
+
+    def test_update_user_profile_username_exists(self):
+        User.objects.create_user(
+            username="otheruser", password="testpassword", email="other@example.com"
+        )
+        data = {"username": "otheruser"}
+        response = self.client.patch(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("username", response.data)
+        self.assertIn("This field must be unique.", response.data["username"])
+
+    def test_update_user_profile_email_exists(self):
+        User.objects.create_user(
+            username="otheruser", password="testpassword", email="other@example.com"
+        )
+        data = {"email": "other@example.com"}
+        response = self.client.patch(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("email", response.data)
+        self.assertIn("This field must be unique.", response.data["email"])
+
+    def test_update_user_profile_invalid_first_name_length(self):
+        data = {"first_name": "te"}
+        response = self.client.patch(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("first_name", response.data)
+        self.assertIn(
+            "Ensure this field has at least 3 characters.", response.data["first_name"]
+        )
+        data = {"first_name": "test" * 10}
+        response = self.client.patch(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("first_name", response.data)
+        self.assertIn(
+            "Ensure this field has no more than 20 characters.",
+            response.data["first_name"],
+        )
+
+    def test_update_user_profile_invalid_last_name_length(self):
+        data = {"last_name": "te"}
+        response = self.client.patch(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("last_name", response.data)
+        self.assertIn(
+            "Ensure this field has at least 3 characters.", response.data["last_name"]
+        )
+        data = {"last_name": "test" * 10}
+        response = self.client.patch(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("last_name", response.data)
+        self.assertIn(
+            "Ensure this field has no more than 20 characters.",
+            response.data["last_name"],
+        )
+
+    def test_update_user_profile_invalid_username_length(self):
+        data = {"username": "te"}
+        response = self.client.patch(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("username", response.data)
+        self.assertIn(
+            "Ensure this field has at least 3 characters.", response.data["username"]
+        )
+        data = {"username": "test" * 10}
+        response = self.client.patch(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("username", response.data)
+        self.assertIn(
+            "Ensure this field has no more than 20 characters.",
+            response.data["username"],
+        )
+
+    def test_update_user_profile_unauthenticated(self):
+        self.client.force_authenticate(user=None)
+        data = {"first_name": "UpdatedFirst"}
+        response = self.client.patch(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
 class StockHoldingListViewTests(APITestCase):
     def setUp(self):
         self.user = User.objects.create_user(

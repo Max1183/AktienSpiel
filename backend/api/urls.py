@@ -32,6 +32,11 @@ urlpatterns = [
     ),
     path("create-user/", views.CreateUserView.as_view(), name="create-user"),
     path("profile/", views.UserProfileDetailView.as_view(), name="user-profile"),
+    path(
+        "profile/update/",
+        views.UserProfileUpdateView.as_view(),
+        name="user-profile-update",
+    ),
     path("stockholdings/", views.StockHoldingListView.as_view(), name="stock-holdings"),
     path("transactions/", views.TransactionListView.as_view(), name="transaction-list"),
     path(
