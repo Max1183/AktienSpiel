@@ -6,7 +6,6 @@ import api from "../../api";
 import { useAlert } from "../../components/Alerts/AlertProvider";
 import LoadingSite from "../../components/Loading/LoadingSite";
 import { useOutletContext } from "react-router-dom";
-import { PersonCircle } from "react-bootstrap-icons";
 
 function Profile() {
     const [isEditing, setIsEditing] = React.useState(false);
@@ -28,6 +27,11 @@ function Profile() {
     };
 
     const handleSave = async () => {
+        if (Object.keys(formData).length === 0) {
+            setIsEditing(false);
+            return;
+        }
+
         setIsLoading(true);
 
         try {
@@ -57,68 +61,44 @@ function Profile() {
                     !isLoading ? (
                         <>
                             {isEditing ? (
-                                <div className="row g-5 mb-3">
-                                    <div className="col-md-6">
-                                        <form className="row g-3">
-                                            <FormField
-                                                label="Benutzername"
-                                                name="username"
-                                                value={formData.username}
-                                                onChange={handleChange}
-                                                placeholder={
-                                                    profile.user.username
-                                                }
-                                                showError={false}
-                                            />
-                                            <FormField
-                                                label="Email"
-                                                name="email"
-                                                value={formData.email}
-                                                onChange={handleChange}
-                                                placeholder={profile.user.email}
-                                                showError={false}
-                                            />
-                                            <FormField
-                                                label="Vorname"
-                                                name="first_name"
-                                                value={formData.first_name}
-                                                onChange={handleChange}
-                                                placeholder={
-                                                    profile.user.first_name
-                                                }
-                                                showError={false}
-                                            />
-                                            <FormField
-                                                label="Benutzername"
-                                                name="last_name"
-                                                value={formData.last_name}
-                                                onChange={handleChange}
-                                                placeholder={
-                                                    profile.user.last_name
-                                                }
-                                                showError={false}
-                                            />
-                                        </form>
-                                    </div>
-                                    <div className="col-md-6 d-flex flex-column">
-                                        <div className="d-flex flex-grow-1 align-items-center justify-content-center">
-                                            <PersonCircle
-                                                width={100}
-                                                height={100}
-                                            />
-                                        </div>
-                                        <form>
-                                            <FormField
-                                                name="avatar"
-                                                type="file"
-                                                value={formData.avatar}
-                                                onChange={handleChange}
-                                                placeholder={profile.avatar}
-                                                showError={false}
-                                            />
-                                        </form>
-                                    </div>
-                                </div>
+                                <form className="row g-3 mb-3">
+                                    <FormField
+                                        label="Benutzername"
+                                        name="username"
+                                        value={formData.username}
+                                        onChange={handleChange}
+                                        placeholder={profile.user.username}
+                                        showError={false}
+                                        width="col-md-6"
+                                    />
+                                    <FormField
+                                        label="Email"
+                                        name="email"
+                                        value={formData.email}
+                                        onChange={handleChange}
+                                        placeholder={profile.user.email}
+                                        showError={false}
+                                        width="col-md-6"
+                                    />
+                                    <FormField
+                                        label="Vorname"
+                                        name="first_name"
+                                        value={formData.first_name}
+                                        onChange={handleChange}
+                                        placeholder={profile.user.first_name}
+                                        showError={false}
+                                        width="col-md-6"
+                                    />
+                                    <FormField
+                                        label="Nachname"
+                                        name="last_name"
+                                        value={formData.last_name}
+                                        onChange={handleChange}
+                                        placeholder={profile.user.last_name}
+                                        showError={false}
+                                        width="col-md-6"
+                                    />
+                                </form>
                             ) : (
                                 <p className="fs-5 mt-3">
                                     Nutzername: {profile.user.username}
