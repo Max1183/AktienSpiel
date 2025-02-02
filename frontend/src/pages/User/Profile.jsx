@@ -3,18 +3,20 @@ import ProfileNavigation from "../../components/Navigation/ProfileNavigation";
 import Area from "../../components/General/Area";
 import FormField from "../../components/General/FormField";
 import api from "../../api";
+import { useAlert } from "../../components/Alerts/AlertProvider";
+import LoadingSite from "../../components/Loading/LoadingSite";
+import { useOutletContext } from "react-router-dom";
+import { PersonCircle } from "react-bootstrap-icons";
 
 function Profile() {
     const [isEditing, setIsEditing] = React.useState(false);
     const [formData, setFormData] = React.useState({});
+    const [isLoading, setIsLoading] = React.useState(false);
+    const { loadValue } = useOutletContext();
+    const { addAlert } = useAlert();
 
-    const handleEdit = (profile) => {
-        setFormData({
-            username: profile.user.username,
-            email: profile.user.email,
-            first_name: profile.user.first_name,
-            last_name: profile.user.last_name,
-        });
+    const handleEdit = () => {
+        setFormData({});
         setIsEditing(true);
     };
 
@@ -25,102 +27,148 @@ function Profile() {
         });
     };
 
-    const handleSave = () => {
-        setIsEditing(false);
+    const handleSave = async () => {
+        setIsLoading(true);
+
+        try {
+            const response = await api.put("/api/profile/update/", formData);
+            if (response.status === 200) {
+                addAlert("Profil erfolgreich aktualisiert", "success");
+            }
+        } catch (error) {
+            const data = error.response.data;
+            if (error.status === 400 && data) {
+                addAlert(`${Object.values(data)[0]}`, "danger");
+            } else {
+                addAlert("Fehler beim Aktualisieren des Profils", "danger");
+            }
+        } finally {
+            setIsLoading(false);
+            setIsEditing(false);
+            loadValue("profile");
+        }
     };
 
     return (
         <>
             <ProfileNavigation />
             <Area title="Profil" key1="profile">
-                {({ value: profile }) => (
-                    <>
-                        {isEditing ? (
-                            <form className="row g-3 mb-5">
-                                <FormField
-                                    label="Benutzername"
-                                    type="text"
-                                    name="username"
-                                    value={formData.username}
-                                    onChange={handleChange}
-                                    showError={false}
-                                    width="col-md-6"
-                                />
-                                <FormField
-                                    label="Email"
-                                    type="email"
-                                    name="email"
-                                    value={formData.email}
-                                    onChange={handleChange}
-                                    showError={false}
-                                    width="col-md-6"
-                                />
-                                <FormField
-                                    label="Vorname"
-                                    type="text"
-                                    name="first_name"
-                                    value={formData.first_name}
-                                    onChange={handleChange}
-                                    showError={false}
-                                    width="col-md-6"
-                                />
-                                <FormField
-                                    label="Benutzername"
-                                    type="text"
-                                    name="last_name"
-                                    value={formData.last_name}
-                                    onChange={handleChange}
-                                    showError={false}
-                                    width="col-md-6"
-                                />
-                            </form>
-                        ) : (
-                            <p className="fs-5 mt-3">
-                                Nutzername: {profile.user.username}
-                                <br />
-                                Teamname: {profile.team}
-                                <br />
-                                Vorname: {profile.user.first_name}
-                                <br />
-                                Nachname: {profile.user.last_name}
-                                <br />
-                                E-Mail: {profile.user.email}
-                                <br />
-                            </p>
-                        )}
-                        <div className="d-flex justify-content-between">
+                {({ value: profile }) =>
+                    !isLoading ? (
+                        <>
                             {isEditing ? (
-                                <>
-                                    <button
-                                        type="button"
-                                        className="btn btn-success"
-                                        onClick={handleSave}
-                                    >
-                                        Speichern
-                                    </button>
-                                    <button
-                                        type="button"
-                                        className="btn btn-danger"
-                                        onClick={() => setIsEditing(false)}
-                                    >
-                                        Abbrechen
-                                    </button>
-                                </>
+                                <div className="row g-5 mb-3">
+                                    <div className="col-md-6">
+                                        <form className="row g-3">
+                                            <FormField
+                                                label="Benutzername"
+                                                name="username"
+                                                value={formData.username}
+                                                onChange={handleChange}
+                                                placeholder={
+                                                    profile.user.username
+                                                }
+                                                showError={false}
+                                            />
+                                            <FormField
+                                                label="Email"
+                                                name="email"
+                                                value={formData.email}
+                                                onChange={handleChange}
+                                                placeholder={profile.user.email}
+                                                showError={false}
+                                            />
+                                            <FormField
+                                                label="Vorname"
+                                                name="first_name"
+                                                value={formData.first_name}
+                                                onChange={handleChange}
+                                                placeholder={
+                                                    profile.user.first_name
+                                                }
+                                                showError={false}
+                                            />
+                                            <FormField
+                                                label="Benutzername"
+                                                name="last_name"
+                                                value={formData.last_name}
+                                                onChange={handleChange}
+                                                placeholder={
+                                                    profile.user.last_name
+                                                }
+                                                showError={false}
+                                            />
+                                        </form>
+                                    </div>
+                                    <div className="col-md-6 d-flex flex-column">
+                                        <div className="d-flex flex-grow-1 align-items-center justify-content-center">
+                                            <PersonCircle
+                                                width={100}
+                                                height={100}
+                                            />
+                                        </div>
+                                        <form>
+                                            <FormField
+                                                name="avatar"
+                                                type="file"
+                                                value={formData.avatar}
+                                                onChange={handleChange}
+                                                placeholder={profile.avatar}
+                                                showError={false}
+                                            />
+                                        </form>
+                                    </div>
+                                </div>
                             ) : (
-                                <button
-                                    type="button"
-                                    className="btn btn-primary"
-                                    onClick={() => handleEdit(profile)}
-                                >
-                                    Bearbeiten
-                                </button>
+                                <p className="fs-5 mt-3">
+                                    Nutzername: {profile.user.username}
+                                    <br />
+                                    Teamname: {profile.team}
+                                    <br />
+                                    Vorname: {profile.user.first_name}
+                                    <br />
+                                    Nachname: {profile.user.last_name}
+                                    <br />
+                                    E-Mail: {profile.user.email}
+                                    <br />
+                                </p>
                             )}
-                            <a href="/logout" className="btn btn-primary">
-                                Logout
-                            </a>
-                        </div>
-                    </>
-                )}
+                            <div className="d-flex justify-content-between">
+                                {isEditing ? (
+                                    <>
+                                        <button
+                                            type="button"
+                                            className="btn btn-success"
+                                            onClick={handleSave}
+                                        >
+                                            Speichern
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className="btn btn-danger"
+                                            onClick={() => setIsEditing(false)}
+                                        >
+                                            Abbrechen
+                                        </button>
+                                    </>
+                                ) : (
+                                    <button
+                                        type="button"
+                                        className="btn btn-primary"
+                                        onClick={() => handleEdit(profile)}
+                                    >
+                                        Bearbeiten
+                                    </button>
+                                )}
+                                <a href="/logout" className="btn btn-primary">
+                                    Logout
+                                </a>
+                            </div>
+                        </>
+                    ) : (
+                        <LoadingSite />
+                    )
+                }
             </Area>
         </>
     );

@@ -1,12 +1,13 @@
 const FormField = ({
     label,
-    type,
+    type = "text",
     name,
     value,
     onChange,
     onBlur,
     error,
     width = "col-12",
+    placeholder = "",
     showError = true,
 }) => {
     return (
@@ -21,6 +22,7 @@ const FormField = ({
                 value={value}
                 onChange={onChange}
                 onBlur={onBlur}
+                placeholder={placeholder}
                 className={`form-control ${
                     showError && (error ? "is-invalid" : "is-valid")
                 }`}

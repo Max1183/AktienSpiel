@@ -651,7 +651,7 @@ class UserProfileUpdateViewTests(APITestCase):
         response = self.client.patch(self.url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("username", response.data)
-        self.assertIn("This field must be unique.", response.data["username"])
+        self.assertIn("Dieser Nutzername existiert bereits!", response.data["username"])
 
     def test_update_user_profile_email_exists(self):
         User.objects.create_user(
@@ -661,7 +661,7 @@ class UserProfileUpdateViewTests(APITestCase):
         response = self.client.patch(self.url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("email", response.data)
-        self.assertIn("This field must be unique.", response.data["email"])
+        self.assertIn("Diese Email-Adresse existiert bereits!", response.data["email"])
 
     def test_update_user_profile_invalid_first_name_length(self):
         data = {"first_name": "te"}

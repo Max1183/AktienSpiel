@@ -341,10 +341,21 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
     """Serializer for updating a UserProfile."""
 
     email = serializers.EmailField(
-        validators=[UniqueValidator(queryset=User.objects.all())], required=False
+        validators=[
+            UniqueValidator(
+                queryset=User.objects.all(),
+                message="Diese Email-Adresse existiert bereits!",
+            )
+        ],
+        required=False,
     )
     username = serializers.CharField(
-        validators=[UniqueValidator(queryset=User.objects.all())],
+        validators=[
+            UniqueValidator(
+                queryset=User.objects.all(),
+                message="Dieser Nutzername existiert bereits!",
+            )
+        ],
         min_length=3,
         max_length=20,
         required=False,
