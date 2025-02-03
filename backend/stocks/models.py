@@ -127,6 +127,15 @@ class Team(models.Model):
     stocks = models.ManyToManyField(Stock, through="StockHolding")
     code = models.CharField(max_length=8, unique=True, blank=True)
     portfolio_history = models.JSONField(default=list, blank=True)
+    team_admin = models.ForeignKey(
+        to="UserProfile",
+        on_delete=models.SET_NULL,
+        related_name="admin_of_team",
+        default=None,
+        null=True,
+        blank=True,
+    )
+    last_edited = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.name

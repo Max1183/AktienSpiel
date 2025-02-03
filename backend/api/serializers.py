@@ -337,7 +337,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserProfile
-        fields = ["user", "team", "last_edited"]
+        fields = ["user", "team", "edit_timeout"]
 
 
 class UserProfileUpdateSerializer(serializers.ModelSerializer):
