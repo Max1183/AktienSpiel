@@ -53,6 +53,10 @@ function Profile() {
         }
     };
 
+    const canEdit = (profile) => {
+        return profile.edit_timeout < 0;
+    };
+
     return (
         <>
             <ProfileNavigation />
@@ -100,18 +104,28 @@ function Profile() {
                                     />
                                 </form>
                             ) : (
-                                <p className="fs-5 mt-3">
-                                    Nutzername: {profile.user.username}
-                                    <br />
-                                    Teamname: {profile.team}
-                                    <br />
-                                    Vorname: {profile.user.first_name}
-                                    <br />
-                                    Nachname: {profile.user.last_name}
-                                    <br />
-                                    E-Mail: {profile.user.email}
-                                    <br />
-                                </p>
+                                <>
+                                    <p className="fs-5 mt-3 mb-2">
+                                        Nutzername: {profile.user.username}
+                                        <br />
+                                        Teamname: {profile.team}
+                                        <br />
+                                        Vorname: {profile.user.first_name}
+                                        <br />
+                                        Nachname: {profile.user.last_name}
+                                        <br />
+                                        E-Mail: {profile.user.email}
+                                    </p>
+                                    {!canEdit(profile) && (
+                                        <p className="text-danger">
+                                            Zeit bis zu nächster Änderung:{" "}
+                                            {Math.ceil(
+                                                profile.edit_timeout / 60
+                                            )}{" "}
+                                            Minuten
+                                        </p>
+                                    )}
+                                </>
                             )}
                             <div className="d-flex justify-content-between">
                                 {isEditing ? (
@@ -134,7 +148,9 @@ function Profile() {
                                 ) : (
                                     <button
                                         type="button"
-                                        className="btn btn-primary"
+                                        className={`btn btn-primary ${
+                                            !canEdit(profile) && "disabled"
+                                        }`}
                                         onClick={() => handleEdit(profile)}
                                     >
                                         Bearbeiten

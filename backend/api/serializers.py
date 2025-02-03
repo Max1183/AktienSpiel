@@ -334,10 +334,14 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
     user = UserSerializer()
     team = serializers.CharField(source="team.name")
+    edit_timeout = serializers.SerializerMethodField()
 
     class Meta:
         model = UserProfile
         fields = ["user", "team", "edit_timeout"]
+
+    def get_edit_timeout(self, obj):
+        return timedelta(minutes=30) - (timezone.now() - obj.last_edited)
 
 
 class UserProfileUpdateSerializer(serializers.ModelSerializer):
