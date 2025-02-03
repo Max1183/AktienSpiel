@@ -1,5 +1,8 @@
+from datetime import timedelta
+
 from django.contrib.auth.models import User
 from django.db import transaction
+from django.utils import timezone
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
@@ -334,7 +337,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserProfile
-        fields = ["user", "team"]
+        fields = ["user", "team", "last_edited"]
 
 
 class UserProfileUpdateSerializer(serializers.ModelSerializer):
@@ -385,6 +388,14 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 "Dieser Benutzername ist bereits vergeben."
             )
+
+        last_edited = self.instance.last_edited
+        if last_edited:
+            if timezone.now() - last_edited < timedelta(minutes=30):
+                raise serializers.ValidationError(
+                    "Sie können Ihr Profil nur alle 30 Minuten bearbeiten."
+                )
+
         return data
 
     def update(self, instance, validated_data):
