@@ -206,6 +206,112 @@ class TeamDetailViewTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
 
+class TeamUpdateViewTests(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="testuser", password="testpassword", email="test@example.com"
+        )
+        self.team = Team.objects.create(name="Test Team")
+        self.profile = self.user.profile
+        self.team.team_admin = self.profile
+        self.team.save()
+        self.profile.team = self.team
+        self.profile.save()
+
+        self.url = reverse("team-update")
+        self.client.force_authenticate(user=self.user)
+
+        self.other_user = User.objects.create_user(
+            username="otheruser", password="otherpassword", email="other@example.com"
+        )
+        self.other_profile = self.other_user.profile
+        self.other_profile.team = self.team
+        self.other_profile.save()
+
+    def test_update_team_success(self):
+        self.team.last_edited = timezone.now() - timedelta(days=1)
+        data = {"name": "Updated Team Name"}
+        response = self.client.patch(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["name"], "Updated Team Name")
+        self.team.refresh_from_db()
+        self.assertEqual(self.team.name, "Updated Team Name")
+
+    def test_update_team_admin_success(self):
+        self.team.last_edited = timezone.now() - timedelta(days=1)
+        data = {"admin": self.other_profile.pk}
+        response = self.client.patch(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.team.refresh_from_db()
+        self.assertEqual(self.team.team_admin, self.other_profile)
+
+    def test_update_team_name_exists(self):
+        self.team.last_edited = timezone.now() - timedelta(days=1)
+        Team.objects.create(name="Existing Team")
+        data = {"name": "Existing Team"}
+        response = self.client.patch(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("name", response.data)
+        self.assertIn("Teamname ist bereits vergeben.", response.data["name"])
+
+    def test_update_team_name_invalid_length(self):
+        data = {"name": "te"}
+        response = self.client.patch(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("name", response.data)
+        self.assertIn(
+            "Ensure this field has at least 3 characters.", response.data["name"]
+        )
+
+        data = {"name": "test" * 10}
+        response = self.client.patch(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("name", response.data)
+        self.assertIn(
+            "Ensure this field has no more than 20 characters.", response.data["name"]
+        )
+
+    def test_update_team_admin_not_member(self):
+        non_member_user = User.objects.create_user(
+            username="nonmember", password="password", email="nonmember@example.com"
+        )
+        non_member_profile = non_member_user.profile
+
+        data = {"admin": non_member_profile.pk}
+        response = self.client.patch(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("admin", response.data)
+        self.assertIn("Der Admin muss Mitglied des Teams sein.", response.data["admin"])
+
+    def test_update_team_admin_invalid_user_profile(self):
+        data = {"admin": 999}  # Non-existent UserProfile pk
+        response = self.client.patch(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("admin", response.data)
+        self.assertIn(
+            'Invalid pk "999" - object does not exist.', response.data["admin"]
+        )
+
+    def test_update_team_not_admin(self):
+        self.client.force_authenticate(
+            user=self.other_user
+        )  # Authenticate with a non-admin user
+        data = {"name": "Attempted Update"}
+        response = self.client.patch(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("non_field_errors", response.data)
+        self.assertIn(
+            "Nur der Team Admin kann Änderungen vornehmen.",
+            response.data["non_field_errors"],
+        )
+
+    def test_update_team_unauthenticated(self):
+        self.client.force_authenticate(user=None)
+        data = {"name": "Attempted Update"}
+        response = self.client.patch(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
 class TeamRankingListViewTests(APITestCase):
     def setUp(self):
         self.user1 = User.objects.create_user(
@@ -654,7 +760,9 @@ class UserProfileUpdateViewTests(APITestCase):
         response = self.client.patch(self.url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("username", response.data)
-        self.assertIn("Dieser Nutzername existiert bereits!", response.data["username"])
+        self.assertIn(
+            "Dieser Benutzername ist bereits vergeben.", response.data["username"]
+        )
 
     def test_update_user_profile_email_exists(self):
         User.objects.create_user(
@@ -664,7 +772,9 @@ class UserProfileUpdateViewTests(APITestCase):
         response = self.client.patch(self.url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("email", response.data)
-        self.assertIn("Diese Email-Adresse existiert bereits!", response.data["email"])
+        self.assertIn(
+            "Diese E-Mail-Adresse ist bereits registriert.", response.data["email"]
+        )
 
     def test_update_user_profile_invalid_first_name_length(self):
         data = {"first_name": "te"}

@@ -117,6 +117,9 @@ class TeamSerializer(serializers.ModelSerializer):
     members = MemberSerializer(many=True, read_only=True)
     portfolio_value = serializers.SerializerMethodField()
     trades = serializers.SerializerMethodField()
+    admin = serializers.SerializerMethodField()
+    is_admin = serializers.SerializerMethodField()
+    edit_timeout = serializers.SerializerMethodField()
 
     class Meta:
         model = Team
@@ -130,6 +133,9 @@ class TeamSerializer(serializers.ModelSerializer):
             "code",
             "members",
             "portfolio_history",
+            "admin",
+            "is_admin",
+            "edit_timeout",
         ]
         read_only_fields = fields
 
@@ -138,6 +144,67 @@ class TeamSerializer(serializers.ModelSerializer):
 
     def get_trades(self, obj):
         return Transaction.objects.filter(team=obj).count()
+
+    def get_admin(self, obj):
+        try:
+            return obj.team_admin.user.username
+        except AttributeError:
+            return None
+
+    def get_is_admin(self, obj):
+        return self.context["request"].user.profile == obj.team_admin
+
+    def get_edit_timeout(self, obj):
+        return timedelta(minutes=30) - (timezone.now() - obj.last_edited)
+
+
+class TeamUpdateSerializer(serializers.ModelSerializer):
+    """Serializer für die Aktualisierung von Teams."""
+
+    name = serializers.CharField(
+        validators=[
+            UniqueValidator(
+                queryset=Team.objects.all(), message="Teamname ist bereits vergeben."
+            )
+        ],
+        min_length=3,
+        max_length=20,
+        required=False,
+    )
+    admin = serializers.PrimaryKeyRelatedField(
+        queryset=UserProfile.objects.all(),
+        required=False,
+    )
+
+    class Meta:
+        model = Team
+        fields = ["name", "admin"]
+
+    def validate(self, attrs):
+        if self.instance.team_admin != self.context["request"].user.profile:
+            raise serializers.ValidationError(
+                "Nur der Team Admin kann Änderungen vornehmen."
+            )
+
+        if self.instance.last_edited + timedelta(minutes=30) > timezone.now():
+            raise serializers.ValidationError(
+                "Du kannst nur alle 30 Minuten Änderungen vornehmen."
+            )
+        return attrs
+
+    def validate_admin(self, value):
+        if value not in self.instance.members.all():
+            raise serializers.ValidationError("Der Admin muss Mitglied des Teams sein.")
+        return value
+
+    def update(self, instance, validated_data):
+        new_admin = validated_data.get("admin")
+        if new_admin:
+            instance.team_admin = new_admin
+
+        instance.last_edited = timezone.now()
+        instance.save()
+        return super().update(instance, validated_data)
 
 
 class TeamRankingSerializer(serializers.ModelSerializer):
@@ -348,21 +415,9 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
     """Serializer for updating a UserProfile."""
 
     email = serializers.EmailField(
-        validators=[
-            UniqueValidator(
-                queryset=User.objects.all(),
-                message="Diese Email-Adresse existiert bereits!",
-            )
-        ],
         required=False,
     )
     username = serializers.CharField(
-        validators=[
-            UniqueValidator(
-                queryset=User.objects.all(),
-                message="Dieser Nutzername existiert bereits!",
-            )
-        ],
         min_length=3,
         max_length=20,
         required=False,
@@ -374,31 +429,30 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
         model = UserProfile
         fields = ["email", "username", "first_name", "last_name"]
 
-    def validate(self, data):
-        user = self.instance.user
+    def validate_username(self, value):
         if (
-            "email" in data
-            and User.objects.filter(email=data["email"]).exclude(pk=user.pk).exists()
-        ):
-            raise serializers.ValidationError(
-                "Diese E-Mail-Adresse ist bereits registriert."
-            )
-        if (
-            "username" in data
-            and User.objects.filter(username=data["username"])
-            .exclude(pk=user.pk)
+            User.objects.filter(username=value)
+            .exclude(pk=self.instance.user.pk)
             .exists()
         ):
             raise serializers.ValidationError(
                 "Dieser Benutzername ist bereits vergeben."
             )
+        return value
 
+    def validate_email(self, value):
+        if User.objects.filter(email=value).exclude(pk=self.instance.user.pk).exists():
+            raise serializers.ValidationError(
+                "Diese E-Mail-Adresse ist bereits registriert."
+            )
+        return value
+
+    def validate(self, data):
         last_edited = self.instance.last_edited
-        if last_edited:
-            if timezone.now() - last_edited < timedelta(minutes=30):
-                raise serializers.ValidationError(
-                    "Sie können Ihr Profil nur alle 30 Minuten bearbeiten."
-                )
+        if last_edited and timezone.now() - last_edited < timedelta(minutes=30):
+            raise serializers.ValidationError(
+                "Sie können Ihr Profil nur alle 30 Minuten bearbeiten."
+            )
 
         return data
 

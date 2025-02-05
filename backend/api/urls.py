@@ -9,6 +9,7 @@ urlpatterns = [
     path("register/", views.RegistrationRequestCreateView.as_view(), name="register"),
     path("stocks/<int:pk>/", views.StockDetailView.as_view(), name="stock-detail"),
     path("team/", views.TeamDetailView.as_view(), name="team-detail"),
+    path("team/update/", views.TeamUpdateView.as_view(), name="team-update"),
     path("ranking/", views.TeamRankingListView.as_view(), name="ranking"),
     path(
         "watchlist/",

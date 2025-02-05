@@ -25,7 +25,7 @@ const Area = ({
 
     const handleLoadData = () => loadValue(key1, id, page);
     const data = () => getData(key1 || value1, id, page);
-    const isLoading = () => getLoading(key1, id, page);
+    const isLoading = () => getLoading(key1 || value1, id, page);
 
     useEffect(() => {
         if (!key1) return;

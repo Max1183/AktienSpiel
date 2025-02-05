@@ -54,7 +54,7 @@ function Profile() {
     };
 
     const canEdit = (profile) => {
-        return profile.edit_timeout < 0;
+        return profile.edit_timeout <= 0;
     };
 
     return (
@@ -117,7 +117,7 @@ function Profile() {
                                         E-Mail: {profile.user.email}
                                     </p>
                                     {!canEdit(profile) && (
-                                        <p className="text-danger">
+                                        <p className="text-danger m-0">
                                             Zeit bis zu nächster Änderung:{" "}
                                             {Math.ceil(
                                                 profile.edit_timeout / 60
@@ -146,19 +146,24 @@ function Profile() {
                                         </button>
                                     </>
                                 ) : (
-                                    <button
-                                        type="button"
-                                        className={`btn btn-primary ${
-                                            !canEdit(profile) && "disabled"
-                                        }`}
-                                        onClick={() => handleEdit(profile)}
-                                    >
-                                        Bearbeiten
-                                    </button>
+                                    <>
+                                        <button
+                                            type="button"
+                                            className={`btn btn-primary mt-3 ${
+                                                !canEdit(profile) && "disabled"
+                                            }`}
+                                            onClick={() => handleEdit(profile)}
+                                        >
+                                            Bearbeiten
+                                        </button>
+                                        <a
+                                            href="/logout"
+                                            className="btn btn-primary mt-3"
+                                        >
+                                            Logout
+                                        </a>
+                                    </>
                                 )}
-                                <a href="/logout" className="btn btn-primary">
-                                    Logout
-                                </a>
                             </div>
                         </>
                     ) : (
