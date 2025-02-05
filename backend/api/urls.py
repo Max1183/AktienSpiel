@@ -9,6 +9,7 @@ urlpatterns = [
     path("register/", views.RegistrationRequestCreateView.as_view(), name="register"),
     path("stocks/<int:pk>/", views.StockDetailView.as_view(), name="stock-detail"),
     path("team/", views.TeamDetailView.as_view(), name="team-detail"),
+    path("team/update/", views.TeamUpdateView.as_view(), name="team-update"),
     path("ranking/", views.TeamRankingListView.as_view(), name="ranking"),
     path(
         "watchlist/",
@@ -32,6 +33,11 @@ urlpatterns = [
     ),
     path("create-user/", views.CreateUserView.as_view(), name="create-user"),
     path("profile/", views.UserProfileDetailView.as_view(), name="user-profile"),
+    path(
+        "profile/update/",
+        views.UserProfileUpdateView.as_view(),
+        name="user-profile-update",
+    ),
     path("stockholdings/", views.StockHoldingListView.as_view(), name="stock-holdings"),
     path("transactions/", views.TransactionListView.as_view(), name="transaction-list"),
     path(

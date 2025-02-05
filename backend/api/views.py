@@ -27,11 +27,13 @@ from .serializers import (
     StockSerializer,
     TeamRankingSerializer,
     TeamSerializer,
+    TeamUpdateSerializer,
     TransactionCreateSerializer,
     TransactionListSerializer,
     TransactionUpdateSerializer,
     UserCreateSerializer,
     UserProfileSerializer,
+    UserProfileUpdateSerializer,
     ValidateFieldSerializer,
     WatchlistCreateSerializer,
     WatchlistSerializer,
@@ -69,6 +71,16 @@ class TeamDetailView(generics.RetrieveAPIView):
     """Viewset für Teams."""
 
     serializer_class = TeamSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        return self.request.user.profile.team
+
+
+class TeamUpdateView(generics.UpdateAPIView):
+    """Viewset für das Aktualisieren eines Teams."""
+
+    serializer_class = TeamUpdateSerializer
     permission_classes = [IsAuthenticated]
 
     def get_object(self):
@@ -167,6 +179,17 @@ class UserProfileDetailView(generics.RetrieveAPIView):
     """Viewset für Benutzerprofile."""
 
     serializer_class = UserProfileSerializer
+    permission_classes = [IsAuthenticated]
+    queryset = UserProfile.objects.all()
+
+    def get_object(self):
+        return self.request.user.profile
+
+
+class UserProfileUpdateView(generics.UpdateAPIView):
+    """View zum Aktualisieren des Benutzerprofils."""
+
+    serializer_class = UserProfileUpdateSerializer
     permission_classes = [IsAuthenticated]
     queryset = UserProfile.objects.all()
 

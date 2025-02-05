@@ -61,13 +61,23 @@ class TeamAdmin(admin.ModelAdmin):
     inlines = [UserProfileInline, StockHoldingInline, WatchlistInline]
     list_display = ["name", "team_member_count", "portfolio_value", "rank"]
     search_fields = ["name"]
-    readonly_fields = ["team_member_count", "portfolio_value", "code"]
-    fields = ["name", "balance", "portfolio_value", "code", "portfolio_history"]
+    readonly_fields = ["team_member_count", "portfolio_value", "code", "last_edited"]
+    fields = [
+        "name",
+        "balance",
+        "portfolio_value",
+        "code",
+        "team_admin",
+        "last_edited",
+        "portfolio_history",
+    ]
 
 
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
     list_display = ["user", "team"]
+    fields = ["user", "team", "last_edited"]
+    readonly_fields = ["last_edited"]
     search_fields = ["user__username", "user__email"]
 
 

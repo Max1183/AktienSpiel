@@ -6,6 +6,7 @@ import Area from "../../components/General/Area";
 import Chart from "chart.js/auto";
 import DepotNavigation from "../../components/Navigation/DepotNavigation";
 import StockDetailLink from "../../components/Depot/StockDetailLink";
+import { Link } from "react-router-dom";
 
 function StockHoldings() {
     const { getData } = useOutletContext();
@@ -144,10 +145,10 @@ function StockHoldings() {
                         </div>
                     ) : (
                         <div>
-                            <p>Du besitzt noch keine Aktien!</p>
+                            <p>Du besitzt noch keine Aktien.</p>
                             <p>
-                                Klicke <a href="/depot/search/">hier</a>, um
-                                nach Aktien zu suchen.
+                                Klicke <Link to="/depot/search/">hier</Link>, um
+                                nach Aktien zu suchen!
                             </p>
                         </div>
                     )

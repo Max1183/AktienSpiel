@@ -15,8 +15,8 @@ function Transactions() {
                 transactions.length > 0 ? (
                     <>
                         <p>
-                            Durch Klicken auf die Transaktionen gelangst du zu
-                            den Aktien.
+                            In den Details erfährst du genaueres über die
+                            Transaktionen.
                         </p>
                         <div className="list-group rounded mt-3">
                             {transactions.map((transaction) => (
