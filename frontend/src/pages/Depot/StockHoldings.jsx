@@ -101,7 +101,10 @@ function StockHoldings() {
             <Area title="Depotverlauf" value1="team" size="6">
                 {({ value: team }) =>
                     team && team.portfolio_history.length >= 3 ? (
-                        <canvas className="mb-3" id="portfolio-chart"></canvas>
+                        <canvas
+                            className="mb-3 w-100"
+                            id="portfolio-chart"
+                        ></canvas>
                     ) : (
                         <p>Hier kannst du den Verlauf deines Depots sehen</p>
                     )

@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "backend"
 version = "0.1.0"
-description = "A statistics app"
+description = "A stock game"
 authors = ["Max Mustermann <max.megamustermann@gmail.com>"]
 license = "MIT"
 readme = "../README.md"
